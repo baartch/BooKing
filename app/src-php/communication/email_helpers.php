@@ -340,6 +340,36 @@ function findConversationForEmail(
         return $conversationId;
     }
 
+    $closedStmt = $pdo->prepare(
+        'SELECT id FROM email_conversations
+         WHERE mailbox_id = :mailbox_id
+           AND subject_normalized = :subject_normalized
+           AND participant_key = :participant_key
+           AND is_closed = 1
+         ORDER BY id DESC
+         LIMIT 1'
+    );
+    $closedStmt->execute([
+        ':mailbox_id' => $mailboxId,
+        ':subject_normalized' => $normalizedSubject,
+        ':participant_key' => $participantKey
+    ]);
+    $closedConversationId = (int) $closedStmt->fetchColumn();
+    if ($closedConversationId > 0) {
+        $reopenStmt = $pdo->prepare(
+            'UPDATE email_conversations
+             SET is_closed = 0,
+                 closed_at = NULL,
+                 last_activity_at = :last_activity_at
+             WHERE id = :id'
+        );
+        $reopenStmt->execute([
+            ':last_activity_at' => $activityAt,
+            ':id' => $closedConversationId
+        ]);
+        return $closedConversationId;
+    }
+
     return null;
 }
 
