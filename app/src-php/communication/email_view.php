@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/email_helpers.php';
+require_once __DIR__ . '/email_parents.php';
 
 $errors = [];
 $notice = '';
@@ -12,6 +13,7 @@ $teamMailboxes = [];
 $selectedMailbox = null;
 $pdo = null;
 $userId = (int) ($currentUser['user_id'] ?? 0);
+$messageParentLabels = [];
 
 $folderOptions = getEmailFolderOptions();
 $sortOptions = getEmailSortOptions();
@@ -26,6 +28,7 @@ if (!array_key_exists($sortKey, $sortOptions) || !in_array($sortKey, ['received_
 }
 
 $filter = trim((string) ($_GET['filter'] ?? ''));
+$parentFilter = trim((string) ($_GET['parent'] ?? ''));
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $pageSize = EMAIL_PAGE_SIZE_DEFAULT;
 $composeMode = ($_GET['compose'] ?? '') === '1';
@@ -50,6 +53,16 @@ try {
 } catch (Throwable $error) {
     $errors[] = 'Failed to load mailboxes.';
     logAction($userId, 'email_mailbox_load_error', $error->getMessage());
+}
+
+$parentFilterIds = ['contacts' => [], 'venues' => []];
+if ($pdo && $parentFilter !== '') {
+    try {
+        $parentFilterIds = findParentCandidatesForFilter($pdo, $parentFilter);
+    } catch (Throwable $error) {
+        logAction($userId, 'email_parent_filter_error', $error->getMessage());
+        $parentFilterIds = ['contacts' => [], 'venues' => []];
+    }
 }
 
 $selectedMailboxId = (int) ($_GET['mailbox_id'] ?? 0);
@@ -86,7 +99,10 @@ $composeValues = [
     'cc_emails' => '',
     'bcc_emails' => '',
     'subject' => '',
-    'body' => ''
+    'body' => '',
+    'parent_type' => '',
+    'parent_id' => '',
+    'parent_label' => ''
 ];
 
 $selectedMessageId = (int) ($_GET['message_id'] ?? 0);
@@ -110,6 +126,11 @@ if ($pdo && $selectedMailbox && $selectedMessageId > 0) {
             $composeValues['bcc_emails'] = (string) ($message['bcc_emails'] ?? '');
             $composeValues['subject'] = (string) ($message['subject'] ?? '');
             $composeValues['body'] = (string) ($message['body'] ?? '');
+            $composeValues['parent_type'] = (string) ($message['parent_type'] ?? '');
+            $composeValues['parent_id'] = (string) ($message['parent_id'] ?? '');
+            $composeValues['parent_label'] = $composeValues['parent_type'] && $composeValues['parent_id']
+                ? (string) (resolveParentLabel($pdo, $composeValues['parent_type'], (int) $composeValues['parent_id']) ?? '')
+                : '';
             $composeMode = true;
         } elseif ($message && !(bool) $message['is_read']) {
             $updateStmt = $pdo->prepare('UPDATE email_messages SET is_read = 1 WHERE id = :id');
@@ -122,6 +143,11 @@ if ($pdo && $selectedMailbox && $selectedMessageId > 0) {
             );
             $attachmentsStmt->execute([':email_id' => $selectedMessageId]);
             $attachments = $attachmentsStmt->fetchAll();
+            $message['parent_label'] = resolveParentLabel(
+                $pdo,
+                $message['parent_type'] ?? null,
+                isset($message['parent_id']) ? (int) $message['parent_id'] : null
+            );
         }
     } catch (Throwable $error) {
         $errors[] = 'Failed to load email message.';
@@ -153,6 +179,15 @@ if ($pdo && $selectedMailbox && $prefillMessageId > 0) {
             $composeValues['subject'] = $subject;
             if ($replyId > 0) {
                 $composeValues['to_emails'] = (string) ($prefillMessage['from_email'] ?? '');
+            }
+            if (!empty($prefillMessage['parent_type']) && !empty($prefillMessage['parent_id'])) {
+                $composeValues['parent_type'] = (string) $prefillMessage['parent_type'];
+                $composeValues['parent_id'] = (string) $prefillMessage['parent_id'];
+                $composeValues['parent_label'] = (string) (resolveParentLabel(
+                    $pdo,
+                    $prefillMessage['parent_type'],
+                    (int) $prefillMessage['parent_id']
+                ) ?? '');
             }
             $bodyLines = [];
             if ($replyId > 0) {
@@ -189,6 +224,18 @@ if ($pdo && $selectedMailbox) {
                 $composeMode = true;
             }
         }
+
+        if ($composeMode && $composeValues['parent_type'] === '' && $composeValues['parent_id'] === '') {
+            $singleRecipient = parseSingleEmail($composeValues['to_emails']);
+            if ($singleRecipient) {
+                $match = findParentByEmail($pdo, $singleRecipient);
+                if ($match) {
+                    $composeValues['parent_type'] = $match['type'];
+                    $composeValues['parent_id'] = (string) $match['id'];
+                    $composeValues['parent_label'] = (string) ($match['label'] ?? '');
+                }
+            }
+        }
     } catch (Throwable $error) {
         $errors[] = 'Failed to load templates.';
         logAction($userId, 'email_template_load_error', $error->getMessage());
@@ -215,10 +262,41 @@ if ($pdo && $selectedMailbox) {
             $params[':filter'] = '%' . $filter . '%';
         }
 
-        $countStmt = $pdo->prepare(
-            'SELECT COUNT(*) FROM email_messages
-             WHERE mailbox_id = :mailbox_id AND folder = :folder ' . $filterSql
-        );
+        $parentFilterSql = '';
+        if ($parentFilter !== '') {
+            $clauses = [];
+            if ($parentFilterIds['contacts']) {
+                $contactKeys = [];
+                foreach ($parentFilterIds['contacts'] as $index => $id) {
+                    $key = ':parent_contact_' . $index;
+                    $contactKeys[] = $key;
+                    $params[$key] = $id;
+                }
+                if ($contactKeys) {
+                    $clauses[] = '(parent_type = "contact" AND parent_id IN (' . implode(',', $contactKeys) . '))';
+                }
+            }
+            if ($parentFilterIds['venues']) {
+                $venueKeys = [];
+                foreach ($parentFilterIds['venues'] as $index => $id) {
+                    $key = ':parent_venue_' . $index;
+                    $venueKeys[] = $key;
+                    $params[$key] = $id;
+                }
+                if ($venueKeys) {
+                    $clauses[] = '(parent_type = "venue" AND parent_id IN (' . implode(',', $venueKeys) . '))';
+                }
+            }
+            if ($clauses) {
+                $parentFilterSql = 'AND (' . implode(' OR ', $clauses) . ')';
+            } else {
+                $parentFilterSql = 'AND 1 = 0';
+            }
+        }
+
+        $countSql = 'SELECT COUNT(*) FROM email_messages
+             WHERE mailbox_id = :mailbox_id AND folder = :folder ' . $filterSql . ' ' . $parentFilterSql;
+        $countStmt = $pdo->prepare($countSql);
         $countStmt->execute($params);
         $totalMessages = (int) $countStmt->fetchColumn();
         $totalPages = max(1, (int) ceil($totalMessages / $pageSize));
@@ -231,14 +309,14 @@ if ($pdo && $selectedMailbox) {
             $sortColumn = $folder === 'sent' ? 'sent_at' : 'created_at';
         }
 
-        $listStmt = $pdo->prepare(
-            'SELECT id, subject, from_name, from_email, to_emails, is_read,
-                    received_at, sent_at, created_at
+        $listSql = 'SELECT id, subject, from_name, from_email, to_emails, is_read,
+                    received_at, sent_at, created_at, parent_type, parent_id
              FROM email_messages
-             WHERE mailbox_id = :mailbox_id AND folder = :folder ' . $filterSql .
+             WHERE mailbox_id = :mailbox_id AND folder = :folder ' . $filterSql . ' ' . $parentFilterSql .
             ' ORDER BY ' . $sortColumn . ' ' . $sortDirection .
-            ' LIMIT :limit OFFSET :offset'
-        );
+            ' LIMIT :limit OFFSET :offset';
+
+        $listStmt = $pdo->prepare($listSql);
         foreach ($params as $key => $value) {
             $listStmt->bindValue($key, $value);
         }
@@ -246,6 +324,7 @@ if ($pdo && $selectedMailbox) {
         $listStmt->bindValue(':offset', $offset, PDO::PARAM_INT);
         $listStmt->execute();
         $messages = $listStmt->fetchAll();
+        $messageParentLabels = resolveParentLabelsForMessages($pdo, $messages);
 
         $countStmt = $pdo->prepare(
             'SELECT folder, COUNT(*) AS total
@@ -273,6 +352,7 @@ $baseQuery = [
     'folder' => $folder,
     'sort' => $sortKey,
     'filter' => $filter,
+    'parent' => $parentFilter,
     'page' => $page
 ];
 $baseQuery = array_filter($baseQuery, static fn($value) => $value !== null && $value !== '');

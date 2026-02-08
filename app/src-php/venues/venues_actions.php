@@ -141,6 +141,9 @@ function handleVenueDelete(array $currentUser, int $venueId): array
 
     try {
         $pdo = getDatabaseConnection();
+        $stmt = $pdo->prepare('UPDATE email_messages SET parent_type = NULL, parent_id = NULL WHERE parent_type = "venue" AND parent_id = :id');
+        $stmt->execute([':id' => $venueId]);
+
         $stmt = $pdo->prepare('DELETE FROM venues WHERE id = :id');
         $stmt->execute([':id' => $venueId]);
         logAction($currentUser['user_id'] ?? null, 'venue_deleted', sprintf('Deleted venue %d', $venueId));

@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../auth/check.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
 require_once __DIR__ . '/../../src-php/communication/email_helpers.php';
+require_once __DIR__ . '/../../src-php/communication/email_parents.php';
 require_once __DIR__ . '/../../src-php/core/form_helpers.php';
 require_once __DIR__ . '/../../src-php/communication/mail_delivery.php';
 
@@ -22,6 +23,8 @@ $bccEmails = normalizeEmailList((string) ($_POST['bcc_emails'] ?? ''));
 $subject = trim((string) ($_POST['subject'] ?? ''));
 $body = trim((string) ($_POST['body'] ?? ''));
 $startNewConversation = !empty($_POST['start_new_conversation']);
+$parentType = trim((string) ($_POST['parent_type'] ?? ''));
+$parentId = (int) ($_POST['parent_id'] ?? 0);
 
 $redirectParams = [
     'tab' => 'email',
@@ -47,6 +50,17 @@ try {
         exit;
     }
 
+    if ($parentType === '' && $parentId <= 0) {
+        $singleRecipient = parseSingleEmail($toEmails);
+        if ($singleRecipient) {
+            $match = findParentByEmail($pdo, $singleRecipient);
+            if ($match) {
+                $parentType = $match['type'];
+                $parentId = (int) $match['id'];
+            }
+        }
+    }
+
     if ($action === 'save_draft') {
         if ($draftId > 0) {
             $stmt = $pdo->prepare(
@@ -56,6 +70,8 @@ try {
                      to_emails = :to_emails,
                      cc_emails = :cc_emails,
                      bcc_emails = :bcc_emails,
+                     parent_type = :parent_type,
+                     parent_id = :parent_id,
                      updated_at = NOW()
                  WHERE id = :id
                    AND mailbox_id = :mailbox_id
@@ -67,6 +83,8 @@ try {
                 ':to_emails' => $toEmails !== '' ? $toEmails : null,
                 ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
                 ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
+                ':parent_type' => $parentType !== '' ? $parentType : null,
+                ':parent_id' => $parentId > 0 ? $parentId : null,
                 ':id' => $draftId,
                 ':mailbox_id' => $mailbox['id']
             ]);
@@ -74,9 +92,9 @@ try {
         } else {
             $stmt = $pdo->prepare(
                 'INSERT INTO email_messages
-                 (mailbox_id, team_id, folder, subject, body, to_emails, cc_emails, bcc_emails, created_by, created_at)
+                 (mailbox_id, team_id, folder, subject, body, to_emails, cc_emails, bcc_emails, parent_type, parent_id, created_by, created_at)
                  VALUES
-                 (:mailbox_id, :team_id, "drafts", :subject, :body, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW())'
+                 (:mailbox_id, :team_id, "drafts", :subject, :body, :to_emails, :cc_emails, :bcc_emails, :parent_type, :parent_id, :created_by, NOW())'
             );
             $stmt->execute([
                 ':mailbox_id' => $mailbox['id'],
@@ -86,6 +104,8 @@ try {
                 ':to_emails' => $toEmails !== '' ? $toEmails : null,
                 ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
                 ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
+                ':parent_type' => $parentType !== '' ? $parentType : null,
+                ':parent_id' => $parentId > 0 ? $parentId : null,
                 ':created_by' => $userId
             ]);
             logAction($userId, 'email_draft_saved', sprintf('Saved draft in mailbox %d', $mailboxId));
@@ -138,11 +158,14 @@ try {
         );
     }
 
+    $resolvedParentType = $parentType !== '' ? $parentType : null;
+    $resolvedParentId = $parentId > 0 ? $parentId : null;
+
     $stmt = $pdo->prepare(
         'INSERT INTO email_messages
-         (mailbox_id, team_id, folder, subject, body, to_emails, cc_emails, bcc_emails, created_by, sent_at, created_at, conversation_id)
+         (mailbox_id, team_id, folder, subject, body, to_emails, cc_emails, bcc_emails, parent_type, parent_id, created_by, sent_at, created_at, conversation_id)
          VALUES
-         (:mailbox_id, :team_id, "sent", :subject, :body, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), NOW(), :conversation_id)'
+         (:mailbox_id, :team_id, "sent", :subject, :body, :to_emails, :cc_emails, :bcc_emails, :parent_type, :parent_id, :created_by, NOW(), NOW(), :conversation_id)'
     );
     $stmt->execute([
         ':mailbox_id' => $mailbox['id'],
@@ -152,6 +175,8 @@ try {
         ':to_emails' => $toEmails,
         ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
         ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
+        ':parent_type' => $resolvedParentType,
+        ':parent_id' => $resolvedParentId,
         ':created_by' => $userId,
         ':conversation_id' => $conversationId
     ]);

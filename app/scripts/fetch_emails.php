@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../src-php/core/defaults.php';
 require_once __DIR__ . '/../src-php/core/database.php';
 require_once __DIR__ . '/../src-php/communication/email_helpers.php';
+require_once __DIR__ . '/../src-php/communication/email_parents.php';
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(403);
@@ -332,11 +333,17 @@ foreach ($mailboxes as $mailbox) {
                 $date !== '' ? date('Y-m-d H:i:s', strtotime($date)) : date('Y-m-d H:i:s')
             );
 
+            $parentMatch = null;
+            $fromCandidate = $fromEmail !== '' ? strtolower(trim((string) $fromEmail)) : '';
+            if ($fromCandidate !== '') {
+                $parentMatch = findParentByEmail($pdo, $fromCandidate);
+            }
+
             $stmt = $pdo->prepare(
                 'INSERT INTO email_messages
-                 (mailbox_id, team_id, folder, subject, body, from_name, from_email, to_emails, cc_emails, message_id, received_at, conversation_id)
+                 (mailbox_id, team_id, folder, subject, body, from_name, from_email, to_emails, cc_emails, message_id, received_at, conversation_id, parent_type, parent_id)
                  VALUES
-                 (:mailbox_id, :team_id, "inbox", :subject, :body, :from_name, :from_email, :to_emails, :cc_emails, :message_id, :received_at, :conversation_id)'
+                 (:mailbox_id, :team_id, "inbox", :subject, :body, :from_name, :from_email, :to_emails, :cc_emails, :message_id, :received_at, :conversation_id, :parent_type, :parent_id)'
             );
             $stmt->execute([
                 ':mailbox_id' => $mailboxId,
@@ -349,7 +356,9 @@ foreach ($mailboxes as $mailbox) {
                 ':cc_emails' => $ccRaw !== '' ? parseEmailAddressList($ccRaw) : null,
                 ':message_id' => $messageId !== '' ? $messageId : null,
                 ':received_at' => $date !== '' ? date('Y-m-d H:i:s', strtotime($date)) : null,
-                ':conversation_id' => $conversationId
+                ':conversation_id' => $conversationId,
+                ':parent_type' => $parentMatch['type'] ?? null,
+                ':parent_id' => $parentMatch['id'] ?? null
             ]);
             $emailId = (int) $pdo->lastInsertId();
 
