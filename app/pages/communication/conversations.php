@@ -161,9 +161,30 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                           <div class="has-text-weight-semibold"><?php echo (int) $conversation['id']; ?>: <?php echo htmlspecialchars($conversation['subject'] ?? '(No subject)'); ?></div>
                           <div class="is-size-7"><?php echo htmlspecialchars($participantLabel); ?></div>
                         </div>
-                        <div class="is-size-7 has-text-right">
+                        <div class="is-flex is-flex-direction-column is-align-items-flex-end is-size-7">
                           <div><?php echo htmlspecialchars($activityLabel); ?></div>
-                          <div><span class="tag is-small"><?php echo $messageCount; ?> <?php echo $messageLabel; ?></span></div>
+                          <div class="is-flex is-align-items-center mt-1">
+                            <span class="tag is-small"><?php echo $messageCount; ?> <?php echo $messageLabel; ?></span>
+                            <?php if (empty($conversation['is_closed'])): ?>
+                              <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/close_conversation.php" class="ml-2 is-flex is-align-items-center">
+                                <?php renderCsrfField(); ?>
+                                <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
+                                <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
+                                <button type="submit" class="button is-small" aria-label="Close conversation" title="Close conversation">
+                                  <span class="icon"><i class="fa-solid fa-circle-xmark"></i></span>
+                                </button>
+                              </form>
+                            <?php else: ?>
+                              <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/delete_conversation.php" class="ml-2 is-flex is-align-items-center" onsubmit="return confirm('Delete this conversation?');">
+                                <?php renderCsrfField(); ?>
+                                <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
+                                <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
+                                <button type="submit" class="button is-small" aria-label="Delete conversation" title="Delete conversation">
+                                  <span class="icon"><i class="fa-solid fa-trash"></i></span>
+                                </button>
+                              </form>
+                            <?php endif; ?>
+                          </div>
                         </div>
                       </div>
                       <div class="mt-2">
@@ -175,25 +196,6 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                         <?php endif; ?>
                       </div>
                     </a>
-                    <?php if (empty($conversation['is_closed'])): ?>
-                      <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/close_conversation.php" class="ml-2">
-                        <?php renderCsrfField(); ?>
-                        <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
-                        <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
-                        <button type="submit" class="button is-small" aria-label="Close conversation" title="Close conversation">
-                          <span class="icon"><i class="fa-solid fa-circle-xmark"></i></span>
-                        </button>
-                      </form>
-                    <?php else: ?>
-                      <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/delete_conversation.php" class="ml-2" onsubmit="return confirm('Delete this conversation?');">
-                        <?php renderCsrfField(); ?>
-                        <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
-                        <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
-                        <button type="submit" class="button is-small" aria-label="Delete conversation" title="Delete conversation">
-                          <span class="icon"><i class="fa-solid fa-trash"></i></span>
-                        </button>
-                      </form>
-                    <?php endif; ?>
                   </div>
                 </li>
               <?php endforeach; ?>
