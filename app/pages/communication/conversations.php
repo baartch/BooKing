@@ -40,7 +40,12 @@ $conversationId = (int) ($_GET['conversation_id'] ?? 0);
 if ($pdo && $selectedMailbox) {
     try {
         $stmt = $pdo->prepare(
-            'SELECT c.*, COUNT(em.id) AS message_count
+            'SELECT c.*, COUNT(em.id) AS message_count,
+                    (SELECT em2.folder
+                     FROM email_messages em2
+                     WHERE em2.conversation_id = c.id
+                     ORDER BY COALESCE(em2.received_at, em2.sent_at, em2.created_at) DESC, em2.id DESC
+                     LIMIT 1) AS last_message_folder
              FROM email_conversations c
              LEFT JOIN email_messages em ON em.conversation_id = c.id
              WHERE c.mailbox_id = :mailbox_id
@@ -126,12 +131,53 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
       <?php endforeach; ?>
 
       <?php if ($selectedMailbox): ?>
+        <?php
+          $openConversations = [];
+          $closedConversations = [];
+
+          foreach ($conversations as $conversation) {
+              if (!empty($conversation['is_closed'])) {
+                  $closedConversations[] = $conversation;
+              } else {
+                  $openConversations[] = $conversation;
+              }
+          }
+
+          $incomingConversations = [];
+          $outgoingConversations = [];
+
+          foreach ($openConversations as $conversation) {
+              $lastFolder = (string) ($conversation['last_message_folder'] ?? '');
+              if ($lastFolder === 'inbox') {
+                  $incomingConversations[] = $conversation;
+              } else {
+                  $outgoingConversations[] = $conversation;
+              }
+          }
+
+          $sortByHeat = static function (array $left, array $right): int {
+              $leftActivity = $left['last_activity_at'] ?? $left['created_at'] ?? null;
+              $rightActivity = $right['last_activity_at'] ?? $right['created_at'] ?? null;
+              $leftTime = $leftActivity ? strtotime((string) $leftActivity) : 0;
+              $rightTime = $rightActivity ? strtotime((string) $rightActivity) : 0;
+
+              return $leftTime <=> $rightTime;
+          };
+
+          usort($incomingConversations, $sortByHeat);
+          usort($outgoingConversations, $sortByHeat);
+          usort($closedConversations, $sortByHeat);
+
+          $orderedOpenConversations = array_merge($incomingConversations, $outgoingConversations);
+        ?>
         <div class="menu">
           <ul class="menu-list">
             <?php if (!$conversations): ?>
               <li><span>No conversations found.</span></li>
+            <?php elseif (!$orderedOpenConversations): ?>
+              <li><span>No open conversations.</span></li>
             <?php else: ?>
-              <?php foreach ($conversations as $conversation): ?>
+              <?php foreach ($orderedOpenConversations as $conversation): ?>
                 <?php
                   $conversationLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, [
                       'conversation_id' => $conversation['id']
@@ -155,14 +201,11 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                 ?>
                 <li class="mb-3">
                   <div class="is-flex is-justify-content-space-between">
-                    <a href="<?php echo htmlspecialchars($conversationLink); ?>" class="is-flex-grow-1 <?php echo (int) $conversation['id'] === $conversationId ? 'is-active' : ''; ?> <?php echo !empty($conversation['is_closed']) ? 'has-text-success' : ''; ?>">
+                    <a href="<?php echo htmlspecialchars($conversationLink); ?>" class="is-flex-grow-1 <?php echo (int) $conversation['id'] === $conversationId ? 'is-active' : ''; ?>">
                       <div class="is-flex is-justify-content-space-between">
                         <div>
                           <div class="has-text-weight-semibold">
                             <?php echo (int) $conversation['id']; ?>: <?php echo htmlspecialchars($conversation['subject'] ?? '(No subject)'); ?>
-                            <?php if (!empty($conversation['is_closed'])): ?>
-                              <span class="tag is-small has-background-success-dark ml-2">Closed</span>
-                            <?php endif; ?>
                           </div>
                           <div class="is-size-7"><?php echo htmlspecialchars($participantLabel); ?></div>
                         </div>
@@ -170,25 +213,14 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                           <div><?php echo htmlspecialchars($activityLabel); ?></div>
                           <div class="is-flex is-align-items-center mt-1">
                             <span class="tag is-small"><?php echo $messageCount; ?> <?php echo $messageLabel; ?></span>
-                            <?php if (empty($conversation['is_closed'])): ?>
-                              <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/close_conversation.php" class="ml-2 is-flex is-align-items-center">
-                                <?php renderCsrfField(); ?>
-                                <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
-                                <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
-                                <button type="submit" class="button is-small" aria-label="Close conversation" title="Close conversation">
-                                  <span class="icon"><i class="fa-solid fa-circle-xmark"></i></span>
-                                </button>
-                              </form>
-                            <?php else: ?>
-                              <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/delete_conversation.php" class="ml-2 is-flex is-align-items-center" onsubmit="return confirm('Delete this conversation?');">
-                                <?php renderCsrfField(); ?>
-                                <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
-                                <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
-                                <button type="submit" class="button is-small" aria-label="Delete conversation" title="Delete conversation">
-                                  <span class="icon"><i class="fa-solid fa-trash"></i></span>
-                                </button>
-                              </form>
-                            <?php endif; ?>
+                            <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/close_conversation.php" class="ml-2 is-flex is-align-items-center">
+                              <?php renderCsrfField(); ?>
+                              <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
+                              <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
+                              <button type="submit" class="button is-small" aria-label="Close conversation" title="Close conversation">
+                                <span class="icon"><i class="fa-solid fa-circle-xmark"></i></span>
+                              </button>
+                            </form>
                           </div>
                         </div>
                       </div>
@@ -202,6 +234,60 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
             <?php endif; ?>
           </ul>
         </div>
+
+        <?php if ($closedConversations): ?>
+          <div class="mt-4">
+            <h3 class="title is-6">Closed</h3>
+            <div class="menu">
+              <ul class="menu-list">
+                <?php foreach ($closedConversations as $conversation): ?>
+                  <?php
+                    $conversationLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, [
+                        'conversation_id' => $conversation['id']
+                    ]));
+                    $lastActivity = $conversation['last_activity_at'] ?? $conversation['created_at'] ?? null;
+                    $lastActivityTime = $lastActivity ? strtotime((string) $lastActivity) : null;
+                    $participantLabel = $conversation['participant_key'] === 'unknown'
+                        ? 'Unknown participants'
+                        : str_replace('|', ' · ', $conversation['participant_key']);
+                    $activityLabel = $lastActivityTime ? date('Y-m-d H:i', $lastActivityTime) : '';
+                    $messageCount = (int) ($conversation['message_count'] ?? 0);
+                    $messageLabel = $messageCount === 1 ? 'mail' : 'mails';
+                  ?>
+                  <li class="mb-3">
+                    <div class="is-flex is-justify-content-space-between">
+                      <a href="<?php echo htmlspecialchars($conversationLink); ?>" class="is-flex-grow-1 has-text-success <?php echo (int) $conversation['id'] === $conversationId ? 'is-active' : ''; ?>">
+                        <div class="is-flex is-justify-content-space-between">
+                          <div>
+                            <div class="has-text-weight-semibold">
+                              <?php echo (int) $conversation['id']; ?>: <?php echo htmlspecialchars($conversation['subject'] ?? '(No subject)'); ?>
+                              <span class="tag is-small has-background-success-dark ml-2">Closed</span>
+                            </div>
+                            <div class="is-size-7"><?php echo htmlspecialchars($participantLabel); ?></div>
+                          </div>
+                          <div class="is-flex is-flex-direction-column is-align-items-flex-end is-size-7">
+                            <div><?php echo htmlspecialchars($activityLabel); ?></div>
+                            <div class="is-flex is-align-items-center mt-1">
+                              <span class="tag is-small"><?php echo $messageCount; ?> <?php echo $messageLabel; ?></span>
+                              <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/delete_conversation.php" class="ml-2 is-flex is-align-items-center" onsubmit="return confirm('Delete this conversation?');">
+                                <?php renderCsrfField(); ?>
+                                <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
+                                <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
+                                <button type="submit" class="button is-small" aria-label="Delete conversation" title="Delete conversation">
+                                  <span class="icon"><i class="fa-solid fa-trash"></i></span>
+                                </button>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                      </a>
+                    </div>
+                  </li>
+                <?php endforeach; ?>
+              </ul>
+            </div>
+          </div>
+        <?php endif; ?>
       <?php endif; ?>
     </div>
   </section>
