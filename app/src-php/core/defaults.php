@@ -1,30 +1,34 @@
 <?php
-// Mail storage
-// Base directory for stored email attachments (web root).
-// Ensure the web server user can read/write this directory.
-if (!defined('MAIL_ATTACHMENTS_PATH')) {
-    define('MAIL_ATTACHMENTS_PATH', '/uploads/email_attachments');
-}
-
 // Base path - auto-detect or set manually
 // For example: '' for root, '/venues' for subdirectory
 if (!defined('BASE_PATH')) {
     $scriptPath = dirname($_SERVER['SCRIPT_NAME'] ?? '');
     $pathParts = explode('/', trim($scriptPath, '/'));
     $baseParts = $pathParts;
-    $rootMarkers = ['app', 'pages', 'routes'];
 
-    foreach ($rootMarkers as $marker) {
-        $markerIndex = array_search($marker, $pathParts, true);
-        if ($markerIndex !== false) {
-            $baseParts = array_slice($pathParts, 0, $markerIndex);
-            break;
-        }
+    $markerIndex = array_search('app', $pathParts, true);
+    if ($markerIndex !== false) {
+        $baseParts = array_slice($pathParts, 0, $markerIndex);
     }
 
     $basePath = implode('/', $baseParts);
     define('BASE_PATH', $basePath === '' ? '' : '/' . $basePath);
-    unset($scriptPath, $pathParts, $baseParts, $rootMarkers, $markerIndex, $basePath);
+    unset($scriptPath, $pathParts, $baseParts, $markerIndex, $basePath);
+}
+
+// Mail storage
+// Base directory for stored email attachments (web root).
+// Ensure the web server user can read/write this directory.
+if (!defined('MAIL_ATTACHMENTS_PATH')) {
+    $documentRoot = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+    if ($documentRoot === '') {
+        $documentRoot = rtrim(dirname(__DIR__, 3), '/');
+    }
+
+    $basePath = rtrim(BASE_PATH, '/');
+    $rootPrefix = $documentRoot . ($basePath === '' ? '' : $basePath);
+    define('MAIL_ATTACHMENTS_PATH', $rootPrefix . '/uploads/email_attachments');
+    unset($documentRoot, $basePath, $rootPrefix);
 }
 
 /**
