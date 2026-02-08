@@ -23,6 +23,7 @@ CREATE INDEX idx_venues_name ON venues(name(100));
 CREATE INDEX idx_venues_city ON venues(city(100));
 CREATE INDEX idx_venues_address ON venues(address(100));
 CREATE INDEX idx_venues_contact_person ON venues(contact_person(100));
+CREATE INDEX idx_venues_contact_email ON venues(contact_email(100));
 CREATE INDEX idx_venues_coordinates ON venues(latitude, longitude);
 CREATE FULLTEXT INDEX idx_venues_fulltext ON venues(
     name,
@@ -149,6 +150,8 @@ CREATE TABLE email_messages (
     cc_emails TEXT DEFAULT NULL,
     bcc_emails TEXT DEFAULT NULL,
     message_id VARCHAR(255) DEFAULT NULL,
+    parent_type VARCHAR(50) DEFAULT NULL,
+    parent_id INT DEFAULT NULL,
     is_read TINYINT(1) NOT NULL DEFAULT 0,
     received_at DATETIME DEFAULT NULL,
     sent_at DATETIME DEFAULT NULL,
@@ -162,7 +165,8 @@ CREATE TABLE email_messages (
     INDEX idx_email_messages_mailbox_folder (mailbox_id, folder),
     INDEX idx_email_messages_received (received_at),
     INDEX idx_email_messages_sent (sent_at),
-    INDEX idx_email_messages_conversation (conversation_id, created_at)
+    INDEX idx_email_messages_conversation (conversation_id, created_at),
+    INDEX idx_email_messages_parent (parent_type, parent_id)
 );
 
 CREATE TABLE email_attachments (
@@ -216,7 +220,7 @@ CREATE TABLE contacts (
   notes TEXT DEFAULT NULL,
   created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_contacts_surname (surname(100)),
+  INDEX idx_contacts_name (firstname(100), surname(100)),
   INDEX idx_contacts_email (email(100)),
   INDEX idx_contacts_city (city(100))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;

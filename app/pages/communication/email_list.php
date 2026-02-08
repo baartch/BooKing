@@ -17,6 +17,13 @@
             <input type="text" name="filter" value="<?php echo htmlspecialchars($filter); ?>" placeholder="Search" class="input">
           </div>
           <div class="control">
+            <div class="dropdown is-fullwidth" data-parent-lookup data-lookup-mode="parent" data-lookup-url="<?php echo BASE_PATH; ?>/app/routes/communication/parent_lookup.php">
+              <div class="dropdown-trigger control">
+                <input type="text" name="parent" value="<?php echo htmlspecialchars($parentFilter); ?>" placeholder="Parent" class="input" data-parent-input>
+              </div>
+            </div>
+          </div>
+          <div class="control">
             <button type="submit" class="button">Filter</button>
           </div>
         </form>
@@ -69,6 +76,18 @@
                     <div>
                       <div class="<?php echo $isUnread ? 'has-text-weight-bold' : 'has-text-weight-semibold'; ?>"><?php echo htmlspecialchars($row['subject'] ?? '(No subject)'); ?></div>
                       <div class="is-size-7"><?php echo htmlspecialchars($displayName); ?></div>
+                      <?php
+                        $parentKey = null;
+                        if (!empty($row['parent_type']) && !empty($row['parent_id'])) {
+                            $parentKey = $row['parent_type'] . ':' . (int) $row['parent_id'];
+                        }
+                        $parentLabel = $parentKey && isset($messageParentLabels[$parentKey])
+                            ? $messageParentLabels[$parentKey]
+                            : '';
+                      ?>
+                      <?php if ($parentLabel !== ''): ?>
+                        <div class="is-size-7 has-text-grey"><?php echo htmlspecialchars($parentLabel); ?></div>
+                      <?php endif; ?>
                     </div>
                     <div class="is-size-7 email-meta-right">
                       <div><?php echo htmlspecialchars($dateLabel); ?></div>
@@ -80,6 +99,7 @@
                           <input type="hidden" name="folder" value="<?php echo htmlspecialchars($folder); ?>">
                           <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
                           <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+                          <input type="hidden" name="parent" value="<?php echo htmlspecialchars($parentFilter); ?>">
                           <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
                           <input type="hidden" name="tab" value="email">
                           <button type="submit" class="button is-small" aria-label="Move email to trash" title="Move email to trash">

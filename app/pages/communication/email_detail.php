@@ -52,6 +52,11 @@
             <?php endif; ?>
             · <?php echo htmlspecialchars($message['received_at'] ?? $message['sent_at'] ?? $message['created_at'] ?? ''); ?>
           </p>
+          <?php if (!empty($message['parent_label'])): ?>
+            <p class="is-size-7">
+              Parent: <?php echo htmlspecialchars($message['parent_label']); ?>
+            </p>
+          <?php endif; ?>
         </div>
       </div>
       <div class="level-right">
@@ -85,6 +90,7 @@
             <input type="hidden" name="folder" value="<?php echo htmlspecialchars($folder); ?>">
             <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
             <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+            <input type="hidden" name="parent" value="<?php echo htmlspecialchars($parentFilter); ?>">
             <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
             <input type="hidden" name="tab" value="email">
             <button type="submit" class="button is-small" aria-label="Mark as unread" title="Mark as unread">
@@ -99,6 +105,7 @@
             <input type="hidden" name="folder" value="<?php echo htmlspecialchars($folder); ?>">
             <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
             <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+            <input type="hidden" name="parent" value="<?php echo htmlspecialchars($parentFilter); ?>">
             <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
             <input type="hidden" name="tab" value="email">
             <button type="submit" class="button is-small" aria-label="Move email to trash" title="Move email to trash">
@@ -110,6 +117,34 @@
     </div>
 
     <div class="content">
+      <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/update_parent.php" class="mb-4" data-parent-lookup data-lookup-mode="parent" data-lookup-url="<?php echo BASE_PATH; ?>/app/routes/communication/parent_lookup.php">
+        <?php renderCsrfField(); ?>
+        <input type="hidden" name="email_id" value="<?php echo (int) $message['id']; ?>">
+        <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
+        <input type="hidden" name="folder" value="<?php echo htmlspecialchars($folder); ?>">
+        <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
+        <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+        <input type="hidden" name="parent" value="<?php echo htmlspecialchars($parentFilter); ?>">
+        <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
+        <input type="hidden" name="tab" value="email">
+        <input type="hidden" name="parent_type" value="<?php echo htmlspecialchars((string) ($message['parent_type'] ?? '')); ?>" data-parent-type>
+        <input type="hidden" name="parent_id" value="<?php echo htmlspecialchars((string) ($message['parent_id'] ?? '')); ?>" data-parent-id>
+        <div class="field">
+          <label for="email_parent" class="label">Parent</label>
+          <div class="dropdown is-fullwidth">
+            <div class="dropdown-trigger control">
+              <input type="text" id="email_parent" name="parent_label" class="input" value="<?php echo htmlspecialchars((string) ($message['parent_label'] ?? '')); ?>" placeholder="Search contacts or venues" data-parent-input>
+            </div>
+          </div>
+        </div>
+        <div class="buttons">
+          <button type="submit" class="button">Save Parent</button>
+          <?php if (!empty($message['parent_type']) && !empty($message['parent_id'])): ?>
+            <button type="submit" class="button" name="clear_parent" value="1">Clear</button>
+          <?php endif; ?>
+        </div>
+      </form>
+
       <?php
         $messageBody = (string) ($message['body'] ?? '');
         if ($messageBody !== '' && $messageBody !== strip_tags($messageBody)) {

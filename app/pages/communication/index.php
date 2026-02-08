@@ -16,6 +16,7 @@ logAction($currentUser['user_id'] ?? null, 'view_communication', 'User opened co
     'extraScripts' => [
         '<script src="' . BASE_PATH . '/app/public/js/wysi.min.js" defer></script>',
         '<script type="module" src="' . BASE_PATH . '/app/public/js/tabs.js" defer></script>',
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/email-parent.js" defer></script>',
         '<script type="module" src="' . BASE_PATH . '/app/public/js/wysi-email.js" defer></script>'
     ]
 ]); ?>

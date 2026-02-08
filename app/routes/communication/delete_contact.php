@@ -23,6 +23,9 @@ try {
     $pdo = getDatabaseConnection();
     $existing = fetchContact($pdo, $contactId);
     if ($existing) {
+        $stmt = $pdo->prepare('UPDATE email_messages SET parent_type = NULL, parent_id = NULL WHERE parent_type = "contact" AND parent_id = :id');
+        $stmt->execute([':id' => $contactId]);
+
         $stmt = $pdo->prepare('DELETE FROM contacts WHERE id = :id');
         $stmt->execute([':id' => $contactId]);
         logAction($userId, 'contact_deleted', sprintf('Deleted contact %d', $contactId));
