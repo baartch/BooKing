@@ -89,7 +89,7 @@ $mailboxCount = count($teamMailboxes);
 $cooldownSeconds = 14 * 24 * 60 * 60;
 ?>
 <div class="columns is-variable is-4">
-  <section class="column is-4">
+  <section class="column is-6">
     <div class="box">
       <div class="level mb-3">
         <div class="level-left">
@@ -155,10 +155,15 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                 ?>
                 <li class="mb-3">
                   <div class="is-flex is-justify-content-space-between">
-                    <a href="<?php echo htmlspecialchars($conversationLink); ?>" class="is-flex-grow-1 <?php echo (int) $conversation['id'] === $conversationId ? 'is-active' : ''; ?>">
+                    <a href="<?php echo htmlspecialchars($conversationLink); ?>" class="is-flex-grow-1 <?php echo (int) $conversation['id'] === $conversationId ? 'is-active' : ''; ?> <?php echo !empty($conversation['is_closed']) ? 'has-text-success' : ''; ?>">
                       <div class="is-flex is-justify-content-space-between">
                         <div>
-                          <div class="has-text-weight-semibold"><?php echo (int) $conversation['id']; ?>: <?php echo htmlspecialchars($conversation['subject'] ?? '(No subject)'); ?></div>
+                          <div class="has-text-weight-semibold">
+                            <?php echo (int) $conversation['id']; ?>: <?php echo htmlspecialchars($conversation['subject'] ?? '(No subject)'); ?>
+                            <?php if (!empty($conversation['is_closed'])): ?>
+                              <span class="tag is-small has-background-success-dark ml-2">Closed</span>
+                            <?php endif; ?>
+                          </div>
                           <div class="is-size-7"><?php echo htmlspecialchars($participantLabel); ?></div>
                         </div>
                         <div class="is-flex is-flex-direction-column is-align-items-flex-end is-size-7">
@@ -189,11 +194,6 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                       </div>
                       <div class="mt-2">
                         <progress class="progress is-small is-cooldown-step-<?php echo $colorStep; ?>" value="<?php echo $heatPercent; ?>" max="100"></progress>
-                        <?php if (!empty($conversation['is_closed'])): ?>
-                          <div class="mt-2">
-                            <span class="tag is-small is-light">Closed</span>
-                          </div>
-                        <?php endif; ?>
                       </div>
                     </a>
                   </div>
@@ -206,7 +206,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
     </div>
   </section>
 
-  <section class="column">
+  <section class="column is-6">
     <div class="box">
       <div class="level mb-3">
         <div class="level-left">
