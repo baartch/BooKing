@@ -55,10 +55,30 @@
         </div>
       </div>
       <div class="level-right">
-        <div class="buttons are-small">
-          <a href="<?php echo htmlspecialchars($baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, ['compose' => 1, 'reply' => $message['id']]))); ?>" class="button">Reply</a>
-          <a href="<?php echo htmlspecialchars($baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, ['compose' => 1, 'forward' => $message['id']]))); ?>" class="button">Forward</a>
-          <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/mark_unread.php">
+        <div class="field has-addons">
+          <div class="control">
+            <a
+              href="<?php echo htmlspecialchars($baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, ['compose' => 1, 'reply' => $message['id']]))); ?>"
+              class="button is-small"
+              aria-label="Reply"
+              title="Reply"
+            >
+              <span class="icon is-small"><i class="fa-solid fa-reply"></i></span>
+            </a>
+          </div>
+
+          <div class="control">
+            <a
+              href="<?php echo htmlspecialchars($baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, ['compose' => 1, 'forward' => $message['id']]))); ?>"
+              class="button is-small"
+              aria-label="Forward"
+              title="Forward"
+            >
+              <span class="icon is-small"><i class="fa-solid fa-forward"></i></span>
+            </a>
+          </div>
+
+          <form class="control" method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/mark_unread.php">
             <?php renderCsrfField(); ?>
             <input type="hidden" name="email_id" value="<?php echo (int) $message['id']; ?>">
             <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
@@ -67,9 +87,12 @@
             <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
             <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
             <input type="hidden" name="tab" value="email">
-            <button type="submit" class="button">Mark as unread</button>
+            <button type="submit" class="button is-small" aria-label="Mark as unread" title="Mark as unread">
+              <span class="icon is-small"><i class="fa-solid fa-envelope"></i></span>
+            </button>
           </form>
-          <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/delete.php" onsubmit="return confirm('Delete this email?');">
+
+          <form class="control" method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/delete.php" onsubmit="return confirm('Delete this email?');">
             <?php renderCsrfField(); ?>
             <input type="hidden" name="email_id" value="<?php echo (int) $message['id']; ?>">
             <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
@@ -78,8 +101,8 @@
             <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
             <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
             <input type="hidden" name="tab" value="email">
-            <button type="submit" class="button" aria-label="Move email to trash" title="Move email to trash">
-              <span class="icon"><i class="fa-solid fa-trash"></i></span>
+            <button type="submit" class="button is-small" aria-label="Move email to trash" title="Move email to trash">
+              <span class="icon is-small"><i class="fa-solid fa-trash"></i></span>
             </button>
           </form>
         </div>
