@@ -44,17 +44,43 @@
       <div class="level-left">
         <div>
           <h2 class="title is-5"><?php echo htmlspecialchars($message['subject'] ?? '(No subject)'); ?></h2>
+          <?php
+            $senderName = trim((string) ($message['from_name'] ?? ''));
+            $senderEmail = trim((string) ($message['from_email'] ?? ''));
+            $senderLabel = $senderEmail !== '' ? $senderEmail : $senderName;
+            if ($senderName !== '' && $senderEmail !== '') {
+                $senderLabel = $senderName . ' <' . $senderEmail . '>';
+            } elseif ($senderName !== '') {
+                $senderLabel = $senderName;
+            }
+
+            $hasParent = !empty($message['parent_type']) && !empty($message['parent_id']) && !empty($message['parent_label']);
+            $parentLink = null;
+            if ($hasParent) {
+                if ($message['parent_type'] === 'contact') {
+                    $parentLink = BASE_PATH . '/app/pages/communication/index.php?tab=contacts&q=' . urlencode($message['parent_label']);
+                } elseif ($message['parent_type'] === 'venue') {
+                    $parentLink = BASE_PATH . '/app/pages/venues/index.php?q=' . urlencode($message['parent_label']);
+                }
+            }
+          ?>
           <p class="is-size-7">
             <?php if ($folder === 'inbox'): ?>
-              From: <?php echo htmlspecialchars($message['from_name'] ?? $message['from_email'] ?? ''); ?>
+              From: <?php echo htmlspecialchars($senderLabel); ?>
             <?php else: ?>
               To: <?php echo htmlspecialchars($message['to_emails'] ?? ''); ?>
             <?php endif; ?>
             · <?php echo htmlspecialchars($message['received_at'] ?? $message['sent_at'] ?? $message['created_at'] ?? ''); ?>
           </p>
-          <?php if (!empty($message['parent_label'])): ?>
+          <?php if ($parentLink): ?>
             <p class="is-size-7">
-              Parent: <?php echo htmlspecialchars($message['parent_label']); ?>
+              Parent:
+              <a href="<?php echo htmlspecialchars($parentLink); ?>" class="has-text-weight-semibold">
+                <?php echo htmlspecialchars($message['parent_label']); ?>
+              </a>
+              <button type="button" class="button is-small is-ghost" aria-label="Edit parent" title="Edit parent">
+                <span class="icon is-small"><i class="fa-solid fa-pen"></i></span>
+              </button>
             </p>
           <?php endif; ?>
         </div>
@@ -117,33 +143,32 @@
     </div>
 
     <div class="content">
-      <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/update_parent.php" class="mb-4" data-parent-lookup data-lookup-mode="parent" data-lookup-url="<?php echo BASE_PATH; ?>/app/routes/communication/parent_lookup.php">
-        <?php renderCsrfField(); ?>
-        <input type="hidden" name="email_id" value="<?php echo (int) $message['id']; ?>">
-        <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
-        <input type="hidden" name="folder" value="<?php echo htmlspecialchars($folder); ?>">
-        <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
-        <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
-        <input type="hidden" name="parent" value="<?php echo htmlspecialchars($parentFilter); ?>">
-        <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
-        <input type="hidden" name="tab" value="email">
-        <input type="hidden" name="parent_type" value="<?php echo htmlspecialchars((string) ($message['parent_type'] ?? '')); ?>" data-parent-type>
-        <input type="hidden" name="parent_id" value="<?php echo htmlspecialchars((string) ($message['parent_id'] ?? '')); ?>" data-parent-id>
-        <div class="field">
-          <label for="email_parent" class="label">Parent</label>
-          <div class="dropdown is-fullwidth">
-            <div class="dropdown-trigger control">
-              <input type="text" id="email_parent" name="parent_label" class="input" value="<?php echo htmlspecialchars((string) ($message['parent_label'] ?? '')); ?>" placeholder="Search contacts or venues" data-parent-input>
+      <?php if (!$hasParent): ?>
+        <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/update_parent.php" class="mb-4" data-parent-lookup data-lookup-mode="parent" data-lookup-url="<?php echo BASE_PATH; ?>/app/routes/communication/parent_lookup.php">
+          <?php renderCsrfField(); ?>
+          <input type="hidden" name="email_id" value="<?php echo (int) $message['id']; ?>">
+          <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
+          <input type="hidden" name="folder" value="<?php echo htmlspecialchars($folder); ?>">
+          <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
+          <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+          <input type="hidden" name="parent" value="<?php echo htmlspecialchars($parentFilter); ?>">
+          <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
+          <input type="hidden" name="tab" value="email">
+          <input type="hidden" name="parent_type" value="<?php echo htmlspecialchars((string) ($message['parent_type'] ?? '')); ?>" data-parent-type>
+          <input type="hidden" name="parent_id" value="<?php echo htmlspecialchars((string) ($message['parent_id'] ?? '')); ?>" data-parent-id>
+          <div class="field">
+            <label for="email_parent" class="label">Parent</label>
+            <div class="dropdown is-fullwidth">
+              <div class="dropdown-trigger control">
+                <input type="text" id="email_parent" name="parent_label" class="input" value="<?php echo htmlspecialchars((string) ($message['parent_label'] ?? '')); ?>" placeholder="Search contacts or venues" data-parent-input>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="buttons">
-          <button type="submit" class="button">Save Parent</button>
-          <?php if (!empty($message['parent_type']) && !empty($message['parent_id'])): ?>
-            <button type="submit" class="button" name="clear_parent" value="1">Clear</button>
-          <?php endif; ?>
-        </div>
-      </form>
+          <div class="buttons">
+            <button type="submit" class="button">Save Parent</button>
+          </div>
+        </form>
+      <?php endif; ?>
 
       <?php
         $messageBody = (string) ($message['body'] ?? '');
