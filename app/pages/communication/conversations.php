@@ -158,7 +158,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                     <a href="<?php echo htmlspecialchars($conversationLink); ?>" class="is-flex-grow-1 <?php echo (int) $conversation['id'] === $conversationId ? 'is-active' : ''; ?>">
                       <div class="is-flex is-justify-content-space-between">
                         <div>
-                          <div class="has-text-weight-semibold"><?php echo htmlspecialchars($conversation['subject'] ?? '(No subject)'); ?></div>
+                          <div class="has-text-weight-semibold"><?php echo (int) $conversation['id']; ?>: <?php echo htmlspecialchars($conversation['subject'] ?? '(No subject)'); ?></div>
                           <div class="is-size-7"><?php echo htmlspecialchars($participantLabel); ?></div>
                         </div>
                         <div class="is-size-7 has-text-right">
