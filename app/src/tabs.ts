@@ -1,3 +1,10 @@
+type HistoryMode = 'push' | 'replace';
+
+type ActivateOptions = {
+  updateHistory: boolean;
+  historyMode?: HistoryMode;
+};
+
 const initTabs = (): void => {
   const tabs = Array.from(document.querySelectorAll<HTMLElement>('[data-tab]'));
   const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-tab-panel]'));
@@ -6,40 +13,96 @@ const initTabs = (): void => {
     return;
   }
 
-  const setActiveTab = (activeTab: HTMLElement): void => {
-    tabs.forEach((button) => {
-      const isActive = button === activeTab;
-      button.classList.toggle('is-active', isActive);
-      button.setAttribute('aria-selected', isActive ? 'true' : 'false');
-      const parent = button.closest('li');
+  const getTabName = (tabEl: HTMLElement): string => tabEl.getAttribute('data-tab') ?? '';
+
+  const isValidTab = (tabName: string): boolean =>
+    tabName !== '' && tabs.some((tab) => getTabName(tab) === tabName);
+
+  const showPanels = (target: string): void => {
+    let activated = false;
+
+    panels.forEach((panel) => {
+      const isActive = panel.getAttribute('data-tab-panel') === target;
+      panel.classList.toggle('is-hidden', !isActive);
+      if (isActive) {
+        activated = true;
+      }
+    });
+
+    if (activated) {
+      document.dispatchEvent(new CustomEvent('tab:activated', { detail: { tab: target } }));
+    }
+  };
+
+  const setActiveTab = (target: string): void => {
+    tabs.forEach((tabEl) => {
+      const isActive = getTabName(tabEl) === target;
+      tabEl.classList.toggle('is-active', isActive);
+      tabEl.setAttribute('aria-selected', isActive ? 'true' : 'false');
+
+      const parent = tabEl.closest('li');
       if (parent) {
         parent.classList.toggle('is-active', isActive);
       }
     });
+
+    showPanels(target);
   };
 
-  tabs.forEach((tab) => {
-    tab.addEventListener('click', (event) => {
+  const updateUrl = (target: string, mode: HistoryMode): void => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', target);
+
+    if (mode === 'push') {
+      window.history.pushState({ tab: target }, '', url.toString());
+    } else {
+      window.history.replaceState({ tab: target }, '', url.toString());
+    }
+  };
+
+  const activateTab = (target: string, options: ActivateOptions): void => {
+    if (!isValidTab(target)) {
+      return;
+    }
+
+    setActiveTab(target);
+
+    if (options.updateHistory) {
+      updateUrl(target, options.historyMode ?? 'push');
+    }
+  };
+
+  tabs.forEach((tabEl) => {
+    tabEl.addEventListener('click', (event) => {
       event.preventDefault();
-      const target = tab.getAttribute('data-tab');
-      setActiveTab(tab);
-      panels.forEach((panel) => {
-        const isActive = panel.getAttribute('data-tab-panel') === target;
-        panel.classList.toggle('is-hidden', !isActive);
-        if (isActive) {
-          document.dispatchEvent(new CustomEvent('tab:activated', { detail: { tab: target } }));
-        }
-      });
+      const target = getTabName(tabEl);
+      if (!isValidTab(target)) {
+        return;
+      }
+      activateTab(target, { updateHistory: true, historyMode: 'push' });
     });
   });
 
-  const activeTab = tabs.find((tab) => {
-    const parent = tab.closest('li');
-    return parent?.classList.contains('is-active') ?? false;
+  window.addEventListener('popstate', () => {
+    const url = new URL(window.location.href);
+    const tabFromUrl = url.searchParams.get('tab') ?? '';
+    if (isValidTab(tabFromUrl)) {
+      activateTab(tabFromUrl, { updateHistory: false });
+    }
   });
-  if (activeTab) {
-    setActiveTab(activeTab);
+
+  // Initial activation: prefer URL param, otherwise server-rendered active tab.
+  const url = new URL(window.location.href);
+  const tabFromUrl = url.searchParams.get('tab') ?? '';
+
+  if (isValidTab(tabFromUrl)) {
+    activateTab(tabFromUrl, { updateHistory: false });
+    return;
   }
+
+  const activeTabEl = tabs.find((tabEl) => tabEl.closest('li')?.classList.contains('is-active') ?? false);
+  const initial = activeTabEl ? getTabName(activeTabEl) : getTabName(tabs[0]);
+  activateTab(initial, { updateHistory: false });
 };
 
 initTabs();
