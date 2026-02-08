@@ -447,7 +447,12 @@ logAction($currentUser['user_id'] ?? null, 'view_venue_form', $editVenue ? sprin
                 <input type="hidden" name="venue_id" value="<?php echo (int) $editVenue['id']; ?>">
               <?php endif; ?>
 
-              <div class="column is-6">
+              <div class="column is-12">
+                <h2 class="title is-5 mb-2">Venue</h2>
+                <hr class="mt-0">
+              </div>
+
+              <div class="column is-4">
                 <div class="field">
                   <label for="name" class="label">Name *</label>
                   <div class="control">
@@ -455,7 +460,8 @@ logAction($currentUser['user_id'] ?? null, 'view_venue_form', $editVenue ? sprin
                   </div>
                 </div>
               </div>
-              <div class="column is-6">
+
+              <div class="column is-2">
                 <div class="field">
                   <label for="type" class="label">Type</label>
                   <div class="control">
@@ -472,14 +478,47 @@ logAction($currentUser['user_id'] ?? null, 'view_venue_form', $editVenue ? sprin
                   </div>
                 </div>
               </div>
+
               <div class="column is-4">
                 <div class="field">
-                  <label for="state" class="label">State</label>
+                  <label for="website" class="label">Website</label>
                   <div class="control">
-                    <input type="text" id="state" name="state" class="input" value="<?php echo htmlspecialchars($formValues['state']); ?>">
+                    <input type="url" id="website" name="website" class="input" value="<?php echo htmlspecialchars($formValues['website']); ?>">
                   </div>
                 </div>
               </div>
+
+              <div class="column is-2">
+                <div class="field">
+                  <label for="capacity" class="label">Capacity</label>
+                  <div class="control">
+                    <input type="number" step="1" id="capacity" name="capacity" class="input" value="<?php echo htmlspecialchars($formValues['capacity']); ?>">
+                  </div>
+                </div>
+              </div>
+
+              <div class="column is-12 pt-5">
+                <h2 class="title is-5 mb-2">Address &amp; location</h2>
+                <hr class="mt-0">
+              </div>
+
+              <div class="column is-8">
+                <div class="field">
+                  <label for="address" class="label">Address</label>
+                  <div class="field has-addons">
+                    <div class="control is-expanded">
+                      <input type="text" id="address" name="address" class="input" value="<?php echo htmlspecialchars($formValues['address']); ?>">
+                    </div>
+                    <div class="control">
+                      <button type="submit" form="mapbox_search_form" class="button" id="address_mapbox_button" aria-label="Search address" disabled>
+                        <span class="icon"><i class="fa-solid fa-location-crosshairs"></i></span>
+                      </button>
+                    </div>
+                  </div>
+                  <p class="help">Use the crosshair button to look up coordinates (requires address + city).</p>
+                </div>
+              </div>
+
               <div class="column is-4">
                 <div class="field">
                   <label for="city" class="label">City *</label>
@@ -488,7 +527,8 @@ logAction($currentUser['user_id'] ?? null, 'view_venue_form', $editVenue ? sprin
                   </div>
                 </div>
               </div>
-              <div class="column is-4">
+
+              <div class="column is-3">
                 <div class="field">
                   <label for="postal_code" class="label">Postal Code</label>
                   <div class="control">
@@ -496,7 +536,17 @@ logAction($currentUser['user_id'] ?? null, 'view_venue_form', $editVenue ? sprin
                   </div>
                 </div>
               </div>
-              <div class="column is-4">
+
+              <div class="column is-3">
+                <div class="field">
+                  <label for="state" class="label">State</label>
+                  <div class="control">
+                    <input type="text" id="state" name="state" class="input" value="<?php echo htmlspecialchars($formValues['state']); ?>">
+                  </div>
+                </div>
+              </div>
+
+              <div class="column is-2">
                 <div class="field">
                   <label for="country" class="label">Country</label>
                   <div class="control">
@@ -513,70 +563,31 @@ logAction($currentUser['user_id'] ?? null, 'view_venue_form', $editVenue ? sprin
                   </div>
                 </div>
               </div>
-              <div class="column is-8">
+
+              <div class="column is-2">
                 <div class="field">
-                  <label for="address" class="label">Address</label>
-                  <div class="field has-addons">
-                    <div class="control is-expanded">
-                      <input type="text" id="address" name="address" class="input" value="<?php echo htmlspecialchars($formValues['address']); ?>">
-                    </div>
-                    <div class="control">
-                      <button type="submit" form="mapbox_search_form" class="button" id="address_mapbox_button" aria-label="Search address" disabled>
-                        <span class="icon"><i class="fa-solid fa-location-crosshairs"></i></span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="column is-3">
-                <div class="field">
-                  <label for="latitude" class="label">Latitude</label>
+                  <label for="latitude" class="label">Lat</label>
                   <div class="control">
                     <input type="number" step="0.000001" id="latitude" name="latitude" class="input" value="<?php echo htmlspecialchars($formValues['latitude']); ?>">
                   </div>
                 </div>
               </div>
-              <div class="column is-3">
+
+              <div class="column is-2">
                 <div class="field">
-                  <label for="longitude" class="label">Longitude</label>
+                  <label for="longitude" class="label">Lng</label>
                   <div class="control">
                     <input type="number" step="0.000001" id="longitude" name="longitude" class="input" value="<?php echo htmlspecialchars($formValues['longitude']); ?>">
                   </div>
                 </div>
               </div>
-              <div class="column is-3">
-                <div class="field">
-                  <label for="capacity" class="label">Capacity</label>
-                  <div class="control">
-                    <input type="number" step="1" id="capacity" name="capacity" class="input" value="<?php echo htmlspecialchars($formValues['capacity']); ?>">
-                  </div>
-                </div>
+
+              <div class="column is-12 pt-5">
+                <h2 class="title is-5 mb-2">Contact</h2>
+                <hr class="mt-0">
               </div>
-              <div class="column is-6">
-                <div class="field">
-                  <label for="website" class="label">Website</label>
-                  <div class="control">
-                    <input type="url" id="website" name="website" class="input" value="<?php echo htmlspecialchars($formValues['website']); ?>">
-                  </div>
-                </div>
-              </div>
-              <div class="column is-6">
-                <div class="field">
-                  <label for="contact_email" class="label">Contact Email</label>
-                  <div class="control">
-                    <input type="email" id="contact_email" name="contact_email" class="input" value="<?php echo htmlspecialchars($formValues['contact_email']); ?>">
-                  </div>
-                </div>
-              </div>
-              <div class="column is-6">
-                <div class="field">
-                  <label for="contact_phone" class="label">Contact Phone</label>
-                  <div class="control">
-                    <input type="text" id="contact_phone" name="contact_phone" class="input" value="<?php echo htmlspecialchars($formValues['contact_phone']); ?>">
-                  </div>
-                </div>
-              </div>
-              <div class="column is-6">
+
+              <div class="column is-4">
                 <div class="field">
                   <label for="contact_person" class="label">Contact Person</label>
                   <div class="control">
@@ -584,11 +595,35 @@ logAction($currentUser['user_id'] ?? null, 'view_venue_form', $editVenue ? sprin
                   </div>
                 </div>
               </div>
+
+              <div class="column is-4">
+                <div class="field">
+                  <label for="contact_phone" class="label">Contact Phone</label>
+                  <div class="control">
+                    <input type="text" id="contact_phone" name="contact_phone" class="input" value="<?php echo htmlspecialchars($formValues['contact_phone']); ?>">
+                  </div>
+                </div>
+              </div>
+
+              <div class="column is-4">
+                <div class="field">
+                  <label for="contact_email" class="label">Contact Email</label>
+                  <div class="control">
+                    <input type="email" id="contact_email" name="contact_email" class="input" value="<?php echo htmlspecialchars($formValues['contact_email']); ?>">
+                  </div>
+                </div>
+              </div>
+
+              <div class="column is-12 pt-5">
+                <h2 class="title is-5 mb-2">Notes</h2>
+                <hr class="mt-0">
+              </div>
+
               <div class="column is-12">
                 <div class="field">
                   <label for="notes" class="label">Notes</label>
                   <div class="control">
-                    <textarea id="notes" name="notes" class="textarea" rows="4"><?php echo htmlspecialchars($formValues['notes']); ?></textarea>
+                    <textarea id="notes" name="notes" class="textarea" rows="3"><?php echo htmlspecialchars($formValues['notes']); ?></textarea>
                   </div>
                 </div>
               </div>
