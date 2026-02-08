@@ -35,6 +35,9 @@ logAction($currentUser['user_id'] ?? null, 'view_communication', 'User opened co
               <li class="<?php echo $activeTab === 'email' ? 'is-active' : ''; ?>">
                 <a href="#" data-tab="email" role="tab" aria-selected="<?php echo $activeTab === 'email' ? 'true' : 'false'; ?>">eMail</a>
               </li>
+              <li class="<?php echo $activeTab === 'contacts' ? 'is-active' : ''; ?>">
+                <a href="#" data-tab="contacts" role="tab" aria-selected="<?php echo $activeTab === 'contacts' ? 'true' : 'false'; ?>">Contacts</a>
+              </li>
             </ul>
           </div>
 
@@ -44,6 +47,10 @@ logAction($currentUser['user_id'] ?? null, 'view_communication', 'User opened co
 
           <div class="tab-panel <?php echo $activeTab === 'email' ? '' : 'is-hidden'; ?>" data-tab-panel="email" role="tabpanel">
             <?php require __DIR__ . '/email.php'; ?>
+          </div>
+
+          <div class="tab-panel <?php echo $activeTab === 'contacts' ? '' : 'is-hidden'; ?>" data-tab-panel="contacts" role="tabpanel">
+            <?php require __DIR__ . '/contacts.php'; ?>
           </div>
         </div>
       </section>
