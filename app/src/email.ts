@@ -78,7 +78,7 @@ type RecipientItem = {
 
 const initEmailValidation = (): void => {
   const inputs = Array.from(
-    document.querySelectorAll<HTMLInputElement>("[data-email-input]")
+    document.querySelectorAll<HTMLInputElement>("[data-email-input]"),
   );
   if (!inputs.length) {
     return;
@@ -102,7 +102,7 @@ const initEmailValidation = (): void => {
 
 const initRecipientLookup = (): void => {
   const lookups = Array.from(
-    document.querySelectorAll<HTMLElement>("[data-email-lookup]")
+    document.querySelectorAll<HTMLElement>("[data-email-lookup]"),
   );
 
   lookups.forEach((lookup) => {
@@ -135,7 +135,7 @@ const initRecipientLookup = (): void => {
 
     const selectItem = (index: number): void => {
       const items = Array.from(
-        content.querySelectorAll<HTMLElement>(".dropdown-item")
+        content.querySelectorAll<HTMLElement>(".dropdown-item"),
       );
       items.forEach((item) => item.classList.remove("is-active"));
 
@@ -158,9 +158,13 @@ const initRecipientLookup = (): void => {
       } else {
         content.innerHTML = items
           .map((item, index) => {
-            const email = item.email ? ` <span class="has-text-grey">${item.email}</span>` : "";
-            const source = item.source ? ` <span class="tag is-light ml-2">${item.source}</span>` : "";
-            return `<a class="dropdown-item" data-index="${index}" data-label="${item.label}" data-email="${item.email ?? ''}">${item.label}${email}${source}</a>`;
+            const email = item.email
+              ? ` <span class="has-text-grey">${item.email}</span>`
+              : "";
+            const source = item.source
+              ? ` <span class="tag ml-2">${item.source}</span>`
+              : "";
+            return `<a class="dropdown-item" data-index="${index}" data-label="${item.label}" data-email="${item.email ?? ""}">${item.label}${email}${source}</a>`;
           })
           .join("");
       }
@@ -176,7 +180,9 @@ const initRecipientLookup = (): void => {
       }
 
       try {
-        const response = await fetch(`${lookupUrl}?q=${encodeURIComponent(query)}`);
+        const response = await fetch(
+          `${lookupUrl}?q=${encodeURIComponent(query)}`,
+        );
         if (!response.ok) {
           clearResults();
           return;
@@ -220,7 +226,7 @@ const initRecipientLookup = (): void => {
 
     content.addEventListener("click", (event) => {
       const target = (event.target as HTMLElement).closest(
-        ".dropdown-item"
+        ".dropdown-item",
       ) as HTMLElement | null;
       if (!target || !target.dataset.index) {
         return;
@@ -243,13 +249,13 @@ const initRecipientLookup = (): void => {
         case "ArrowDown":
           event.preventDefault();
           selectItem(
-            selectedIndex < currentItems.length - 1 ? selectedIndex + 1 : 0
+            selectedIndex < currentItems.length - 1 ? selectedIndex + 1 : 0,
           );
           break;
         case "ArrowUp":
           event.preventDefault();
           selectItem(
-            selectedIndex > 0 ? selectedIndex - 1 : currentItems.length - 1
+            selectedIndex > 0 ? selectedIndex - 1 : currentItems.length - 1,
           );
           break;
         case "Enter": {
