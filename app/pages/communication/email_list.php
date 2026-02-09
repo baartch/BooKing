@@ -73,7 +73,7 @@
                     <div class="is-size-7 email-meta-right">
                       <div><?php echo htmlspecialchars($dateLabel); ?></div>
                       <div class="email-delete-action">
-                        <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/delete.php" onsubmit="return confirm('Move this email to trash?');">
+                        <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/delete.php">
                           <?php renderCsrfField(); ?>
                           <input type="hidden" name="email_id" value="<?php echo (int) $row['id']; ?>">
                           <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">

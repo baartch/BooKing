@@ -130,7 +130,7 @@
             </button>
           </form>
 
-          <form class="control" method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/delete.php" onsubmit="return confirm('Delete this email?');">
+          <form class="control" method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/delete.php">
             <?php renderCsrfField(); ?>
             <input type="hidden" name="email_id" value="<?php echo (int) $message['id']; ?>">
             <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
