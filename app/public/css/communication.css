@@ -59,6 +59,21 @@
   padding-right: 0;
 }
 
+.email-recipient-dropdown {
+  width: 100%;
+}
+
+.email-recipient-dropdown .dropdown-trigger,
+.email-recipient-dropdown .dropdown-trigger .input {
+  width: 100%;
+}
+
+.email-recipient-dropdown .dropdown-menu {
+  width: 100%;
+  left: 0;
+  right: 0;
+}
+
 .email-columns > .column.is-3 {
   flex: 0 0 25%;
 }
