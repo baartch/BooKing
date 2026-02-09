@@ -125,7 +125,12 @@ if ($pdo && $selectedMailbox && $selectedMessageId > 0) {
             );
             $attachmentsStmt->execute([':email_id' => $selectedMessageId]);
             $attachments = $attachmentsStmt->fetchAll();
-            $messageLinks = fetchLinkedObjects($pdo, 'email', (int) $message['id']);
+
+            try {
+                $messageLinks = fetchLinkedObjects($pdo, 'email', (int) $message['id']);
+            } catch (Throwable $error) {
+                logAction($userId, 'email_links_load_error', $error->getMessage());
+            }
         }
     } catch (Throwable $error) {
         $errors[] = 'Failed to load email message.';
