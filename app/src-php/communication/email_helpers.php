@@ -149,6 +149,152 @@ function splitEmailList(string $value): array
     return array_values(array_filter($parts, static fn($part) => $part !== ''));
 }
 
+function findContactIdsByEmail(PDO $pdo, string $email): array
+{
+    $normalized = strtolower(trim($email));
+    if ($normalized === '') {
+        return [];
+    }
+
+    $stmt = $pdo->prepare(
+        'SELECT id
+         FROM contacts
+         WHERE email IS NOT NULL AND LOWER(email) = :email'
+    );
+    $stmt->execute([':email' => $normalized]);
+
+    return array_map('intval', array_column($stmt->fetchAll(), 'id'));
+}
+
+function findVenueIdsByEmail(PDO $pdo, string $email): array
+{
+    $normalized = strtolower(trim($email));
+    if ($normalized === '') {
+        return [];
+    }
+
+    $stmt = $pdo->prepare(
+        'SELECT id
+         FROM venues
+         WHERE contact_email IS NOT NULL AND LOWER(contact_email) = :email'
+    );
+    $stmt->execute([':email' => $normalized]);
+
+    return array_map('intval', array_column($stmt->fetchAll(), 'id'));
+}
+
+function fetchLinkedObjects(PDO $pdo, string $type, int $id): array
+{
+    $type = trim($type);
+    if ($type === '' || $id <= 0) {
+        return [];
+    }
+
+    $stmt = $pdo->prepare(
+        'SELECT left_type, left_id, right_type, right_id
+         FROM object_links
+         WHERE (left_type = :type AND left_id = :id)
+            OR (right_type = :type AND right_id = :id)'
+    );
+    $stmt->execute([':type' => $type, ':id' => $id]);
+    $rows = $stmt->fetchAll();
+    if (!$rows) {
+        return [];
+    }
+
+    $rawLinks = [];
+    $idsByType = [
+        'contact' => [],
+        'venue' => [],
+        'email' => []
+    ];
+
+    foreach ($rows as $row) {
+        $isLeft = $row['left_type'] === $type && (int) $row['left_id'] === $id;
+        $linkType = $isLeft ? (string) $row['right_type'] : (string) $row['left_type'];
+        $linkId = (int) ($isLeft ? $row['right_id'] : $row['left_id']);
+        if (!array_key_exists($linkType, $idsByType)) {
+            continue;
+        }
+        $rawLinks[] = ['type' => $linkType, 'id' => $linkId];
+        $idsByType[$linkType][] = $linkId;
+    }
+
+    $labels = [];
+    if ($idsByType['contact']) {
+        $contactIds = array_values(array_unique($idsByType['contact']));
+        $placeholders = implode(',', array_fill(0, count($contactIds), '?'));
+        $stmt = $pdo->prepare(
+            'SELECT id, firstname, surname, email
+             FROM contacts
+             WHERE id IN (' . $placeholders . ')'
+        );
+        $stmt->execute($contactIds);
+        foreach ($stmt->fetchAll() as $row) {
+            $name = trim((string) ($row['firstname'] ?? '') . ' ' . (string) ($row['surname'] ?? ''));
+            $email = (string) ($row['email'] ?? '');
+            $label = $name !== '' ? $name : $email;
+            if ($label !== '') {
+                $labels['contact:' . (int) $row['id']] = $label;
+            }
+        }
+    }
+
+    if ($idsByType['venue']) {
+        $venueIds = array_values(array_unique($idsByType['venue']));
+        $placeholders = implode(',', array_fill(0, count($venueIds), '?'));
+        $stmt = $pdo->prepare(
+            'SELECT id, name, contact_email
+             FROM venues
+             WHERE id IN (' . $placeholders . ')'
+        );
+        $stmt->execute($venueIds);
+        foreach ($stmt->fetchAll() as $row) {
+            $name = (string) ($row['name'] ?? '');
+            $email = (string) ($row['contact_email'] ?? '');
+            $label = $name !== '' ? $name : $email;
+            if ($label !== '') {
+                $labels['venue:' . (int) $row['id']] = $label;
+            }
+        }
+    }
+
+    if ($idsByType['email']) {
+        $emailIds = array_values(array_unique($idsByType['email']));
+        $placeholders = implode(',', array_fill(0, count($emailIds), '?'));
+        $stmt = $pdo->prepare(
+            'SELECT id, subject, from_email, to_emails
+             FROM email_messages
+             WHERE id IN (' . $placeholders . ')'
+        );
+        $stmt->execute($emailIds);
+        foreach ($stmt->fetchAll() as $row) {
+            $subject = trim((string) ($row['subject'] ?? ''));
+            $from = trim((string) ($row['from_email'] ?? ''));
+            $to = trim((string) ($row['to_emails'] ?? ''));
+            $label = $subject !== '' ? $subject : ($from !== '' ? $from : ($to !== '' ? $to : 'Email #' . (int) $row['id']));
+            $labels['email:' . (int) $row['id']] = $label;
+        }
+    }
+
+    $results = [];
+    $seen = [];
+    foreach ($rawLinks as $link) {
+        $key = $link['type'] . ':' . (int) $link['id'];
+        if (isset($seen[$key]) || !isset($labels[$key])) {
+            continue;
+        }
+        $seen[$key] = true;
+        $results[] = [
+            'type' => $link['type'],
+            'id' => (int) $link['id'],
+            'label' => $labels[$key]
+        ];
+    }
+
+    return $results;
+}
+
 function getEmailFolderOptions(): array
 {
     return [

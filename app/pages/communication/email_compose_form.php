@@ -10,12 +10,10 @@
   <input type="hidden" name="tab" value="email">
   <input type="hidden" name="draft_id" value="<?php echo $message && ($message['folder'] ?? '') === 'drafts' ? (int) $message['id'] : ''; ?>">
 
-  <div class="field" data-parent-lookup data-lookup-mode="recipient" data-lookup-url="<?php echo BASE_PATH; ?>/app/routes/communication/parent_lookup.php">
+  <div class="field">
     <label for="email_to" class="label">To</label>
-    <div class="dropdown is-fullwidth">
-      <div class="dropdown-trigger control">
-        <input type="text" id="email_to" name="to_emails" class="input" value="<?php echo htmlspecialchars($composeValues['to_emails']); ?>" required data-parent-input>
-      </div>
+    <div class="control">
+      <input type="text" id="email_to" name="to_emails" class="input" value="<?php echo htmlspecialchars($composeValues['to_emails']); ?>" required>
     </div>
   </div>
   <div class="field">
@@ -30,17 +28,6 @@
       <input type="text" id="email_bcc" name="bcc_emails" class="input" value="<?php echo htmlspecialchars($composeValues['bcc_emails']); ?>">
     </div>
   </div>
-  <div class="field" data-parent-lookup data-lookup-mode="parent" data-lookup-url="<?php echo BASE_PATH; ?>/app/routes/communication/parent_lookup.php">
-    <label for="email_parent" class="label">Parent</label>
-    <div class="dropdown is-fullwidth">
-      <div class="dropdown-trigger control">
-        <input type="text" id="email_parent" name="parent_label" class="input" value="<?php echo htmlspecialchars($composeValues['parent_label'] ?? ''); ?>" placeholder="Search contacts or venues" data-parent-input>
-        <input type="hidden" name="parent_type" value="<?php echo htmlspecialchars($composeValues['parent_type'] ?? ''); ?>" data-parent-type>
-        <input type="hidden" name="parent_id" value="<?php echo htmlspecialchars($composeValues['parent_id'] ?? ''); ?>" data-parent-id>
-      </div>
-    </div>
-  </div>
-
   <div class="field">
     <label for="email_subject" class="label">Subject</label>
     <div class="control">

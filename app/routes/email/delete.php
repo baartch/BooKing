@@ -21,7 +21,6 @@ $redirectParams = [
     'folder' => (string) ($_POST['folder'] ?? 'inbox'),
     'sort' => (string) ($_POST['sort'] ?? 'received_desc'),
     'filter' => (string) ($_POST['filter'] ?? ''),
-    'parent' => (string) ($_POST['parent'] ?? ''),
     'page' => (int) ($_POST['page'] ?? 1)
 ];
 
