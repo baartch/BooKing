@@ -247,20 +247,6 @@ foreach ($mailboxes as $mailbox) {
         $uids = array_values(array_filter($uids, static fn($uid) => (int) $uid > $lastUid));
     }
     if (!$uids) {
-        $check = imap_check($imap);
-        $totalMessages = $check ? (int) ($check->Nmsgs ?? 0) : 0;
-        $highestUid = $totalMessages > 0 ? imap_uid($imap, $totalMessages) : 0;
-        $errorDetails = imap_last_error();
-        $logMessage = sprintf(
-            'IMAP no new messages mailbox=%d uid_search=%s last_uid=%d total=%d highest_uid=%d error=%s',
-            $mailboxId,
-            $uidSearch,
-            $lastUid,
-            $totalMessages,
-            $highestUid,
-            $errorDetails !== false ? $errorDetails : ''
-        );
-        logAction(null, 'email_imap_no_new', $logMessage);
         echo "  No new messages.\n";
         imap_close($imap);
         continue;
