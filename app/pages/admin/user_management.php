@@ -422,7 +422,6 @@ try {
     logAction($currentUser['user_id'] ?? null, 'user_team_list_error', $error->getMessage());
 }
 
-logAction($currentUser['user_id'] ?? null, 'view_user_management', 'User opened admin panel');
 ?>
 <?php renderPageStart('Admin', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',

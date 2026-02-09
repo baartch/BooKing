@@ -353,7 +353,6 @@ if ($editVenue && !$mapboxSearchRequested) {
     }
 }
 
-logAction($currentUser['user_id'] ?? null, 'view_venue_form', $editVenue ? sprintf('Editing venue %d', $editId) : 'Opened add venue');
 ?>
 <?php renderPageStart($editVenue ? 'Edit Venue' : 'Add Venue', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',

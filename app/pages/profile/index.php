@@ -76,7 +76,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-logAction($currentUser['user_id'] ?? null, 'view_profile', 'User opened profile');
 ?>
 <?php renderPageStart('Profile', ['bodyClass' => 'is-flex is-flex-direction-column is-fullheight']); ?>
       <section class="section">

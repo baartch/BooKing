@@ -254,7 +254,6 @@ if (!in_array($formValues['smtp_encryption'], $allowedEncryptions, true)) {
     $formValues['smtp_encryption'] = 'tls';
 }
 
-logAction($currentUser['user_id'] ?? null, 'view_team_mailbox_form', $editMailbox ? 'User opened edit mailbox form' : 'User opened create mailbox form');
 ?>
 <?php renderPageStart('Mailbox', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',

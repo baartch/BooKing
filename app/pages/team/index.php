@@ -9,7 +9,6 @@ if (!in_array($activeTab, $validTabs, true)) {
     $activeTab = 'members';
 }
 
-logAction($currentUser['user_id'] ?? null, 'view_team', 'User opened team page');
 ?>
 <?php renderPageStart('Team', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',
