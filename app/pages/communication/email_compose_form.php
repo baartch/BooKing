@@ -11,27 +11,69 @@
   <input type="hidden" name="draft_id" value="<?php echo $message && ($message['folder'] ?? '') === 'drafts' ? (int) $message['id'] : ''; ?>">
 
   <div class="field">
-    <label for="email_to" class="label">To</label>
-    <div class="control">
-      <input type="text" id="email_to" name="to_emails" class="input" value="<?php echo htmlspecialchars($composeValues['to_emails']); ?>" required>
+    <div class="control has-icons-left has-icons-right">
+      <input
+        class="input"
+        type="text"
+        id="email_to"
+        name="to_emails"
+        placeholder="To"
+        value="<?php echo htmlspecialchars($composeValues['to_emails']); ?>"
+        required
+        data-email-input
+      >
+      <span class="icon is-small is-left">
+        <i class="fas fa-envelope"></i>
+      </span>
+      <span class="icon is-small is-right is-hidden" data-email-icon>
+        <i class="fas fa-exclamation-triangle"></i>
+      </span>
     </div>
+    <p class="help is-danger is-hidden" data-email-help>This email is invalid</p>
   </div>
   <div class="field">
-    <label for="email_cc" class="label">Cc</label>
-    <div class="control">
-      <input type="text" id="email_cc" name="cc_emails" class="input" value="<?php echo htmlspecialchars($composeValues['cc_emails']); ?>">
+    <div class="control has-icons-left has-icons-right">
+      <input
+        class="input"
+        type="text"
+        id="email_cc"
+        name="cc_emails"
+        placeholder="Cc"
+        value="<?php echo htmlspecialchars($composeValues['cc_emails']); ?>"
+        data-email-input
+      >
+      <span class="icon is-small is-left">
+        <i class="fas fa-envelope"></i>
+      </span>
+      <span class="icon is-small is-right is-hidden" data-email-icon>
+        <i class="fas fa-exclamation-triangle"></i>
+      </span>
     </div>
+    <p class="help is-danger is-hidden" data-email-help>This email is invalid</p>
   </div>
   <div class="field">
-    <label for="email_bcc" class="label">Bcc</label>
-    <div class="control">
-      <input type="text" id="email_bcc" name="bcc_emails" class="input" value="<?php echo htmlspecialchars($composeValues['bcc_emails']); ?>">
+    <div class="control has-icons-left has-icons-right">
+      <input
+        class="input"
+        type="text"
+        id="email_bcc"
+        name="bcc_emails"
+        placeholder="Bcc"
+        value="<?php echo htmlspecialchars($composeValues['bcc_emails']); ?>"
+        data-email-input
+      >
+      <span class="icon is-small is-left">
+        <i class="fas fa-envelope"></i>
+      </span>
+      <span class="icon is-small is-right is-hidden" data-email-icon>
+        <i class="fas fa-exclamation-triangle"></i>
+      </span>
     </div>
+    <p class="help is-danger is-hidden" data-email-help>This email is invalid</p>
   </div>
   <div class="field">
-    <label for="email_subject" class="label">Subject</label>
     <div class="control">
-      <input type="text" id="email_subject" name="subject" class="input" value="<?php echo htmlspecialchars($composeValues['subject']); ?>">
+      <input type="text" id="email_subject" name="subject" class="input" placeholder="Subject" value="<?php echo htmlspecialchars($composeValues['subject']); ?>">
     </div>
   </div>
   <div class="field">
