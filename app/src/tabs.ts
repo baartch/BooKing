@@ -51,6 +51,7 @@ const initTabs = (): void => {
 
   const updateUrl = (target: string, mode: HistoryMode): void => {
     const url = new URL(window.location.href);
+    url.search = '';
     url.searchParams.set('tab', target);
 
     if (mode === 'push') {
