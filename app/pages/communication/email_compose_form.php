@@ -12,62 +12,83 @@
 
   <div class="field">
     <div class="control has-icons-left has-icons-right">
-      <input
-        class="input"
-        type="text"
-        id="email_to"
-        name="to_emails"
-        placeholder="To"
-        value="<?php echo htmlspecialchars($composeValues['to_emails']); ?>"
-        required
-        data-email-input
-      >
-      <span class="icon is-small is-left">
-        <i class="fas fa-envelope"></i>
-      </span>
-      <span class="icon is-small is-right is-hidden" data-email-icon>
-        <i class="fas fa-exclamation-triangle"></i>
-      </span>
+      <div class="dropdown is-fullwidth email-recipient-dropdown" data-email-lookup data-lookup-url="<?php echo BASE_PATH; ?>/app/routes/communication/email_recipient_lookup.php">
+        <div class="dropdown-trigger">
+          <input
+            class="input"
+            type="text"
+            id="email_to"
+            name="to_emails"
+            placeholder="To"
+            value="<?php echo htmlspecialchars($composeValues['to_emails']); ?>"
+            required
+            data-email-input
+          >
+          <span class="icon is-small is-left">
+            <i class="fas fa-envelope"></i>
+          </span>
+          <span class="icon is-small is-right is-hidden" data-email-icon>
+            <i class="fas fa-exclamation-triangle"></i>
+          </span>
+        </div>
+        <div class="dropdown-menu is-hidden" role="menu">
+          <div class="dropdown-content"></div>
+        </div>
+      </div>
     </div>
     <p class="help is-danger is-hidden" data-email-help>This email is invalid</p>
   </div>
   <div class="field">
     <div class="control has-icons-left has-icons-right">
-      <input
-        class="input"
-        type="text"
-        id="email_cc"
-        name="cc_emails"
-        placeholder="Cc"
-        value="<?php echo htmlspecialchars($composeValues['cc_emails']); ?>"
-        data-email-input
-      >
-      <span class="icon is-small is-left">
-        <i class="fas fa-envelope"></i>
-      </span>
-      <span class="icon is-small is-right is-hidden" data-email-icon>
-        <i class="fas fa-exclamation-triangle"></i>
-      </span>
+      <div class="dropdown is-fullwidth email-recipient-dropdown" data-email-lookup data-lookup-url="<?php echo BASE_PATH; ?>/app/routes/communication/email_recipient_lookup.php">
+        <div class="dropdown-trigger">
+          <input
+            class="input"
+            type="text"
+            id="email_cc"
+            name="cc_emails"
+            placeholder="Cc"
+            value="<?php echo htmlspecialchars($composeValues['cc_emails']); ?>"
+            data-email-input
+          >
+          <span class="icon is-small is-left">
+            <i class="fas fa-envelope"></i>
+          </span>
+          <span class="icon is-small is-right is-hidden" data-email-icon>
+            <i class="fas fa-exclamation-triangle"></i>
+          </span>
+        </div>
+        <div class="dropdown-menu is-hidden" role="menu">
+          <div class="dropdown-content"></div>
+        </div>
+      </div>
     </div>
     <p class="help is-danger is-hidden" data-email-help>This email is invalid</p>
   </div>
   <div class="field">
     <div class="control has-icons-left has-icons-right">
-      <input
-        class="input"
-        type="text"
-        id="email_bcc"
-        name="bcc_emails"
-        placeholder="Bcc"
-        value="<?php echo htmlspecialchars($composeValues['bcc_emails']); ?>"
-        data-email-input
-      >
-      <span class="icon is-small is-left">
-        <i class="fas fa-envelope"></i>
-      </span>
-      <span class="icon is-small is-right is-hidden" data-email-icon>
-        <i class="fas fa-exclamation-triangle"></i>
-      </span>
+      <div class="dropdown is-fullwidth email-recipient-dropdown" data-email-lookup data-lookup-url="<?php echo BASE_PATH; ?>/app/routes/communication/email_recipient_lookup.php">
+        <div class="dropdown-trigger">
+          <input
+            class="input"
+            type="text"
+            id="email_bcc"
+            name="bcc_emails"
+            placeholder="Bcc"
+            value="<?php echo htmlspecialchars($composeValues['bcc_emails']); ?>"
+            data-email-input
+          >
+          <span class="icon is-small is-left">
+            <i class="fas fa-envelope"></i>
+          </span>
+          <span class="icon is-small is-right is-hidden" data-email-icon>
+            <i class="fas fa-exclamation-triangle"></i>
+          </span>
+        </div>
+        <div class="dropdown-menu is-hidden" role="menu">
+          <div class="dropdown-content"></div>
+        </div>
+      </div>
     </div>
     <p class="help is-danger is-hidden" data-email-help>This email is invalid</p>
   </div>
