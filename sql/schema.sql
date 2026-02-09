@@ -150,8 +150,6 @@ CREATE TABLE email_messages (
     cc_emails TEXT DEFAULT NULL,
     bcc_emails TEXT DEFAULT NULL,
     message_id VARCHAR(255) DEFAULT NULL,
-    parent_type VARCHAR(50) DEFAULT NULL,
-    parent_id INT DEFAULT NULL,
     is_read TINYINT(1) NOT NULL DEFAULT 0,
     received_at DATETIME DEFAULT NULL,
     sent_at DATETIME DEFAULT NULL,
@@ -165,8 +163,7 @@ CREATE TABLE email_messages (
     INDEX idx_email_messages_mailbox_folder (mailbox_id, folder),
     INDEX idx_email_messages_received (received_at),
     INDEX idx_email_messages_sent (sent_at),
-    INDEX idx_email_messages_conversation (conversation_id, created_at),
-    INDEX idx_email_messages_parent (parent_type, parent_id)
+    INDEX idx_email_messages_conversation (conversation_id, created_at)
 );
 
 CREATE TABLE email_attachments (
@@ -182,6 +179,18 @@ CREATE TABLE email_attachments (
     FOREIGN KEY (mailbox_id) REFERENCES mailboxes(id) ON DELETE CASCADE,
     INDEX idx_email_attachments_mailbox (mailbox_id)
 );
+
+CREATE TABLE object_links (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    left_type VARCHAR(50) NOT NULL,
+    left_id INT NOT NULL,
+    right_type VARCHAR(50) NOT NULL,
+    right_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_object_link (left_type, left_id, right_type, right_id),
+    INDEX idx_object_links_left (left_type, left_id),
+    INDEX idx_object_links_right (right_type, right_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
 CREATE TABLE email_templates (
     id INT PRIMARY KEY AUTO_INCREMENT,
