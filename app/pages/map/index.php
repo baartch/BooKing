@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../../routes/auth/check.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
 require_once __DIR__ . '/../../src-php/core/layout.php';
-logAction($currentUser['user_id'] ?? null, 'view_map', 'User opened map');
 ?>
 <?php renderPageStart('Map', [
     'leaflet' => true,

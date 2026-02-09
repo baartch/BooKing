@@ -130,7 +130,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-logAction($currentUser['user_id'] ?? null, 'view_team_template_form', $editTemplate ? 'User opened edit template form' : 'User opened create template form');
 ?>
 <?php renderPageStart('Template', ['bodyClass' => 'is-flex is-flex-direction-column is-fullheight']); ?>
       <section class="section">

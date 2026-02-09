@@ -5,7 +5,6 @@ require_once __DIR__ . '/../../src-php/core/layout.php';
 
 $activeTab = $_GET['tab'] ?? 'conversations';
 
-logAction($currentUser['user_id'] ?? null, 'view_communication', 'User opened communication page');
 ?>
 <?php renderPageStart('Communication', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',

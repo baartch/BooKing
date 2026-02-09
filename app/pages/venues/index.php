@@ -65,7 +65,6 @@ if ($endPage - $startPage < $range * 2) {
     $startPage = max(1, min($startPage, $endPage - $range * 2));
 }
 
-logAction($currentUser['user_id'] ?? null, 'view_venues', 'User opened venue management');
 ?>
 <?php renderPageStart('Venues', ['bodyClass' => 'is-flex is-flex-direction-column is-fullheight']); ?>
       <section class="section">
