@@ -15,7 +15,7 @@ $activeTab = $_GET['tab'] ?? 'conversations';
     'extraScripts' => [
         '<script src="' . BASE_PATH . '/app/public/js/wysi.min.js" defer></script>',
         '<script type="module" src="' . BASE_PATH . '/app/public/js/tabs.js" defer></script>',
-        '<script type="module" src="' . BASE_PATH . '/app/public/js/wysi-email.js" defer></script>'
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/email.js" defer></script>'
     ]
 ]); ?>
       <section class="section">

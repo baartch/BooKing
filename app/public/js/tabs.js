@@ -35,6 +35,7 @@ const initTabs = () => {
     };
     const updateUrl = (target, mode) => {
         const url = new URL(window.location.href);
+        url.search = '';
         url.searchParams.set('tab', target);
         if (mode === 'push') {
             window.history.pushState({ tab: target }, '', url.toString());
