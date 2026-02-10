@@ -21,18 +21,19 @@ if (!isset($users, $teamsByUser)):
     <?php endif; ?>
     <div class="column is-3">
       <div class="field">
-        <label for="username" class="label">Username</label>
+        <label for="username" class="label">Email</label>
         <div class="control">
-          <input type="text" id="username" name="username" class="input" required value="<?php echo $isEditing ? htmlspecialchars($editUser['username']) : ''; ?>">
+          <input type="email" id="username" name="username" class="input" required value="<?php echo $isEditing ? htmlspecialchars($editUser['username']) : ''; ?>">
         </div>
       </div>
     </div>
     <div class="column is-3">
       <div class="field">
-        <label for="password" class="label">Password<?php echo $isEditing ? ' (leave blank to keep)' : ''; ?></label>
+        <label for="password" class="label">Password (unused)</label>
         <div class="control">
-          <input type="password" id="password" name="password" class="input" <?php echo $isEditing ? '' : 'required'; ?>>
+          <input type="password" id="password" name="password" class="input" placeholder="Not used" disabled>
         </div>
+        <p class="help">Password login is disabled. Users sign in with email OTP.</p>
       </div>
     </div>
     <div class="column is-2">
@@ -57,6 +58,7 @@ if (!isset($users, $teamsByUser)):
         <div class="control">
           <input type="text" class="input" value="<?php echo empty($editTeams) ? 'No teams' : htmlspecialchars(implode(', ', $editTeams)); ?>" readonly>
         </div>
+        <p class="help">Users sign in with this email address.</p>
       </div>
     </div>
     <div class="column is-1 is-flex is-align-items-flex-end">
@@ -72,11 +74,12 @@ if (!isset($users, $teamsByUser)):
 
 <div class="box">
   <h2 class="title is-5">Current Users</h2>
+  <p class="help">Email addresses are used for OTP sign-in.</p>
   <div class="table-container">
     <table class="table is-fullwidth is-striped is-hoverable" data-users-table>
       <thead>
         <tr>
-          <th>Username</th>
+          <th>Email</th>
           <th>Role</th>
           <th>Teams</th>
           <th>Created</th>
@@ -103,15 +106,6 @@ if (!isset($users, $teamsByUser)):
                 <a class="button" href="<?php echo BASE_PATH; ?>/app/pages/admin/user_management.php?tab=users&edit_user_id=<?php echo $userId; ?>" aria-label="Edit user" title="Edit user">
                   <span class="icon"><i class="fa-solid fa-pen"></i></span>
                 </a>
-                <form method="POST" action="" onsubmit="return confirm('Reset password for this user?');">
-                  <?php renderCsrfField(); ?>
-                  <input type="hidden" name="action" value="reset_password">
-                  <input type="hidden" name="tab" value="users">
-                  <input type="hidden" name="user_id" value="<?php echo $userId; ?>">
-                  <button type="submit" class="button" aria-label="Reset password" title="Reset password">
-                    <span class="icon"><i class="fa-solid fa-rotate"></i></span>
-                  </button>
-                </form>
                 <form method="POST" action="" onsubmit="return confirm('Delete this user?');">
                   <?php renderCsrfField(); ?>
                   <input type="hidden" name="action" value="delete">
@@ -128,5 +122,5 @@ if (!isset($users, $teamsByUser)):
       </tbody>
     </table>
   </div>
-  <p class="help">Your own role is locked.</p>
+  <p class="help">Your own role is locked. Passwords are not used for login.</p>
 </div>

@@ -30,12 +30,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $activeTab = $_POST['tab'] ?? $activeTab;
 
     if ($action === 'create') {
-        $username = trim((string) ($_POST['username'] ?? ''));
+        $username = strtolower(trim((string) ($_POST['username'] ?? '')));
         $role = $_POST['role'] ?? 'agent';
-        $password = (string) ($_POST['password'] ?? '');
 
-        if ($username === '' || $password === '') {
-            $errors[] = 'Username and password are required.';
+        if ($username === '') {
+            $errors[] = 'Email is required.';
+        } elseif (!filter_var($username, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Enter a valid email address.';
         }
 
         if (!in_array($role, ['admin', 'agent'], true)) {
@@ -50,12 +51,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($stmt->fetch()) {
                     $errors[] = 'Username already exists.';
                 } else {
+                    $randomPassword = bin2hex(random_bytes(16));
                     $stmt = $pdo->prepare(
                         'INSERT INTO users (username, password_hash, role) VALUES (:username, :password_hash, :role)'
                     );
                     $stmt->execute([
                         ':username' => $username,
-                        ':password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                        ':password_hash' => password_hash($randomPassword, PASSWORD_DEFAULT),
                         ':role' => $role
                     ]);
                     $userId = (int) $pdo->lastInsertId();
@@ -71,12 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'update_user') {
         $userId = (int) ($_POST['user_id'] ?? 0);
-        $username = trim((string) ($_POST['username'] ?? ''));
+        $username = strtolower(trim((string) ($_POST['username'] ?? '')));
         $role = $_POST['role'] ?? '';
-        $password = (string) ($_POST['password'] ?? '');
 
         if ($userId <= 0 || $username === '') {
-            $errors[] = 'Username is required.';
+            $errors[] = 'Email is required.';
+        } elseif (!filter_var($username, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Enter a valid email address.';
         }
 
         if ($role !== '' && !in_array($role, ['admin', 'agent'], true)) {
@@ -99,29 +102,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $errors[] = 'Username already exists.';
                 } else {
                     $pdo->beginTransaction();
-                    $updateFields = [
-                        'username' => $username,
-                        'role' => $role !== '' ? $role : 'agent'
-                    ];
-                    $sql = 'UPDATE users SET username = :username, role = :role';
-                    if ($password !== '') {
-                        $sql .= ', password_hash = :password_hash';
-                        $updateFields['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
-                    }
-                    $sql .= ' WHERE id = :id';
-                    $updateFields['id'] = $userId;
-
-                    $stmt = $pdo->prepare($sql);
-                    $params = [
-                        ':username' => $updateFields['username'],
-                        ':role' => $updateFields['role'],
-                        ':id' => $updateFields['id']
-                    ];
-                    if (isset($updateFields['password_hash'])) {
-                        $params[':password_hash'] = $updateFields['password_hash'];
-                    }
-                    $stmt->execute($params);
-
+                    $stmt = $pdo->prepare('UPDATE users SET username = :username, role = :role WHERE id = :id');
+                    $stmt->execute([
+                        ':username' => $username,
+                        ':role' => $role !== '' ? $role : 'agent',
+                        ':id' => $userId
+                    ]);
                     $pdo->commit();
                     logAction($currentUser['user_id'] ?? null, 'user_updated', sprintf('Updated user %d', $userId));
                     $notice = 'User updated successfully.';
@@ -137,30 +123,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if ($action === 'reset_password') {
-        $userId = (int) ($_POST['user_id'] ?? 0);
-
-        if ($userId <= 0) {
-            $errors[] = 'Please select a user to reset.';
-        }
-
-        if (!$errors) {
-            try {
-                $newPassword = bin2hex(random_bytes(4));
-                $pdo = getDatabaseConnection();
-                $stmt = $pdo->prepare('UPDATE users SET password_hash = :password_hash WHERE id = :id');
-                $stmt->execute([
-                    ':password_hash' => password_hash($newPassword, PASSWORD_DEFAULT),
-                    ':id' => $userId
-                ]);
-                logAction($currentUser['user_id'] ?? null, 'password_reset', sprintf('Reset password for user %d', $userId));
-                $notice = 'Password reset successfully. New password: ' . $newPassword;
-            } catch (Throwable $error) {
-                $errors[] = 'Failed to reset password.';
-                logAction($currentUser['user_id'] ?? null, 'password_reset_error', $error->getMessage());
-            }
-        }
-    }
 
     if ($action === 'delete') {
         $userId = (int) ($_POST['user_id'] ?? 0);
