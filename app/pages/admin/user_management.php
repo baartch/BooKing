@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../src-php/auth/admin_check.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
 require_once __DIR__ . '/../../src-php/core/layout.php';
 require_once __DIR__ . '/../../src-php/core/settings.php';
+require_once __DIR__ . '/../../src-php/communication/mailbox_helpers.php';
 
 $errors = [];
 $notice = '';
@@ -20,6 +21,7 @@ $settingsStatus = [
     'brave_spellcheck_api_key' => false,
     'mapbox_api_key' => false
 ];
+$smtpMailbox = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken();
@@ -341,6 +343,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             logAction($currentUser['user_id'] ?? null, 'settings_update_error', $error->getMessage());
         }
     }
+
+    if ($action === 'save_global_smtp') {
+        $smtpMailboxId = (int) ($_POST['mailbox_id'] ?? 0);
+        $formResult = buildMailboxFormInput($_POST, [
+            'allowed_encryptions' => ['ssl', 'tls', 'none'],
+            'default_imap_port' => 993,
+            'default_smtp_port' => 587,
+            'require_team' => false,
+            'require_imap' => false,
+            'require_smtp' => true,
+            'is_create' => $smtpMailboxId <= 0
+        ]);
+
+        $formValues = $formResult['values'];
+        $formValues['name'] = 'Global SMTP';
+        $imapPassword = $formResult['imap_password'];
+        $smtpPassword = $formResult['smtp_password'];
+        $errors = array_merge($errors, $formResult['errors']);
+
+        if (!$errors) {
+            try {
+                $pdo = getDatabaseConnection();
+                $existingMailbox = fetchGlobalMailbox($pdo);
+                if ($existingMailbox && $smtpMailboxId > 0 && $smtpMailboxId !== (int) $existingMailbox['id']) {
+                    $errors[] = 'Another global SMTP mailbox already exists.';
+                } else {
+                    $mailboxId = persistMailbox($pdo, $formValues, $imapPassword, $smtpPassword, $existingMailbox ?: null);
+                    logAction($currentUser['user_id'] ?? null, 'admin_smtp_saved', sprintf('Saved global SMTP mailbox %d', $mailboxId));
+                    $notice = 'Global SMTP settings saved successfully.';
+                }
+            } catch (Throwable $error) {
+                $errors[] = 'Failed to save SMTP settings.';
+                logAction($currentUser['user_id'] ?? null, 'admin_smtp_save_error', $error->getMessage());
+            }
+        }
+    }
 }
 
 try {
@@ -382,6 +420,9 @@ try {
         'brave_spellcheck_api_key',
         'mapbox_api_key'
     ]);
+
+    $smtpMailbox = fetchGlobalMailbox($pdo);
+    $smtpMailbox = $smtpMailbox ?: null;
     $settingsStatus = [
         'brave_search_api_key' => $settings['brave_search_api_key'] !== '',
         'brave_spellcheck_api_key' => $settings['brave_spellcheck_api_key'] !== '',
@@ -418,6 +459,7 @@ try {
         'brave_spellcheck_api_key' => false,
         'mapbox_api_key' => false
     ];
+    $smtpMailbox = $smtpMailbox ?? null;
     $errors[] = 'Failed to load users, teams, or settings.';
     logAction($currentUser['user_id'] ?? null, 'user_team_list_error', $error->getMessage());
 }
@@ -426,7 +468,8 @@ try {
 <?php renderPageStart('Admin', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',
     'extraScripts' => [
-        '<script type="module" src="' . BASE_PATH . '/app/public/js/tabs.js" defer></script>'
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/tabs.js" defer></script>',
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/mailboxes.js" defer></script>'
     ]
 ]); ?>
       <section class="section">
@@ -456,6 +499,9 @@ try {
               <li class="<?php echo $activeTab === 'api-keys' ? 'is-active' : ''; ?>">
                 <a href="#" data-tab="api-keys" role="tab" aria-selected="<?php echo $activeTab === 'api-keys' ? 'true' : 'false'; ?>">API Keys</a>
               </li>
+              <li class="<?php echo $activeTab === 'smtp' ? 'is-active' : ''; ?>">
+                <a href="#" data-tab="smtp" role="tab" aria-selected="<?php echo $activeTab === 'smtp' ? 'true' : 'false'; ?>">SMTP</a>
+              </li>
             </ul>
           </div>
 
@@ -469,6 +515,10 @@ try {
 
           <div class="tab-panel <?php echo $activeTab === 'api-keys' ? '' : 'is-hidden'; ?>" data-tab-panel="api-keys" role="tabpanel">
             <?php require __DIR__ . '/admin_api_keys.php'; ?>
+          </div>
+
+          <div class="tab-panel <?php echo $activeTab === 'smtp' ? '' : 'is-hidden'; ?>" data-tab-panel="smtp" role="tabpanel">
+            <?php require __DIR__ . '/admin_smtp.php'; ?>
           </div>
         </div>
       </section>
