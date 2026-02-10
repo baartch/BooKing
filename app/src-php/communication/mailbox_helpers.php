@@ -262,6 +262,35 @@ function fetchTeamMailbox(PDO $pdo, int $mailboxId, int $userId): ?array
     return $mailbox ?: null;
 }
 
+function fetchUserMailbox(PDO $pdo, int $mailboxId, int $userId): ?array
+{
+    $stmt = $pdo->prepare(
+        'SELECT *
+         FROM mailboxes
+         WHERE id = :id AND user_id = :user_id
+         LIMIT 1'
+    );
+    $stmt->execute([
+        ':id' => $mailboxId,
+        ':user_id' => $userId
+    ]);
+    $mailbox = $stmt->fetch();
+
+    return $mailbox ?: null;
+}
+
+function fetchUserMailboxes(PDO $pdo, int $userId): array
+{
+    $stmt = $pdo->prepare(
+        'SELECT *
+         FROM mailboxes
+         WHERE user_id = :user_id
+         ORDER BY name'
+    );
+    $stmt->execute([':user_id' => $userId]);
+    return $stmt->fetchAll();
+}
+
 function loadTeamAdminTeams(PDO $pdo, int $userId): array
 {
     $teamsStmt = $pdo->prepare(
