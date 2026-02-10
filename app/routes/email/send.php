@@ -50,6 +50,9 @@ try {
         exit;
     }
 
+    $linkTeamId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
+    $linkUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
+
     if ($action === 'save_draft') {
         if ($draftId > 0) {
             $stmt = $pdo->prepare(
@@ -73,11 +76,14 @@ try {
                 ':id' => $draftId,
                 ':mailbox_id' => $mailbox['id']
             ]);
-            clearObjectLinks($pdo, 'email', $draftId);
+            clearObjectLinks($pdo, 'email', $draftId, $linkTeamId, $linkUserId);
             if ($linkItems) {
                 foreach ($linkItems as $linkItem) {
                     [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
-                    createObjectLink($pdo, 'email', $draftId, (string) $type, (int) $id);
+                    if ($type === '') {
+                        continue;
+                    }
+                    createObjectLink($pdo, 'email', $draftId, (string) $type, (int) $id, $linkTeamId, $linkUserId);
                 }
             }
             logAction($userId, 'email_draft_updated', sprintf('Updated draft %d in mailbox %d', $draftId, $mailboxId));
@@ -102,7 +108,10 @@ try {
             if ($draftId > 0 && $linkItems) {
                 foreach ($linkItems as $linkItem) {
                     [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
-                    createObjectLink($pdo, 'email', $draftId, (string) $type, (int) $id);
+                    if ($type === '') {
+                        continue;
+                    }
+                    createObjectLink($pdo, 'email', $draftId, (string) $type, (int) $id, $linkTeamId, $linkUserId);
                 }
             }
             logAction($userId, 'email_draft_saved', sprintf('Saved draft in mailbox %d', $mailboxId));
@@ -176,7 +185,10 @@ try {
     if ($sentId > 0 && $linkItems) {
         foreach ($linkItems as $linkItem) {
             [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
-            createObjectLink($pdo, 'email', $sentId, (string) $type, (int) $id);
+            if ($type === '') {
+                continue;
+            }
+            createObjectLink($pdo, 'email', $sentId, (string) $type, (int) $id, $linkTeamId, $linkUserId);
         }
     }
     $redirectParams['folder'] = 'sent';

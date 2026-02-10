@@ -17,13 +17,17 @@ function normalizeObjectLink(string $leftType, int $leftId, string $rightType, i
     return [$rightType, $rightId, $leftType, $leftId];
 }
 
-function createObjectLink(PDO $pdo, string $leftType, int $leftId, string $rightType, int $rightId): bool
+function createObjectLink(PDO $pdo, string $leftType, int $leftId, string $rightType, int $rightId, ?int $teamId, ?int $userId): bool
 {
     if ($leftType === '' || $rightType === '' || $leftId <= 0 || $rightId <= 0) {
         return false;
     }
 
     if ($leftType === $rightType && $leftId === $rightId) {
+        return false;
+    }
+
+    if ($teamId === null && $userId === null) {
         return false;
     }
 
@@ -35,32 +39,54 @@ function createObjectLink(PDO $pdo, string $leftType, int $leftId, string $right
     );
 
     $stmt = $pdo->prepare(
-        'INSERT IGNORE INTO object_links (left_type, left_id, right_type, right_id)
-         VALUES (:left_type, :left_id, :right_type, :right_id)'
+        'INSERT IGNORE INTO object_links (left_type, left_id, right_type, right_id, team_id, user_id)
+         VALUES (:left_type, :left_id, :right_type, :right_id, :team_id, :user_id)'
     );
     $stmt->execute([
         ':left_type' => $normalizedLeftType,
         ':left_id' => $normalizedLeftId,
         ':right_type' => $normalizedRightType,
-        ':right_id' => $normalizedRightId
+        ':right_id' => $normalizedRightId,
+        ':team_id' => $teamId,
+        ':user_id' => $userId
     ]);
 
     return $stmt->rowCount() > 0;
 }
 
-function clearObjectLinks(PDO $pdo, string $type, int $id): void
+function clearObjectLinks(PDO $pdo, string $type, int $id, ?int $teamId, ?int $userId): void
 {
     if ($type === '' || $id <= 0) {
         return;
     }
 
-    $stmt = $pdo->prepare(
+    if ($teamId === null && $userId === null) {
+        return;
+    }
+
+    $sql =
         'DELETE FROM object_links
-         WHERE (left_type = :type AND left_id = :id)
-            OR (right_type = :type AND right_id = :id)'
-    );
-    $stmt->execute([
+         WHERE ((left_type = :type AND left_id = :id)
+            OR (right_type = :type AND right_id = :id))
+           AND ';
+
+    if ($userId !== null) {
+        $sql .= 'user_id = :user_id';
+    } else {
+        $sql .= 'user_id IS NULL AND team_id = :team_id';
+    }
+
+    $stmt = $pdo->prepare($sql);
+    $params = [
         ':type' => $type,
         ':id' => $id
-    ]);
+    ];
+
+    if ($userId !== null) {
+        $params[':user_id'] = $userId;
+    } else {
+        $params[':team_id'] = $teamId;
+    }
+
+    $stmt->execute($params);
 }

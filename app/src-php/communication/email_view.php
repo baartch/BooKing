@@ -127,7 +127,13 @@ if ($pdo && $selectedMailbox && $selectedMessageId > 0) {
             $attachments = $attachmentsStmt->fetchAll();
 
             try {
-                $messageLinks = fetchLinkedObjects($pdo, 'email', (int) $message['id']);
+                $messageLinks = fetchLinkedObjects(
+                    $pdo,
+                    'email',
+                    (int) $message['id'],
+                    !empty($selectedMailbox['team_id']) ? (int) $selectedMailbox['team_id'] : null,
+                    !empty($selectedMailbox['user_id']) ? (int) $selectedMailbox['user_id'] : null
+                );
             } catch (Throwable $error) {
                 logAction($userId, 'email_links_load_error', $error->getMessage());
             }
