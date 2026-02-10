@@ -102,15 +102,16 @@ function ensureConversationAccess(PDO $pdo, int $conversationId, int $userId): ?
          FROM email_conversations c
          LEFT JOIN teams t ON t.id = c.team_id
          LEFT JOIN users u ON u.id = c.user_id
-         LEFT JOIN team_members tm ON tm.team_id = c.team_id AND tm.user_id = :member_user_id
+         LEFT JOIN team_members tm ON tm.team_id = c.team_id AND tm.user_id = :member_user_id_join
          WHERE c.id = :conversation_id
-           AND ((c.team_id IS NOT NULL AND tm.user_id = :member_user_id)
+           AND ((c.team_id IS NOT NULL AND tm.user_id = :member_user_id_where)
              OR (c.user_id IS NOT NULL AND c.user_id = :owner_user_id))
          LIMIT 1'
     );
     $stmt->execute([
         ':conversation_id' => $conversationId,
-        ':member_user_id' => $userId,
+        ':member_user_id_join' => $userId,
+        ':member_user_id_where' => $userId,
         ':owner_user_id' => $userId
     ]);
     $conversation = $stmt->fetch();
@@ -127,16 +128,17 @@ function ensureConversationScopeAccess(PDO $pdo, int $conversationId, array $mai
          FROM email_conversations c
          LEFT JOIN teams t ON t.id = c.team_id
          LEFT JOIN users u ON u.id = c.user_id
-         LEFT JOIN team_members tm ON tm.team_id = c.team_id AND tm.user_id = :member_user_id
+         LEFT JOIN team_members tm ON tm.team_id = c.team_id AND tm.user_id = :member_user_id_join
          WHERE c.id = :conversation_id
-           AND ((c.team_id IS NOT NULL AND tm.user_id = :member_user_id)
+           AND ((c.team_id IS NOT NULL AND tm.user_id = :member_user_id_where)
              OR (c.user_id IS NOT NULL AND c.user_id = :owner_user_id))
            AND (c.team_id = :scope_team_id OR c.user_id = :scope_user_id)
          LIMIT 1'
     );
     $stmt->execute([
         ':conversation_id' => $conversationId,
-        ':member_user_id' => $userId,
+        ':member_user_id_join' => $userId,
+        ':member_user_id_where' => $userId,
         ':owner_user_id' => $userId,
         ':scope_team_id' => $scopeTeamId,
         ':scope_user_id' => $scopeUserId

@@ -12,29 +12,21 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 verifyCsrfToken();
 
 $userId = (int) ($currentUser['user_id'] ?? 0);
-$mailboxId = (int) ($_POST['mailbox_id'] ?? 0);
 $conversationId = (int) ($_POST['conversation_id'] ?? 0);
 
 $redirectParams = [
     'tab' => 'conversations',
-    'mailbox_id' => $mailboxId,
     'conversation_id' => $conversationId
 ];
 
-if ($mailboxId <= 0 || $conversationId <= 0) {
+if ($conversationId <= 0) {
     header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
     exit;
 }
 
 try {
     $pdo = getDatabaseConnection();
-    $mailbox = ensureMailboxAccess($pdo, $mailboxId, $userId);
-    if (!$mailbox) {
-        header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
-        exit;
-    }
-
-    $conversation = ensureConversationScopeAccess($pdo, $conversationId, $mailbox, $userId);
+    $conversation = ensureConversationAccess($pdo, $conversationId, $userId);
     if ($conversation) {
         $stmt = $pdo->prepare(
             'UPDATE email_conversations
@@ -46,7 +38,7 @@ try {
             ':id' => $conversationId
         ]);
 
-        logAction($userId, 'conversation_closed', sprintf('Closed conversation %d in mailbox %d', $conversationId, $mailboxId));
+        logAction($userId, 'conversation_closed', sprintf('Closed conversation %d', $conversationId));
     }
 } catch (Throwable $error) {
     logAction($userId, 'conversation_close_error', $error->getMessage());

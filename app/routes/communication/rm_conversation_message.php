@@ -12,30 +12,22 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 verifyCsrfToken();
 
 $userId = (int) ($currentUser['user_id'] ?? 0);
-$mailboxId = (int) ($_POST['mailbox_id'] ?? 0);
 $messageId = (int) ($_POST['message_id'] ?? 0);
 $conversationId = (int) ($_POST['conversation_id'] ?? 0);
 
 $redirectParams = [
     'tab' => 'conversations',
-    'mailbox_id' => $mailboxId,
     'conversation_id' => $conversationId
 ];
 
-if ($mailboxId <= 0 || $messageId <= 0) {
+if ($messageId <= 0) {
     header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
     exit;
 }
 
 try {
     $pdo = getDatabaseConnection();
-    $mailbox = ensureMailboxAccess($pdo, $mailboxId, $userId);
-    if (!$mailbox) {
-        header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
-        exit;
-    }
-
-    $conversation = ensureConversationScopeAccess($pdo, $conversationId, $mailbox, $userId);
+    $conversation = ensureConversationAccess($pdo, $conversationId, $userId);
     if ($conversation) {
         $stmt = $pdo->prepare(
             'UPDATE email_messages
@@ -47,7 +39,7 @@ try {
             ':conversation_id' => $conversationId
         ]);
 
-        logAction($userId, 'conversation_email_removed', sprintf('Removed email %d from conversation in mailbox %d', $messageId, $mailboxId));
+        logAction($userId, 'conversation_email_removed', sprintf('Removed email %d from conversation %d', $messageId, $conversationId));
     }
 } catch (Throwable $error) {
     logAction($userId, 'conversation_email_remove_error', $error->getMessage());
