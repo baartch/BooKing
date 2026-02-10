@@ -2,9 +2,14 @@
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../src-php/core/defaults.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/auth/rate_limit.php';
 require_once __DIR__ . '/../../src-php/auth/cookie_helpers.php';
 require_once __DIR__ . '/../../src-php/core/layout.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once __DIR__ . '/../../src-php/auth/csrf.php';
 
 $token = getSessionToken();
 $existingSession = $token !== '' ? fetchSessionUser($token) : null;
@@ -22,67 +27,28 @@ if ($token !== '' && !$existingSession) {
 }
 
 $error = '';
+$step = $_GET['step'] ?? 'email';
+$email = strtolower(trim((string) ($_GET['email'] ?? '')));
 
-// Handle login form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim((string) ($_POST['username'] ?? ''));
-    $password = (string) ($_POST['password'] ?? '');
-    $clientIp = getClientIdentifier();
-    
-    // Check rate limit by IP
-    $rateLimitByIp = checkRateLimit($clientIp, 'login', 5, 900); // 5 attempts per 15 minutes
-    
-    // Check rate limit by username (if provided)
-    $rateLimitByUsername = $username !== '' 
-        ? checkRateLimit('user:' . $username, 'login', 10, 1800) // 10 attempts per 30 minutes
-        : ['allowed' => true];
-    
-    if (!$rateLimitByIp['allowed']) {
-        $error = sprintf(
-            'Too many login attempts from your IP address. Please try again in %s.',
-            formatRateLimitReset($rateLimitByIp['reset_at'])
-        );
-        logAction(null, 'login_rate_limit_ip', sprintf('Rate limit exceeded for IP %s', $clientIp));
-    } elseif (!$rateLimitByUsername['allowed']) {
-        $error = sprintf(
-            'Too many login attempts for this account. Please try again in %s.',
-            formatRateLimitReset($rateLimitByUsername['reset_at'])
-        );
-        logAction(null, 'login_rate_limit_user', sprintf('Rate limit exceeded for username %s', $username));
-    } else {
-        try {
-            $pdo = getDatabaseConnection();
-            $stmt = $pdo->prepare('SELECT id, username, password_hash, role FROM users WHERE username = :username LIMIT 1');
-            $stmt->execute([':username' => $username]);
-            $user = $stmt->fetch();
+$errorKey = $_GET['error'] ?? '';
+if ($errorKey === 'invalid') {
+    $error = 'Please enter a valid email address.';
+} elseif ($errorKey === 'unknown') {
+    $error = 'unknown email';
+} elseif ($errorKey === 'expired') {
+    $error = 'Your code has expired. Please request a new one.';
+} elseif ($errorKey === 'locked') {
+    $error = 'Too many invalid attempts. Please request a new code.';
+} elseif ($errorKey === 'send') {
+    $error = 'Unable to send the code. Please try again later.';
+} elseif ($errorKey !== '') {
+    $error = (string) $errorKey;
+}
 
-            if ($user && password_verify($password, $user['password_hash'])) {
-                // Clear rate limit attempts on successful login
-                recordRateLimitAttempt($clientIp, 'login', true);
-                recordRateLimitAttempt('user:' . $username, 'login', true);
-                
-                $sessionData = createSession((int) $user['id']);
-                setSessionCookie($sessionData['token'], $sessionData['expiresAt']);
-                logAction((int) $user['id'], 'login', 'User logged in');
-                header('Location: ' . BASE_PATH . '/index.php');
-                exit;
-            }
-
-            // Record failed login attempts
-            recordRateLimitAttempt($clientIp, 'login', false);
-            if ($username !== '') {
-                recordRateLimitAttempt('user:' . $username, 'login', false);
-            }
-
-            $details = sprintf('Login failed (user=%s, ip=%s)', $username, $clientIp);
-            logAction($user ? (int) $user['id'] : null, 'login_failed', $details);
-            $error = 'Invalid username or password';
-        } catch (Throwable $errorException) {
-            $details = sprintf('Login error: %s', $errorException->getMessage());
-            logAction(null, 'login_error', $details);
-            $error = 'Login failed. Please try again later.';
-        }
-    }
+$notice = '';
+$noticeKey = $_GET['notice'] ?? '';
+if ($noticeKey === 'resent') {
+    $notice = 'A new code has been sent.';
 }
 ?>
 <?php renderPageStart('Login', ['includeSidebar' => false, 'bodyClass' => 'is-flex is-flex-direction-column is-fullheight']); ?>
@@ -93,32 +59,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <div class="box">
             <h1 class="title is-3">BooKing</h1>
             <p class="subtitle is-6">Please login to access the app.</p>
+            <p class="help">You will receive a one-time code by email.</p>
+
+            <?php if ($notice): ?>
+              <div class="notification"><?php echo htmlspecialchars($notice); ?></div>
+            <?php endif; ?>
 
             <?php if ($error): ?>
               <div class="notification"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
 
-            <form method="POST" action="">
-              <div class="field">
-                <label for="username" class="label">Username</label>
-                <div class="control">
-                  <input type="text" id="username" name="username" class="input" required autofocus>
+            <?php if ($step === 'otp' && $email !== ''): ?>
+              <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/auth/otp_verify.php">
+                <?php renderCsrfField(); ?>
+                <input type="hidden" name="email" value="<?php echo htmlspecialchars($email); ?>">
+                <div class="field">
+                  <label for="otp_code" class="label">One-time code</label>
+                  <div class="control">
+                    <input type="text" id="otp_code" name="otp_code" class="input" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="\d{8}" required autofocus>
+                  </div>
+                  <p class="help">Enter the 8-digit code sent to your email. Code expires in 10 minutes.</p>
                 </div>
-              </div>
 
-              <div class="field">
-                <label for="password" class="label">Password</label>
-                <div class="control">
-                  <input type="password" id="password" name="password" class="input" required>
+                <div class="field">
+                  <div class="control">
+                    <button type="submit" class="button is-fullwidth">Verify code</button>
+                  </div>
                 </div>
-              </div>
+              </form>
 
-              <div class="field">
-                <div class="control">
-                  <button type="submit" class="button is-fullwidth">Login</button>
+              <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/auth/otp_request.php" class="mt-2">
+                <?php renderCsrfField(); ?>
+                <input type="hidden" name="email" value="<?php echo htmlspecialchars($email); ?>">
+                <button type="submit" class="button is-text is-small">Send a new code</button>
+              </form>
+            <?php else: ?>
+              <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/auth/otp_request.php">
+                <?php renderCsrfField(); ?>
+                <div class="field">
+                  <label for="email" class="label">Email address</label>
+                  <div class="control">
+                    <input type="email" id="email" name="email" class="input" required autofocus>
+                  </div>
+                  <p class="help">Enter your email to receive a one-time code.</p>
                 </div>
-              </div>
-            </form>
+
+                <div class="field">
+                  <div class="control">
+                    <button type="submit" class="button is-fullwidth">Send code</button>
+                  </div>
+                </div>
+              </form>
+            <?php endif; ?>
 
             <p>Keep your Booking organized.</p>
           </div>

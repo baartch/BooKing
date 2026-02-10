@@ -32,9 +32,15 @@ try {
     $stmt->execute([':cutoff' => $rateLimitCutoff]);
     $rateLimitsDeleted = $stmt->rowCount();
 
-    logAction(null, 'cleanup', sprintf('Deleted %d logs, %d sessions, %d rate limits older than %s', $logsDeleted, $sessionsDeleted, $rateLimitsDeleted, $cutoff));
+    // Clean expired OTPs (keep a short buffer)
+    $otpCutoff = date('Y-m-d H:i:s', strtotime('-1 day'));
+    $stmt = $pdo->prepare('DELETE FROM email_otps WHERE expires_at < :cutoff');
+    $stmt->execute([':cutoff' => $otpCutoff]);
+    $otpDeleted = $stmt->rowCount();
 
-    echo sprintf("Cleanup complete. Logs deleted: %d, sessions deleted: %d, rate limits deleted: %d (days=%d)\n", $logsDeleted, $sessionsDeleted, $rateLimitsDeleted, $daysToKeep);
+    logAction(null, 'cleanup', sprintf('Deleted %d logs, %d sessions, %d rate limits, %d OTPs older than %s', $logsDeleted, $sessionsDeleted, $rateLimitsDeleted, $otpDeleted, $cutoff));
+
+    echo sprintf("Cleanup complete. Logs deleted: %d, sessions deleted: %d, rate limits deleted: %d, OTPs deleted: %d (days=%d)\n", $logsDeleted, $sessionsDeleted, $rateLimitsDeleted, $otpDeleted, $daysToKeep);
 } catch (Throwable $error) {
     logAction(null, 'cleanup_error', $error->getMessage());
     http_response_code(500);

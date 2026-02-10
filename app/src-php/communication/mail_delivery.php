@@ -6,6 +6,7 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
 {
     $smtpPassword = decryptSettingValue($mailbox['smtp_password'] ?? '');
     if ($smtpPassword === '') {
+        logAction(null, 'smtp_send_error', 'SMTP password missing');
         return false;
     }
 
@@ -15,6 +16,7 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
     $encryption = (string) ($mailbox['smtp_encryption'] ?? 'tls');
 
     if ($host === '' || $port <= 0 || $username === '') {
+        logAction(null, 'smtp_send_error', sprintf('SMTP config invalid host=%s port=%d user=%s', $host, $port, $username));
         return false;
     }
 
@@ -52,6 +54,7 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
 
     $connection = smtpOpenConnection($host, $port, $encryption);
     if (!$connection) {
+        logAction(null, 'smtp_send_error', 'SMTP connection failed');
         return false;
     }
 
@@ -59,62 +62,74 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
 
     if (!smtpExpect($socket, 220)) {
         smtpClose($socket);
+        logAction(null, 'smtp_send_error', 'SMTP greeting failed');
         return false;
     }
 
     if (!smtpCommand($socket, 'EHLO ' . gethostname(), 250)) {
         smtpClose($socket);
+        logAction(null, 'smtp_send_error', 'SMTP EHLO failed');
         return false;
     }
 
     if ($encryption === 'tls') {
         if (!smtpCommand($socket, 'STARTTLS', 220)) {
             smtpClose($socket);
+            logAction(null, 'smtp_send_error', 'SMTP STARTTLS failed');
             return false;
         }
         if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
             smtpClose($socket);
+            logAction(null, 'smtp_send_error', 'SMTP TLS negotiation failed');
             return false;
         }
         if (!smtpCommand($socket, 'EHLO ' . gethostname(), 250)) {
             smtpClose($socket);
+            logAction(null, 'smtp_send_error', 'SMTP EHLO after TLS failed');
             return false;
         }
     }
 
     if (!smtpCommand($socket, 'AUTH LOGIN', 334)) {
         smtpClose($socket);
+        logAction(null, 'smtp_send_error', 'SMTP AUTH LOGIN failed');
         return false;
     }
     if (!smtpCommand($socket, base64_encode($username), 334)) {
         smtpClose($socket);
+        logAction(null, 'smtp_send_error', 'SMTP AUTH username failed');
         return false;
     }
     if (!smtpCommand($socket, base64_encode($smtpPassword), 235)) {
         smtpClose($socket);
+        logAction(null, 'smtp_send_error', 'SMTP AUTH password failed');
         return false;
     }
 
     if (!smtpCommand($socket, 'MAIL FROM:<' . $fromEmail . '>', 250)) {
         smtpClose($socket);
+        logAction(null, 'smtp_send_error', 'SMTP MAIL FROM failed');
         return false;
     }
 
     foreach ($recipients as $recipient) {
         if (!smtpCommand($socket, 'RCPT TO:<' . $recipient . '>', 250)) {
             smtpClose($socket);
+            logAction(null, 'smtp_send_error', 'SMTP RCPT TO failed');
             return false;
         }
     }
 
     if (!smtpCommand($socket, 'DATA', 354)) {
         smtpClose($socket);
+        logAction(null, 'smtp_send_error', 'SMTP DATA command failed');
         return false;
     }
 
     fwrite($socket, $message . "\r\n.\r\n");
     if (!smtpExpect($socket, 250)) {
         smtpClose($socket);
+        logAction(null, 'smtp_send_error', 'SMTP DATA send failed');
         return false;
     }
 
