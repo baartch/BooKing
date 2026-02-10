@@ -81,7 +81,7 @@
             · <?php echo htmlspecialchars($message['received_at'] ?? $message['sent_at'] ?? $message['created_at'] ?? ''); ?>
           </p>
           <?php if (!empty($linkItems)): ?>
-            <p class="is-size-7">
+            <p class="is-size-7 has-text-grey">
               Links:
               <?php foreach ($linkItems as $index => $link): ?>
                 <a href="<?php echo htmlspecialchars($link['url']); ?>" class="has-text-weight-semibold">
