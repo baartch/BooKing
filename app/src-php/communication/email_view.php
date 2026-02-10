@@ -132,7 +132,8 @@ if ($pdo && $selectedMailbox && $selectedMessageId > 0) {
                     'email',
                     (int) $message['id'],
                     !empty($selectedMailbox['team_id']) ? (int) $selectedMailbox['team_id'] : null,
-                    !empty($selectedMailbox['user_id']) ? (int) $selectedMailbox['user_id'] : null
+                    !empty($selectedMailbox['user_id']) ? (int) $selectedMailbox['user_id'] : null,
+                    true
                 );
             } catch (Throwable $error) {
                 logAction($userId, 'email_links_load_error', $error->getMessage());
