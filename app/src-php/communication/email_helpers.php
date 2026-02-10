@@ -183,7 +183,7 @@ function findVenueIdsByEmail(PDO $pdo, string $email): array
     return array_map('intval', array_column($stmt->fetchAll(), 'id'));
 }
 
-function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int $userId, bool $includeLegacy = false): array
+function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int $userId): array
 {
     $type = trim($type);
     if ($type === '' || $id <= 0) {
@@ -197,30 +197,26 @@ function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int 
     $sql =
         'SELECT left_type, left_id, right_type, right_id
          FROM object_links
-         WHERE ((left_type = :type AND left_id = :id)
-            OR (right_type = :type AND right_id = :id))
-           AND (';
+         WHERE ((left_type = :left_type AND left_id = :left_id)
+            OR (right_type = :right_type AND right_id = :right_id))
+           AND ';
+
+    $params = [
+        ':left_type' => $type,
+        ':left_id' => $id,
+        ':right_type' => $type,
+        ':right_id' => $id
+    ];
 
     if ($userId !== null) {
         $sql .= 'user_id = :user_id';
-    } else {
-        $sql .= 'user_id IS NULL AND team_id = :team_id';
-    }
-
-    if ($includeLegacy) {
-        $sql .= ' OR (user_id IS NULL AND team_id IS NULL)';
-    }
-
-    $sql .= ')';
-
-    $stmt = $pdo->prepare($sql);
-    $params = [':type' => $type, ':id' => $id];
-    if ($userId !== null) {
         $params[':user_id'] = $userId;
     } else {
+        $sql .= 'user_id IS NULL AND team_id = :team_id';
         $params[':team_id'] = $teamId;
     }
 
+    $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $rows = $stmt->fetchAll();
     if (!$rows) {
@@ -259,9 +255,10 @@ function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int 
             $name = trim((string) ($row['firstname'] ?? '') . ' ' . (string) ($row['surname'] ?? ''));
             $email = (string) ($row['email'] ?? '');
             $label = $name !== '' ? $name : $email;
-            if ($label !== '') {
-                $labels['contact:' . (int) $row['id']] = $label;
+            if ($label === '') {
+                $label = 'Contact #' . (int) $row['id'];
             }
+            $labels['contact:' . (int) $row['id']] = $label;
         }
     }
 
@@ -278,9 +275,10 @@ function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int 
             $name = (string) ($row['name'] ?? '');
             $email = (string) ($row['contact_email'] ?? '');
             $label = $name !== '' ? $name : $email;
-            if ($label !== '') {
-                $labels['venue:' . (int) $row['id']] = $label;
+            if ($label === '') {
+                $label = 'Venue #' . (int) $row['id'];
             }
+            $labels['venue:' . (int) $row['id']] = $label;
         }
     }
 
