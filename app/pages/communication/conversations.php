@@ -55,9 +55,6 @@ if ($pdo && $selectedMailbox) {
         $stmt->execute([':mailbox_id' => $selectedMailbox['id']]);
         $conversations = $stmt->fetchAll();
 
-        if ($conversationId <= 0 && $conversations) {
-            $conversationId = (int) ($conversations[0]['id'] ?? 0);
-        }
     } catch (Throwable $error) {
         $errors[] = 'Failed to load conversations.';
         logAction($userId, 'conversation_list_error', $error->getMessage());
