@@ -1,3 +1,5 @@
+export {};
+
 const qs = <T extends Element>(selector: string, scope: ParentNode = document): T | null =>
   scope.querySelector(selector) as T | null;
 
