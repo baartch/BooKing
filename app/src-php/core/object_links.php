@@ -47,3 +47,20 @@ function createObjectLink(PDO $pdo, string $leftType, int $leftId, string $right
 
     return $stmt->rowCount() > 0;
 }
+
+function clearObjectLinks(PDO $pdo, string $type, int $id): void
+{
+    if ($type === '' || $id <= 0) {
+        return;
+    }
+
+    $stmt = $pdo->prepare(
+        'DELETE FROM object_links
+         WHERE (left_type = :type AND left_id = :id)
+            OR (right_type = :type AND right_id = :id)'
+    );
+    $stmt->execute([
+        ':type' => $type,
+        ':id' => $id
+    ]);
+}

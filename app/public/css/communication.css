@@ -74,6 +74,48 @@
   right: 0;
 }
 
+.email-recipient-badge {
+  background-color: color-mix(in srgb, currentColor 18%, transparent);
+  color: currentColor;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.email-link-metadata {
+  margin-top: 0.35rem;
+}
+
+.email-link-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.email-link-item .delete {
+  margin-left: 0.25rem;
+}
+
+.email-link-item + .email-link-item {
+  margin-left: 0.25rem;
+}
+
+.email-recipient-badge {
+  background-color: color-mix(in srgb, currentColor 18%, transparent);
+  color: currentColor;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.email-link-metadata {
+  margin-top: 0.35rem;
+}
+
+.email-link-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.email-link-item .delete {
+  margin-left: 0.25rem;
+}
+
 .email-columns > .column.is-3 {
   flex: 0 0 25%;
 }

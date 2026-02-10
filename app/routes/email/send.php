@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../src-php/core/database.php';
 require_once __DIR__ . '/../../src-php/communication/email_helpers.php';
 require_once __DIR__ . '/../../src-php/core/form_helpers.php';
 require_once __DIR__ . '/../../src-php/communication/mail_delivery.php';
+require_once __DIR__ . '/../../src-php/core/object_links.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -22,6 +23,8 @@ $bccEmails = normalizeEmailList((string) ($_POST['bcc_emails'] ?? ''));
 $subject = trim((string) ($_POST['subject'] ?? ''));
 $body = trim((string) ($_POST['body'] ?? ''));
 $startNewConversation = !empty($_POST['start_new_conversation']);
+$linkItems = $_POST['link_items'] ?? [];
+$linkItems = is_array($linkItems) ? $linkItems : [];
 
 $redirectParams = [
     'tab' => 'email',
@@ -70,6 +73,13 @@ try {
                 ':id' => $draftId,
                 ':mailbox_id' => $mailbox['id']
             ]);
+            clearObjectLinks($pdo, 'email', $draftId);
+            if ($linkItems) {
+                foreach ($linkItems as $linkItem) {
+                    [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
+                    createObjectLink($pdo, 'email', $draftId, (string) $type, (int) $id);
+                }
+            }
             logAction($userId, 'email_draft_updated', sprintf('Updated draft %d in mailbox %d', $draftId, $mailboxId));
         } else {
             $stmt = $pdo->prepare(
@@ -88,6 +98,13 @@ try {
                 ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
                 ':created_by' => $userId
             ]);
+            $draftId = (int) $pdo->lastInsertId();
+            if ($draftId > 0 && $linkItems) {
+                foreach ($linkItems as $linkItem) {
+                    [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
+                    createObjectLink($pdo, 'email', $draftId, (string) $type, (int) $id);
+                }
+            }
             logAction($userId, 'email_draft_saved', sprintf('Saved draft in mailbox %d', $mailboxId));
         }
         $redirectParams['notice'] = 'draft_saved';
@@ -155,6 +172,13 @@ try {
         ':created_by' => $userId,
         ':conversation_id' => $conversationId
     ]);
+    $sentId = (int) $pdo->lastInsertId();
+    if ($sentId > 0 && $linkItems) {
+        foreach ($linkItems as $linkItem) {
+            [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
+            createObjectLink($pdo, 'email', $sentId, (string) $type, (int) $id);
+        }
+    }
     $redirectParams['folder'] = 'sent';
     logAction($userId, 'email_sent', sprintf('Sent email via mailbox %d', $mailboxId));
     $redirectParams['notice'] = 'sent';
