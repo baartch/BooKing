@@ -11,8 +11,9 @@ function fetchContacts(PDO $pdo, ?string $search = null): array
     }
 
     if ($search !== null && $search !== '') {
-        $where = 'WHERE (firstname LIKE :q OR surname LIKE :q OR email LIKE :q OR phone LIKE :q OR city LIKE :q)';
-        $params[':q'] = '%' . $search . '%';
+        $where = 'WHERE (firstname LIKE ? OR surname LIKE ? OR email LIKE ? OR phone LIKE ? OR city LIKE ?)';
+        $like = '%' . $search . '%';
+        $params = array_fill(0, 5, $like);
     }
 
     $stmt = $pdo->prepare(

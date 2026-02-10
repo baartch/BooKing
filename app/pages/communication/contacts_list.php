@@ -14,25 +14,32 @@
       <h2 class="title is-5">Contacts</h2>
     </div>
     <div class="level-right">
-      <div class="field has-addons">
-        <div class="control is-expanded">
-          <input type="text" form="contacts-search-form" class="input" name="q" placeholder="Search contacts" value="<?php echo htmlspecialchars($searchQuery); ?>">
+      <form method="GET" action="<?php echo htmlspecialchars($baseUrl); ?>" data-contacts-search-form>
+        <input type="hidden" name="tab" value="contacts">
+        <div class="field has-addons">
+          <div class="control has-icons-left is-expanded">
+            <input
+              type="text"
+              class="input"
+              name="q"
+              placeholder="Search contacts"
+              value="<?php echo htmlspecialchars($searchQuery); ?>"
+            >
+            <span class="icon is-left"><i class="fa-solid fa-magnifying-glass"></i></span>
+          </div>
+          <p class="control">
+            <span class="button is-static">Ctrl+K</span>
+          </p>
         </div>
-        <div class="control">
-          <button type="submit" form="contacts-search-form" class="button" aria-label="Search contacts" title="Search contacts">
-            <span class="icon"><i class="fa-solid fa-magnifying-glass"></i></span>
-          </button>
-        </div>
-        <div class="control">
-          <a href="<?php echo htmlspecialchars($baseUrl . '?' . http_build_query(array_merge($baseQuery, ['contact_id' => 0]))); ?>" class="button is-primary">Add Contact</a>
-        </div>
-      </div>
+      </form>
     </div>
   </div>
-
-  <form id="contacts-search-form" method="GET" action="<?php echo htmlspecialchars($baseUrl); ?>" class="is-hidden">
-    <input type="hidden" name="tab" value="contacts">
-  </form>
+  <div class="level mb-3">
+    <div class="level-left"></div>
+    <div class="level-right">
+      <a href="<?php echo htmlspecialchars($baseUrl . '?' . http_build_query(array_merge($baseQuery, ['contact_id' => 0]))); ?>" class="button is-primary">Add Contact</a>
+    </div>
+  </div>
 
   <?php if (!$contacts): ?>
     <p>No contacts found.</p>
