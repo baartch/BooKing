@@ -17,7 +17,7 @@ try {
 
     $term = '%' . $query . '%';
     $contactStmt = $pdo->prepare(
-        'SELECT firstname, surname, email
+        'SELECT id, firstname, surname, email
          FROM contacts
          WHERE email IS NOT NULL AND email <> ""
            AND (firstname LIKE ? OR surname LIKE ? OR email LIKE ?)
@@ -35,6 +35,9 @@ try {
         $name = trim((string) ($row['firstname'] ?? '') . ' ' . (string) ($row['surname'] ?? ''));
         $label = $name !== '' ? $name : $email;
         $items[] = [
+            'id' => (int) $row['id'],
+            'type' => 'contact',
+            'name' => $label,
             'label' => $label,
             'email' => $email,
             'source' => 'contact'
@@ -45,7 +48,7 @@ try {
         $remaining = 8 - count($items);
         $limit = max(0, (int) $remaining);
         $venueStmt = $pdo->prepare(
-            'SELECT name, contact_email
+            'SELECT id, name, contact_email
              FROM venues
              WHERE contact_email IS NOT NULL AND contact_email <> ""
                AND (name LIKE ? OR contact_email LIKE ?)
@@ -62,6 +65,9 @@ try {
             $name = (string) ($row['name'] ?? '');
             $label = $name !== '' ? $name : $email;
             $items[] = [
+                'id' => (int) $row['id'],
+                'type' => 'venue',
+                'name' => $label,
                 'label' => $label,
                 'email' => $email,
                 'source' => 'venue'

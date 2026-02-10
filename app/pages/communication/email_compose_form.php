@@ -104,6 +104,10 @@
         Start a new conversation
       </label>
     </div>
+    <p class="is-size-7 email-link-metadata is-hidden" data-email-links>
+      Links: <span data-email-links-list></span>
+    </p>
+    <div data-email-link-inputs></div>
   </div>
   <div class="field">
     <label for="email_body" class="label">Body</label>

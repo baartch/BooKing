@@ -71,9 +71,102 @@ const validateEmailInput = (input: HTMLInputElement): boolean => {
 };
 
 type RecipientItem = {
+  id: number;
+  type: string;
+  name: string;
   label: string;
   email: string;
   source?: string;
+};
+
+type LinkItem = {
+  id: number;
+  type: string;
+  name: string;
+};
+
+let selectedLinkItems: LinkItem[] = [];
+
+const renderLinkItems = (): void => {
+  const container = document.querySelector<HTMLElement>("[data-email-links]");
+  const list = document.querySelector<HTMLElement>("[data-email-links-list]");
+  const inputs = document.querySelector<HTMLElement>("[data-email-link-inputs]");
+  if (!container || !list || !inputs) {
+    return;
+  }
+
+  list.innerHTML = "";
+  inputs.innerHTML = "";
+
+  if (selectedLinkItems.length === 0) {
+    container.classList.add("is-hidden");
+    return;
+  }
+
+  container.classList.remove("is-hidden");
+
+  selectedLinkItems.forEach((item, index) => {
+    const wrapper = document.createElement("span");
+    wrapper.className = "email-link-item";
+    wrapper.textContent = item.name;
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "delete is-small";
+    removeButton.dataset.index = String(index);
+    removeButton.setAttribute("aria-label", `Remove ${item.name}`);
+    wrapper.appendChild(removeButton);
+
+    list.appendChild(wrapper);
+    if (index < selectedLinkItems.length - 1) {
+      list.appendChild(document.createTextNode(", "));
+    }
+
+    const hidden = document.createElement("input");
+    hidden.type = "hidden";
+    hidden.name = "link_items[]";
+    hidden.value = `${item.type}:${item.id}`;
+    inputs.appendChild(hidden);
+  });
+};
+
+const addLinkItem = (item: LinkItem): void => {
+  if (!item.type || item.id <= 0 || item.name.trim() === "") {
+    return;
+  }
+  if (selectedLinkItems.some((existing) => existing.type === item.type && existing.id === item.id)) {
+    return;
+  }
+  selectedLinkItems = [...selectedLinkItems, item];
+  renderLinkItems();
+};
+
+const removeLinkItem = (index: number): void => {
+  if (index < 0 || index >= selectedLinkItems.length) {
+    return;
+  }
+  selectedLinkItems = selectedLinkItems.filter((_, itemIndex) => itemIndex !== index);
+  renderLinkItems();
+};
+
+const initLinkList = (): void => {
+  const list = document.querySelector<HTMLElement>("[data-email-links-list]");
+  if (!list || list.dataset.linkListBound === "true") {
+    return;
+  }
+  list.dataset.linkListBound = "true";
+  list.addEventListener("click", (event) => {
+    const target = event.target as HTMLElement;
+    if (!target.classList.contains("delete")) {
+      return;
+    }
+    const index = Number(target.dataset.index);
+    if (Number.isNaN(index)) {
+      return;
+    }
+    removeLinkItem(index);
+  });
+  renderLinkItems();
 };
 
 const initEmailValidation = (): void => {
@@ -162,9 +255,9 @@ const initRecipientLookup = (): void => {
               ? ` <span class="has-text-grey">${item.email}</span>`
               : "";
             const source = item.source
-              ? ` <span class="tag ml-2">${item.source}</span>`
+              ? ` <span class="tag email-recipient-badge ml-2">${item.source}</span>`
               : "";
-            return `<a class="dropdown-item" data-index="${index}" data-label="${item.label}" data-email="${item.email ?? ""}">${item.label}${email}${source}</a>`;
+            return `<a class="dropdown-item" data-index="${index}" data-id="${item.id}" data-type="${item.type}" data-name="${item.name}" data-label="${item.label}" data-email="${item.email ?? ""}">${item.label}${email}${source}</a>`;
           })
           .join("");
       }
@@ -233,11 +326,19 @@ const initRecipientLookup = (): void => {
       }
 
       const index = Number(target.dataset.index);
-      if (Number.isNaN(index) || !currentItems[index]) {
+      const item = Number.isNaN(index) ? undefined : currentItems[index];
+      if (!item) {
         return;
       }
 
-      appendSelection(currentItems[index]);
+      appendSelection(item);
+      if (item.id && item.type && item.name) {
+        addLinkItem({
+          id: item.id,
+          type: item.type,
+          name: item.name,
+        });
+      }
     });
 
     input.addEventListener("keydown", (event) => {
@@ -261,10 +362,18 @@ const initRecipientLookup = (): void => {
         case "Enter": {
           event.preventDefault();
           const index = selectedIndex >= 0 ? selectedIndex : 0;
-          if (!currentItems[index]) {
+          const item = currentItems[index];
+          if (!item) {
             return;
           }
-          appendSelection(currentItems[index]);
+          appendSelection(item);
+          if (item.id && item.type && item.name) {
+            addLinkItem({
+              id: item.id,
+              type: item.type,
+              name: item.name,
+            });
+          }
           break;
         }
         case "Escape":
@@ -286,10 +395,12 @@ const bindWysiEditor = (): void => {
   initWysiEditor();
   initEmailValidation();
   initRecipientLookup();
+  initLinkList();
   document.addEventListener("tab:activated", () => {
     initWysiEditor();
     initEmailValidation();
     initRecipientLookup();
+    initLinkList();
   });
 };
 
