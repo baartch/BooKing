@@ -119,8 +119,9 @@ CREATE TABLE mailboxes (
 
 CREATE TABLE email_conversations (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    mailbox_id INT NOT NULL,
-    team_id INT NOT NULL,
+    mailbox_id INT DEFAULT NULL,
+    team_id INT DEFAULT NULL,
+    user_id INT DEFAULT NULL,
     subject VARCHAR(255) NOT NULL,
     subject_normalized VARCHAR(255) NOT NULL,
     participant_key VARCHAR(255) NOT NULL,
@@ -129,17 +130,22 @@ CREATE TABLE email_conversations (
     last_activity_at DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (mailbox_id) REFERENCES mailboxes(id) ON DELETE CASCADE,
+    FOREIGN KEY (mailbox_id) REFERENCES mailboxes(id) ON DELETE SET NULL,
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
-    INDEX idx_email_conversations_mailbox (mailbox_id, last_activity_at),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_email_conversations_mailbox (mailbox_id),
+    INDEX idx_email_conversations_team (team_id, last_activity_at),
+    INDEX idx_email_conversations_user (user_id, last_activity_at),
     INDEX idx_email_conversations_status (is_closed, last_activity_at),
-    UNIQUE KEY uniq_email_conversation (mailbox_id, subject_normalized, participant_key, is_closed)
+    UNIQUE KEY uniq_email_conversation_team (team_id, subject_normalized, participant_key, is_closed),
+    UNIQUE KEY uniq_email_conversation_user (user_id, subject_normalized, participant_key, is_closed)
 );
 
 CREATE TABLE email_messages (
     id INT PRIMARY KEY AUTO_INCREMENT,
     mailbox_id INT NOT NULL,
-    team_id INT NOT NULL,
+    team_id INT DEFAULT NULL,
+    user_id INT DEFAULT NULL,
     conversation_id INT DEFAULT NULL,
     folder ENUM('inbox', 'drafts', 'sent', 'trash') NOT NULL DEFAULT 'inbox',
     subject VARCHAR(255) DEFAULT NULL,
@@ -158,9 +164,12 @@ CREATE TABLE email_messages (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (mailbox_id) REFERENCES mailboxes(id) ON DELETE CASCADE,
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (conversation_id) REFERENCES email_conversations(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_email_messages_mailbox_folder (mailbox_id, folder),
+    INDEX idx_email_messages_team (team_id),
+    INDEX idx_email_messages_user (user_id),
     INDEX idx_email_messages_received (received_at),
     INDEX idx_email_messages_sent (sent_at),
     INDEX idx_email_messages_conversation (conversation_id, created_at)

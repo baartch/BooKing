@@ -11,8 +11,13 @@
         <div class="select is-fullwidth">
           <select name="mailbox_id">
             <?php foreach ($teamMailboxes as $mailbox): ?>
+              <?php
+                $label = $mailbox['user_id']
+                    ? 'Personal · ' . $mailbox['name']
+                    : (($mailbox['team_name'] ?? 'Team') . ' · ' . $mailbox['name']);
+              ?>
               <option value="<?php echo (int) $mailbox['id']; ?>" <?php echo (int) ($selectedMailbox['id'] ?? 0) === (int) $mailbox['id'] ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($mailbox['team_name'] . ' · ' . $mailbox['name']); ?>
+                <?php echo htmlspecialchars($label); ?>
               </option>
             <?php endforeach; ?>
           </select>
@@ -23,7 +28,12 @@
       </div>
     </form>
   <?php else: ?>
-    <p><?php echo htmlspecialchars($teamMailboxes[0]['team_name'] . ' · ' . $teamMailboxes[0]['name']); ?></p>
+    <?php
+      $singleLabel = $teamMailboxes[0]['user_id']
+          ? 'Personal · ' . $teamMailboxes[0]['name']
+          : (($teamMailboxes[0]['team_name'] ?? 'Team') . ' · ' . $teamMailboxes[0]['name']);
+    ?>
+    <p><?php echo htmlspecialchars($singleLabel); ?></p>
   <?php endif; ?>
 
   <div class="block">

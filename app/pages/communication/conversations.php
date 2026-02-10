@@ -12,7 +12,7 @@ $folderOptions = getEmailFolderOptions();
 
 try {
     $pdo = getDatabaseConnection();
-    $teamMailboxes = fetchTeamMailboxes($pdo, $userId);
+    $teamMailboxes = fetchAccessibleMailboxes($pdo, $userId);
 } catch (Throwable $error) {
     $errors[] = 'Failed to load mailboxes.';
     logAction($userId, 'conversation_mailbox_load_error', $error->getMessage());
@@ -39,20 +39,36 @@ $conversationId = (int) ($_GET['conversation_id'] ?? 0);
 
 if ($pdo && $selectedMailbox) {
     try {
-        $stmt = $pdo->prepare(
-            'SELECT c.*, COUNT(em.id) AS message_count,
-                    (SELECT em2.folder
-                     FROM email_messages em2
-                     WHERE em2.conversation_id = c.id
-                     ORDER BY COALESCE(em2.received_at, em2.sent_at, em2.created_at) DESC, em2.id DESC
-                     LIMIT 1) AS last_message_folder
-             FROM email_conversations c
-             LEFT JOIN email_messages em ON em.conversation_id = c.id
-             WHERE c.mailbox_id = :mailbox_id
-             GROUP BY c.id
-             ORDER BY c.last_activity_at DESC, c.id DESC'
-        );
-        $stmt->execute([':mailbox_id' => $selectedMailbox['id']]);
+        $conversationScopeSql = '';
+        $conversationParams = [];
+
+        if (!empty($selectedMailbox['team_id'])) {
+            $conversationScopeSql = 'c.team_id = :scope_team_id';
+            $conversationParams[':scope_team_id'] = (int) $selectedMailbox['team_id'];
+        } elseif (!empty($selectedMailbox['user_id'])) {
+            $conversationScopeSql = 'c.user_id = :scope_user_id';
+            $conversationParams[':scope_user_id'] = (int) $selectedMailbox['user_id'];
+        }
+
+        if ($conversationScopeSql === '') {
+            $conversations = [];
+        } else {
+            $stmt = $pdo->prepare(
+                'SELECT c.*, COUNT(em.id) AS message_count,
+                        (SELECT em2.folder
+                         FROM email_messages em2
+                         WHERE em2.conversation_id = c.id
+                         ORDER BY COALESCE(em2.received_at, em2.sent_at, em2.created_at) DESC, em2.id DESC
+                         LIMIT 1) AS last_message_folder
+                 FROM email_conversations c
+                 LEFT JOIN email_messages em ON em.conversation_id = c.id
+                 WHERE ' . $conversationScopeSql . '
+                 GROUP BY c.id
+                 ORDER BY c.last_activity_at DESC, c.id DESC'
+            );
+            $stmt->execute($conversationParams);
+            $conversations = $stmt->fetchAll();
+        }
         $conversations = $stmt->fetchAll();
 
     } catch (Throwable $error) {
@@ -63,17 +79,24 @@ if ($pdo && $selectedMailbox) {
 
 if ($pdo && $selectedMailbox && $conversationId > 0) {
     try {
-        $stmt = $pdo->prepare(
-            'SELECT em.id, em.subject, em.body, em.from_name, em.from_email, em.to_emails, em.folder,
-                    em.is_read, em.received_at, em.sent_at, em.created_at
-             FROM email_messages em
-             WHERE em.mailbox_id = :mailbox_id AND em.conversation_id = :conversation_id
-             ORDER BY COALESCE(em.received_at, em.sent_at, em.created_at) DESC'
-        );
-        $stmt->execute([
-            ':mailbox_id' => $selectedMailbox['id'],
-            ':conversation_id' => $conversationId
-        ]);
+        $conversationScope = ensureConversationAccess($pdo, $conversationId, $userId);
+        if (!$conversationScope) {
+            $errors[] = 'Conversation access denied.';
+        } else {
+            $stmt = $pdo->prepare(
+                'SELECT em.id, em.subject, em.body, em.from_name, em.from_email, em.to_emails, em.folder,
+                        em.is_read, em.received_at, em.sent_at, em.created_at,
+                        em.team_id, em.user_id, u.username AS user_name
+                 FROM email_messages em
+                 LEFT JOIN users u ON u.id = em.user_id
+                 WHERE em.conversation_id = :conversation_id
+                 ORDER BY COALESCE(em.received_at, em.sent_at, em.created_at) DESC'
+            );
+            $stmt->execute([
+                ':conversation_id' => $conversationId
+            ]);
+            $conversationMessages = $stmt->fetchAll();
+        }
         $conversationMessages = $stmt->fetchAll();
     } catch (Throwable $error) {
         $errors[] = 'Failed to load conversation emails.';
@@ -108,8 +131,13 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
             <div class="select is-fullwidth">
               <select name="mailbox_id">
                 <?php foreach ($teamMailboxes as $mailbox): ?>
+                  <?php
+                    $label = $mailbox['user_id']
+                        ? 'Personal · ' . $mailbox['name']
+                        : (($mailbox['team_name'] ?? 'Team') . ' · ' . $mailbox['name']);
+                  ?>
                   <option value="<?php echo (int) $mailbox['id']; ?>" <?php echo (int) ($selectedMailbox['id'] ?? 0) === (int) $mailbox['id'] ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($mailbox['team_name'] . ' · ' . $mailbox['name']); ?>
+                    <?php echo htmlspecialchars($label); ?>
                   </option>
                 <?php endforeach; ?>
               </select>
@@ -120,7 +148,12 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
           </div>
         </form>
       <?php else: ?>
-        <p><?php echo htmlspecialchars($teamMailboxes[0]['team_name'] . ' · ' . $teamMailboxes[0]['name']); ?></p>
+        <?php
+          $singleLabel = $teamMailboxes[0]['user_id']
+              ? 'Personal · ' . $teamMailboxes[0]['name']
+              : (($teamMailboxes[0]['team_name'] ?? 'Team') . ' · ' . $teamMailboxes[0]['name']);
+        ?>
+        <p><?php echo htmlspecialchars($singleLabel); ?></p>
       <?php endif; ?>
 
       <?php foreach ($errors as $error): ?>
@@ -326,11 +359,20 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
               $folderLabel = $folderOptions[$messageFolder] ?? ucfirst($messageFolder);
               $isUnread = empty($message['is_read']) && $messageFolder === 'inbox';
               $messageBody = (string) ($message['body'] ?? '');
+              $isPersonalMessage = empty($message['team_id']) && !empty($message['user_id']);
+              $isPersonalPlaceholder = $isPersonalMessage
+                  && !empty($selectedMailbox['team_id'])
+                  && (int) $message['user_id'] !== (int) $userId;
+              $placeholderLabel = $isPersonalPlaceholder
+                  ? sprintf('Personal reply from %s (hidden)', $message['user_name'] ?? 'user')
+                  : '';
             ?>
             <article class="box mb-4">
               <div class="is-flex is-justify-content-space-between is-align-items-flex-start is-size-7 mb-2">
                 <div>
-                  <span class="has-text-weight-semibold"><?php echo htmlspecialchars($displayName); ?></span>
+                  <span class="has-text-weight-semibold">
+                    <?php echo htmlspecialchars($isPersonalPlaceholder ? $placeholderLabel : $displayName); ?>
+                  </span>
                   <span class="mx-1">·</span>
                   <span><?php echo htmlspecialchars($folderLabel); ?></span>
                   <?php if ($isUnread): ?>
@@ -352,13 +394,17 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
               </div>
               <h3 class="title is-6 mb-2"><?php echo htmlspecialchars($message['subject'] ?? '(No subject)'); ?></h3>
               <div class="content is-size-7">
-                <?php
-                  if ($messageBody !== '' && $messageBody !== strip_tags($messageBody)) {
-                      echo $messageBody;
-                  } else {
-                      echo nl2br(htmlspecialchars($messageBody));
-                  }
-                ?>
+                <?php if ($isPersonalPlaceholder): ?>
+                  <em>Personal message hidden.</em>
+                <?php else: ?>
+                  <?php
+                    if ($messageBody !== '' && $messageBody !== strip_tags($messageBody)) {
+                        echo $messageBody;
+                    } else {
+                        echo nl2br(htmlspecialchars($messageBody));
+                    }
+                  ?>
+                <?php endif; ?>
               </div>
             </article>
           <?php endforeach; ?>

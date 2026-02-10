@@ -34,18 +34,20 @@ try {
         exit;
     }
 
-    $stmt = $pdo->prepare(
-        'UPDATE email_conversations
-         SET is_closed = 0,
-             closed_at = NULL
-         WHERE id = :id AND mailbox_id = :mailbox_id AND is_closed = 1'
-    );
-    $stmt->execute([
-        ':id' => $conversationId,
-        ':mailbox_id' => $mailboxId
-    ]);
+    $conversation = ensureConversationScopeAccess($pdo, $conversationId, $mailbox, $userId);
+    if ($conversation) {
+        $stmt = $pdo->prepare(
+            'UPDATE email_conversations
+             SET is_closed = 0,
+                 closed_at = NULL
+             WHERE id = :id AND is_closed = 1'
+        );
+        $stmt->execute([
+            ':id' => $conversationId
+        ]);
 
-    logAction($userId, 'conversation_reopened', sprintf('Reopened conversation %d in mailbox %d', $conversationId, $mailboxId));
+        logAction($userId, 'conversation_reopened', sprintf('Reopened conversation %d in mailbox %d', $conversationId, $mailboxId));
+    }
 } catch (Throwable $error) {
     logAction($userId, 'conversation_reopen_error', $error->getMessage());
 }

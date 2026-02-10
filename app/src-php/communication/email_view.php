@@ -32,6 +32,7 @@ $composeMode = ($_GET['compose'] ?? '') === '1';
 $replyId = (int) ($_GET['reply'] ?? 0);
 $forwardId = (int) ($_GET['forward'] ?? 0);
 $templateId = (int) ($_GET['template_id'] ?? 0);
+$composeConversationId = null;
 
 $noticeKey = (string) ($_GET['notice'] ?? '');
 if ($noticeKey === 'sent') {
@@ -46,7 +47,7 @@ if ($noticeKey === 'sent') {
 
 try {
     $pdo = getDatabaseConnection();
-    $teamMailboxes = fetchTeamMailboxes($pdo, $userId);
+    $teamMailboxes = fetchAccessibleMailboxes($pdo, $userId);
 } catch (Throwable $error) {
     $errors[] = 'Failed to load mailboxes.';
     logAction($userId, 'email_mailbox_load_error', $error->getMessage());
@@ -107,6 +108,13 @@ if ($pdo && $selectedMailbox && $selectedMessageId > 0) {
         ]);
         $message = $stmt->fetch();
 
+        if ($message && !empty($message['conversation_id'])) {
+            $conversation = ensureConversationAccess($pdo, (int) $message['conversation_id'], $userId);
+            if (!$conversation) {
+                $message = null;
+            }
+        }
+
         if ($message && $message['folder'] === 'drafts') {
             $composeValues['to_emails'] = (string) ($message['to_emails'] ?? '');
             $composeValues['cc_emails'] = (string) ($message['cc_emails'] ?? '');
@@ -165,6 +173,13 @@ if ($pdo && $selectedMailbox && $prefillMessageId > 0) {
             ':mailbox_id' => $selectedMailbox['id']
         ]);
         $prefillMessage = $stmt->fetch();
+
+        if ($prefillMessage && !empty($prefillMessage['conversation_id'])) {
+            $conversation = ensureConversationAccess($pdo, (int) $prefillMessage['conversation_id'], $userId);
+            if (!$conversation) {
+                $prefillMessage = null;
+            }
+        }
         if ($prefillMessage) {
             $originalSubject = (string) ($prefillMessage['subject'] ?? '');
             $subjectPrefix = $replyId > 0 ? 'Re: ' : 'Fwd: ';
@@ -176,6 +191,9 @@ if ($pdo && $selectedMailbox && $prefillMessageId > 0) {
             if ($replyId > 0) {
                 $composeValues['to_emails'] = (string) ($prefillMessage['from_email'] ?? '');
             }
+            $composeConversationId = !empty($prefillMessage['conversation_id'])
+                ? (int) $prefillMessage['conversation_id']
+                : null;
             $bodyLines = [];
             if ($replyId > 0) {
                 $bodyLines[] = '';
@@ -223,10 +241,12 @@ $totalPages = 1;
 if ($pdo && $selectedMailbox) {
     try {
         $filterSql = '';
+        $scopeSql = 'mailbox_id = :mailbox_id';
         $params = [
             ':mailbox_id' => $selectedMailbox['id'],
             ':folder' => $folder
         ];
+
         if ($filter !== '') {
             $filterSql = 'AND (subject LIKE :filter OR ';
             if ($folder === 'inbox') {
@@ -239,7 +259,7 @@ if ($pdo && $selectedMailbox) {
         }
 
         $countSql = 'SELECT COUNT(*) FROM email_messages
-             WHERE mailbox_id = :mailbox_id AND folder = :folder ' . $filterSql;
+             WHERE ' . $scopeSql . ' AND folder = :folder ' . $filterSql;
         $countStmt = $pdo->prepare($countSql);
         $countStmt->execute($params);
         $totalMessages = (int) $countStmt->fetchColumn();
@@ -256,7 +276,7 @@ if ($pdo && $selectedMailbox) {
         $listSql = 'SELECT id, subject, from_name, from_email, to_emails, is_read,
                     received_at, sent_at, created_at
              FROM email_messages
-             WHERE mailbox_id = :mailbox_id AND folder = :folder ' . $filterSql .
+             WHERE ' . $scopeSql . ' AND folder = :folder ' . $filterSql .
             ' ORDER BY ' . $sortColumn . ' ' . $sortDirection .
             ' LIMIT :limit OFFSET :offset';
 
@@ -272,7 +292,7 @@ if ($pdo && $selectedMailbox) {
         $countStmt = $pdo->prepare(
             'SELECT folder, COUNT(*) AS total
              FROM email_messages
-             WHERE mailbox_id = :mailbox_id
+             WHERE ' . $scopeSql . '
              GROUP BY folder'
         );
         $countStmt->execute([':mailbox_id' => $selectedMailbox['id']]);

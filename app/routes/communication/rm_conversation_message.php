@@ -35,17 +35,20 @@ try {
         exit;
     }
 
-    $stmt = $pdo->prepare(
-        'UPDATE email_messages
-         SET conversation_id = NULL
-         WHERE id = :id AND mailbox_id = :mailbox_id'
-    );
-    $stmt->execute([
-        ':id' => $messageId,
-        ':mailbox_id' => $mailboxId
-    ]);
+    $conversation = ensureConversationScopeAccess($pdo, $conversationId, $mailbox, $userId);
+    if ($conversation) {
+        $stmt = $pdo->prepare(
+            'UPDATE email_messages
+             SET conversation_id = NULL
+             WHERE id = :id AND conversation_id = :conversation_id'
+        );
+        $stmt->execute([
+            ':id' => $messageId,
+            ':conversation_id' => $conversationId
+        ]);
 
-    logAction($userId, 'conversation_email_removed', sprintf('Removed email %d from conversation in mailbox %d', $messageId, $mailboxId));
+        logAction($userId, 'conversation_email_removed', sprintf('Removed email %d from conversation in mailbox %d', $messageId, $mailboxId));
+    }
 } catch (Throwable $error) {
     logAction($userId, 'conversation_email_remove_error', $error->getMessage());
 }

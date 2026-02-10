@@ -33,17 +33,9 @@ try {
         exit;
     }
 
-    $stmt = $pdo->prepare(
-        'SELECT id FROM email_conversations
-         WHERE id = :id AND mailbox_id = :mailbox_id AND is_closed = 1'
-    );
-    $stmt->execute([
-        ':id' => $conversationId,
-        ':mailbox_id' => $mailboxId
-    ]);
-    $conversation = $stmt->fetch();
+    $conversation = ensureConversationScopeAccess($pdo, $conversationId, $mailbox, $userId);
 
-    if ($conversation) {
+    if ($conversation && !empty($conversation['is_closed'])) {
         $updateStmt = $pdo->prepare(
             'UPDATE email_messages
              SET conversation_id = NULL
@@ -52,11 +44,10 @@ try {
         $updateStmt->execute([':conversation_id' => $conversationId]);
 
         $deleteStmt = $pdo->prepare(
-            'DELETE FROM email_conversations WHERE id = :id AND mailbox_id = :mailbox_id'
+            'DELETE FROM email_conversations WHERE id = :id'
         );
         $deleteStmt->execute([
-            ':id' => $conversationId,
-            ':mailbox_id' => $mailboxId
+            ':id' => $conversationId
         ]);
 
         logAction($userId, 'conversation_deleted', sprintf('Deleted conversation %d in mailbox %d', $conversationId, $mailboxId));
