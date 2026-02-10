@@ -3,6 +3,7 @@ require_once __DIR__ . '/../auth/check.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
 require_once __DIR__ . '/../../src-php/communication/email_helpers.php';
 require_once __DIR__ . '/../../src-php/core/form_helpers.php';
+require_once __DIR__ . '/../../src-php/core/object_links.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -40,16 +41,52 @@ try {
     }
 
     $stmt = $pdo->prepare(
-        'UPDATE email_messages
-         SET folder = "trash"
-         WHERE id = :id AND mailbox_id = :mailbox_id'
+        'SELECT id, folder
+         FROM email_messages
+         WHERE id = :id AND mailbox_id = :mailbox_id
+         LIMIT 1'
     );
     $stmt->execute([
         ':id' => $emailId,
         ':mailbox_id' => $mailboxId
     ]);
+    $message = $stmt->fetch();
 
-    logAction($userId, 'email_deleted', sprintf('Moved email %d to trash', $emailId));
+    if ($message && $message['folder'] === 'trash') {
+        $pdo->beginTransaction();
+        try {
+            clearAllObjectLinks($pdo, 'email', $emailId);
+
+            $deleteStmt = $pdo->prepare(
+                'DELETE FROM email_messages
+                 WHERE id = :id AND mailbox_id = :mailbox_id'
+            );
+            $deleteStmt->execute([
+                ':id' => $emailId,
+                ':mailbox_id' => $mailboxId
+            ]);
+
+            $pdo->commit();
+        } catch (Throwable $error) {
+            $pdo->rollBack();
+            throw $error;
+        }
+
+        logAction($userId, 'email_deleted_permanent', sprintf('Deleted email %d from trash', $emailId));
+    } elseif ($message) {
+        $updateStmt = $pdo->prepare(
+            'UPDATE email_messages
+             SET folder = "trash"
+             WHERE id = :id AND mailbox_id = :mailbox_id'
+        );
+        $updateStmt->execute([
+            ':id' => $emailId,
+            ':mailbox_id' => $mailboxId
+        ]);
+
+        logAction($userId, 'email_deleted', sprintf('Moved email %d to trash', $emailId));
+    }
+
     $redirectParams['notice'] = 'deleted';
     header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
     exit;

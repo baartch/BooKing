@@ -90,3 +90,22 @@ function clearObjectLinks(PDO $pdo, string $type, int $id, ?int $teamId, ?int $u
 
     $stmt->execute($params);
 }
+
+function clearAllObjectLinks(PDO $pdo, string $type, int $id): void
+{
+    if ($type === '' || $id <= 0) {
+        return;
+    }
+
+    $stmt = $pdo->prepare(
+        'DELETE FROM object_links
+         WHERE (left_type = :left_type AND left_id = :left_id)
+            OR (right_type = :right_type AND right_id = :right_id)'
+    );
+    $stmt->execute([
+        ':left_type' => $type,
+        ':left_id' => $id,
+        ':right_type' => $type,
+        ':right_id' => $id
+    ]);
+}
