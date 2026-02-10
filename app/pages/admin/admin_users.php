@@ -29,15 +29,6 @@ if (!isset($users, $teamsByUser)):
     </div>
     <div class="column is-3">
       <div class="field">
-        <label for="password" class="label">Password (unused)</label>
-        <div class="control">
-          <input type="password" id="password" name="password" class="input" placeholder="Not used" disabled>
-        </div>
-        <p class="help">Password login is disabled. Users sign in with email OTP.</p>
-      </div>
-    </div>
-    <div class="column is-2">
-      <div class="field">
         <label for="role" class="label">Role</label>
         <div class="control">
           <div class="select is-fullwidth">
@@ -50,15 +41,6 @@ if (!isset($users, $teamsByUser)):
             <input type="hidden" name="role" value="<?php echo htmlspecialchars($editUser['role']); ?>">
           <?php endif; ?>
         </div>
-      </div>
-    </div>
-    <div class="column is-3">
-      <div class="field">
-        <label class="label">Teams</label>
-        <div class="control">
-          <input type="text" class="input" value="<?php echo empty($editTeams) ? 'No teams' : htmlspecialchars(implode(', ', $editTeams)); ?>" readonly>
-        </div>
-        <p class="help">Users sign in with this email address.</p>
       </div>
     </div>
     <div class="column is-1 is-flex is-align-items-flex-end">

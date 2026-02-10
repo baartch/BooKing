@@ -16,9 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $action = $_POST['action'] ?? '';
 
-    if ($action === 'update_password') {
-        $errors[] = 'Password login is disabled.';
-    }
 
     if ($action === 'update_page_size') {
         $requestedPageSize = (int) ($_POST['venues_page_size'] ?? $defaultPageSize);
@@ -61,12 +58,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <?php endforeach; ?>
 
           <div class="columns is-multiline">
-            <div class="column is-12">
-              <div class="box">
-                <h2 class="title is-5">Password Login Disabled</h2>
-                <p>Email OTP is now used for authentication.</p>
-              </div>
-            </div>
             <div class="column is-12">
               <div class="box">
                 <h2 class="title is-5">Venues List</h2>
