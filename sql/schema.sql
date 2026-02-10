@@ -186,10 +186,16 @@ CREATE TABLE object_links (
     left_id INT NOT NULL,
     right_type VARCHAR(50) NOT NULL,
     right_id INT NOT NULL,
+    team_id INT DEFAULT NULL,
+    user_id INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY uniq_object_link (left_type, left_id, right_type, right_id),
+    UNIQUE KEY uniq_object_link (left_type, left_id, right_type, right_id, team_id, user_id),
     INDEX idx_object_links_left (left_type, left_id),
-    INDEX idx_object_links_right (right_type, right_id)
+    INDEX idx_object_links_right (right_type, right_id),
+    INDEX idx_object_links_team (team_id),
+    INDEX idx_object_links_user (user_id),
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
 CREATE TABLE email_templates (

@@ -183,20 +183,39 @@ function findVenueIdsByEmail(PDO $pdo, string $email): array
     return array_map('intval', array_column($stmt->fetchAll(), 'id'));
 }
 
-function fetchLinkedObjects(PDO $pdo, string $type, int $id): array
+function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int $userId): array
 {
     $type = trim($type);
     if ($type === '' || $id <= 0) {
         return [];
     }
 
-    $stmt = $pdo->prepare(
+    if ($teamId === null && $userId === null) {
+        return [];
+    }
+
+    $sql =
         'SELECT left_type, left_id, right_type, right_id
          FROM object_links
-         WHERE (left_type = :type AND left_id = :id)
-            OR (right_type = :type AND right_id = :id)'
-    );
-    $stmt->execute([':type' => $type, ':id' => $id]);
+         WHERE ((left_type = :type AND left_id = :id)
+            OR (right_type = :type AND right_id = :id))
+           AND ';
+
+    if ($userId !== null) {
+        $sql .= 'user_id = :user_id';
+    } else {
+        $sql .= 'user_id IS NULL AND team_id = :team_id';
+    }
+
+    $stmt = $pdo->prepare($sql);
+    $params = [':type' => $type, ':id' => $id];
+    if ($userId !== null) {
+        $params[':user_id'] = $userId;
+    } else {
+        $params[':team_id'] = $teamId;
+    }
+
+    $stmt->execute($params);
     $rows = $stmt->fetchAll();
     if (!$rows) {
         return [];
