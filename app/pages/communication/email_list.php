@@ -28,6 +28,16 @@
     <div class="level mb-2">
       <div class="level-left">
         <span class="tag"><?php echo (int) $totalMessages; ?> emails</span>
+        <?php if ($folder === 'trash'): ?>
+          <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/empty_trash.php" class="ml-2" onsubmit="return confirm('Empty the trash for this mailbox?');">
+            <?php renderCsrfField(); ?>
+            <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
+            <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
+            <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+            <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
+            <button type="submit" class="button is-small" aria-label="Empty trash" title="Empty trash">Empty trash</button>
+          </form>
+        <?php endif; ?>
       </div>
       <div class="level-right">
         <?php
