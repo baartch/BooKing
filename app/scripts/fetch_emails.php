@@ -309,27 +309,35 @@ foreach ($mailboxes as $mailbox) {
             $pdo->beginTransaction();
 
             $toEmails = $toRaw !== '' ? parseEmailAddressList($toRaw) : '';
-            $conversationId = ensureConversationForEmail(
-                $pdo,
-                $mailbox,
-                (string) $fromEmail,
-                $toEmails,
-                $subject,
-                false,
-                $date !== '' ? date('Y-m-d H:i:s', strtotime($date)) : date('Y-m-d H:i:s')
-            );
+            $teamScopeId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
+            $userScopeId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
+            $conversationId = null;
+            if ($teamScopeId || $userScopeId) {
+                $conversationId = ensureConversationForEmail(
+                    $pdo,
+                    $mailbox,
+                    (string) $fromEmail,
+                    $toEmails,
+                    $subject,
+                    false,
+                    $date !== '' ? date('Y-m-d H:i:s', strtotime($date)) : date('Y-m-d H:i:s'),
+                    $teamScopeId,
+                    $userScopeId
+                );
+            }
 
             $fromCandidate = $fromEmail !== '' ? strtolower(trim((string) $fromEmail)) : '';
 
             $stmt = $pdo->prepare(
                 'INSERT INTO email_messages
-                 (mailbox_id, team_id, folder, subject, body, from_name, from_email, to_emails, cc_emails, message_id, received_at, conversation_id)
+                 (mailbox_id, team_id, user_id, folder, subject, body, from_name, from_email, to_emails, cc_emails, message_id, received_at, conversation_id)
                  VALUES
-                 (:mailbox_id, :team_id, "inbox", :subject, :body, :from_name, :from_email, :to_emails, :cc_emails, :message_id, :received_at, :conversation_id)'
+                 (:mailbox_id, :team_id, :user_id, "inbox", :subject, :body, :from_name, :from_email, :to_emails, :cc_emails, :message_id, :received_at, :conversation_id)'
             );
             $stmt->execute([
                 ':mailbox_id' => $mailboxId,
-                ':team_id' => $mailbox['team_id'],
+                ':team_id' => $mailbox['team_id'] ?? null,
+                ':user_id' => $mailbox['user_id'] ?? null,
                 ':subject' => $subject !== '' ? $subject : null,
                 ':body' => $body !== '' ? $body : null,
                 ':from_name' => $fromName !== '' ? $fromName : null,

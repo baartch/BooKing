@@ -17,6 +17,7 @@ $userId = (int) ($currentUser['user_id'] ?? 0);
 $mailboxId = (int) ($_POST['mailbox_id'] ?? 0);
 $action = (string) ($_POST['action'] ?? 'send_email');
 $draftId = (int) ($_POST['draft_id'] ?? 0);
+$conversationId = (int) ($_POST['conversation_id'] ?? 0);
 $toEmails = normalizeEmailList((string) ($_POST['to_emails'] ?? ''));
 $ccEmails = normalizeEmailList((string) ($_POST['cc_emails'] ?? ''));
 $bccEmails = normalizeEmailList((string) ($_POST['bcc_emails'] ?? ''));
@@ -53,6 +54,18 @@ try {
     $linkTeamId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
     $linkUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
 
+    if ($conversationId > 0) {
+        $conversation = ensureConversationAccess($pdo, $conversationId, $userId);
+        if (!$conversation) {
+            $redirectParams['notice'] = 'send_failed';
+            header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+            exit;
+        }
+        $redirectParams['tab'] = 'conversations';
+        $redirectParams['conversation_id'] = $conversationId;
+        $redirectParams['mailbox_id'] = $conversation['mailbox_id'] ?? $mailboxId;
+    }
+
     if ($action === 'save_draft') {
         if ($draftId > 0) {
             $stmt = $pdo->prepare(
@@ -62,6 +75,7 @@ try {
                      to_emails = :to_emails,
                      cc_emails = :cc_emails,
                      bcc_emails = :bcc_emails,
+                     conversation_id = :conversation_id,
                      updated_at = NOW()
                  WHERE id = :id
                    AND mailbox_id = :mailbox_id
@@ -73,9 +87,23 @@ try {
                 ':to_emails' => $toEmails !== '' ? $toEmails : null,
                 ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
                 ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
+                ':conversation_id' => $conversationId > 0 ? $conversationId : null,
                 ':id' => $draftId,
                 ':mailbox_id' => $mailbox['id']
             ]);
+
+            if ($mailbox['user_id']) {
+                $ownershipStmt = $pdo->prepare(
+                    'UPDATE email_messages
+                     SET team_id = NULL,
+                         user_id = :user_id
+                     WHERE id = :id'
+                );
+                $ownershipStmt->execute([
+                    ':user_id' => $mailbox['user_id'],
+                    ':id' => $draftId
+                ]);
+            }
             clearObjectLinks($pdo, 'email', $draftId, $linkTeamId, $linkUserId);
             if ($linkItems) {
                 foreach ($linkItems as $linkItem) {
@@ -90,13 +118,15 @@ try {
         } else {
             $stmt = $pdo->prepare(
                 'INSERT INTO email_messages
-                 (mailbox_id, team_id, folder, subject, body, to_emails, cc_emails, bcc_emails, created_by, created_at)
+                 (mailbox_id, team_id, user_id, conversation_id, folder, subject, body, to_emails, cc_emails, bcc_emails, created_by, created_at)
                  VALUES
-                 (:mailbox_id, :team_id, "drafts", :subject, :body, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW())'
+                 (:mailbox_id, :team_id, :user_id, :conversation_id, "drafts", :subject, :body, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW())'
             );
             $stmt->execute([
                 ':mailbox_id' => $mailbox['id'],
-                ':team_id' => $mailbox['team_id'],
+                ':team_id' => $mailbox['team_id'] ?? null,
+                ':user_id' => $mailbox['user_id'] ?? null,
+                ':conversation_id' => $conversationId > 0 ? $conversationId : null,
                 ':subject' => $subject !== '' ? $subject : null,
                 ':body' => $body !== '' ? $body : null,
                 ':to_emails' => $toEmails !== '' ? $toEmails : null,
@@ -143,36 +173,66 @@ try {
         exit;
     }
 
-    if ($startNewConversation) {
-        $conversationId = ensureConversationForEmail(
-            $pdo,
-            $mailbox,
-            getMailboxPrimaryEmail($mailbox),
-            $toEmails,
-            $subject,
-            true,
-            date('Y-m-d H:i:s')
-        );
-    } else {
-        $conversationId = findConversationForEmail(
-            $pdo,
-            $mailbox,
-            getMailboxPrimaryEmail($mailbox),
-            $toEmails,
-            $subject,
-            date('Y-m-d H:i:s')
-        );
+    if ($conversationId <= 0) {
+        $teamScopeId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
+        $fallbackUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
+        $conversationId = $teamScopeId
+            ? findConversationForEmail(
+                $pdo,
+                $mailbox,
+                getMailboxPrimaryEmail($mailbox),
+                $toEmails,
+                $subject,
+                date('Y-m-d H:i:s'),
+                $teamScopeId,
+                null
+            )
+            : findConversationForEmail(
+                $pdo,
+                $mailbox,
+                getMailboxPrimaryEmail($mailbox),
+                $toEmails,
+                $subject,
+                date('Y-m-d H:i:s'),
+                null,
+                $fallbackUserId
+            );
+
+        if ($conversationId <= 0 && $startNewConversation) {
+            $conversationId = ensureConversationForEmail(
+                $pdo,
+                $mailbox,
+                getMailboxPrimaryEmail($mailbox),
+                $toEmails,
+                $subject,
+                true,
+                date('Y-m-d H:i:s'),
+                $teamScopeId,
+                $fallbackUserId
+            );
+        }
+    }
+
+    $messageTeamId = $mailbox['team_id'] ?? null;
+    $messageUserId = $mailbox['user_id'] ?? null;
+
+    if ($conversationId > 0 && $messageTeamId !== null) {
+        $conversation = ensureConversationAccess($pdo, $conversationId, $userId);
+        if ($conversation) {
+            $messageTeamId = $conversation['team_id'] ?? $messageTeamId;
+        }
     }
 
     $stmt = $pdo->prepare(
         'INSERT INTO email_messages
-         (mailbox_id, team_id, folder, subject, body, to_emails, cc_emails, bcc_emails, created_by, sent_at, created_at, conversation_id)
+         (mailbox_id, team_id, user_id, folder, subject, body, to_emails, cc_emails, bcc_emails, created_by, sent_at, created_at, conversation_id)
          VALUES
-         (:mailbox_id, :team_id, "sent", :subject, :body, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), NOW(), :conversation_id)'
+         (:mailbox_id, :team_id, :user_id, "sent", :subject, :body, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), NOW(), :conversation_id)'
     );
     $stmt->execute([
         ':mailbox_id' => $mailbox['id'],
-        ':team_id' => $mailbox['team_id'],
+        ':team_id' => $messageTeamId,
+        ':user_id' => $messageUserId,
         ':subject' => $subject !== '' ? $subject : null,
         ':body' => $body !== '' ? $body : null,
         ':to_emails' => $toEmails,

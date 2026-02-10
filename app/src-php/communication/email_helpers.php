@@ -31,6 +31,29 @@ function fetchTeamMailboxes(PDO $pdo, int $userId): array
     return $stmt->fetchAll();
 }
 
+function fetchAccessibleMailboxes(PDO $pdo, int $userId): array
+{
+    $stmt = $pdo->prepare(
+        'SELECT m.id, m.name, m.team_id, m.user_id, t.name AS team_name, m.attachment_quota_bytes
+         FROM mailboxes m
+         LEFT JOIN team_members tm ON tm.team_id = m.team_id AND tm.user_id = :team_user_id
+         LEFT JOIN teams t ON t.id = m.team_id
+         WHERE m.user_id = :owner_user_id
+            OR tm.user_id = :member_user_id
+         ORDER BY
+           CASE WHEN m.user_id = :order_user_id THEN 0 ELSE 1 END,
+           t.name,
+           m.name'
+    );
+    $stmt->execute([
+        ':team_user_id' => $userId,
+        ':owner_user_id' => $userId,
+        ':member_user_id' => $userId,
+        ':order_user_id' => $userId
+    ]);
+    return $stmt->fetchAll();
+}
+
 function fetchTeamAdminTeams(PDO $pdo, int $userId): array
 {
     $stmt = $pdo->prepare(
@@ -72,19 +95,72 @@ function fetchMailboxQuotaUsage(PDO $pdo, int $mailboxId): int
     return (int) $stmt->fetchColumn();
 }
 
+function ensureConversationAccess(PDO $pdo, int $conversationId, int $userId): ?array
+{
+    $stmt = $pdo->prepare(
+        'SELECT c.*, t.name AS team_name, u.username AS user_name
+         FROM email_conversations c
+         LEFT JOIN teams t ON t.id = c.team_id
+         LEFT JOIN users u ON u.id = c.user_id
+         LEFT JOIN team_members tm ON tm.team_id = c.team_id AND tm.user_id = :member_user_id
+         WHERE c.id = :conversation_id
+           AND ((c.team_id IS NOT NULL AND tm.user_id = :member_user_id)
+             OR (c.user_id IS NOT NULL AND c.user_id = :owner_user_id))
+         LIMIT 1'
+    );
+    $stmt->execute([
+        ':conversation_id' => $conversationId,
+        ':member_user_id' => $userId,
+        ':owner_user_id' => $userId
+    ]);
+    $conversation = $stmt->fetch();
+    return $conversation ?: null;
+}
+
+function ensureConversationScopeAccess(PDO $pdo, int $conversationId, array $mailbox, int $userId): ?array
+{
+    $scopeTeamId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
+    $scopeUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
+
+    $stmt = $pdo->prepare(
+        'SELECT c.*, t.name AS team_name, u.username AS user_name
+         FROM email_conversations c
+         LEFT JOIN teams t ON t.id = c.team_id
+         LEFT JOIN users u ON u.id = c.user_id
+         LEFT JOIN team_members tm ON tm.team_id = c.team_id AND tm.user_id = :member_user_id
+         WHERE c.id = :conversation_id
+           AND ((c.team_id IS NOT NULL AND tm.user_id = :member_user_id)
+             OR (c.user_id IS NOT NULL AND c.user_id = :owner_user_id))
+           AND (c.team_id = :scope_team_id OR c.user_id = :scope_user_id)
+         LIMIT 1'
+    );
+    $stmt->execute([
+        ':conversation_id' => $conversationId,
+        ':member_user_id' => $userId,
+        ':owner_user_id' => $userId,
+        ':scope_team_id' => $scopeTeamId,
+        ':scope_user_id' => $scopeUserId
+    ]);
+    $conversation = $stmt->fetch();
+    return $conversation ?: null;
+}
+
 function ensureMailboxAccess(PDO $pdo, int $mailboxId, int $userId): ?array
 {
     $stmt = $pdo->prepare(
         'SELECT m.*, t.name AS team_name
          FROM mailboxes m
-         JOIN team_members tm ON tm.team_id = m.team_id
-         JOIN teams t ON t.id = m.team_id
-         WHERE m.id = :mailbox_id AND tm.user_id = :user_id
+         LEFT JOIN team_members tm ON tm.team_id = m.team_id AND tm.user_id = :member_user_id_join
+         LEFT JOIN teams t ON t.id = m.team_id
+         WHERE m.id = :mailbox_id
+           AND (m.user_id = :owner_user_id OR tm.user_id = :member_user_id_where)
          LIMIT 1'
     );
     $stmt->execute([
         ':mailbox_id' => $mailboxId,
-        ':user_id' => $userId
+        ':member_user_id_join' => $userId,
+        ':member_user_id_where' => $userId,
+        ':owner_user_id' => $userId
     ]);
     $mailbox = $stmt->fetch();
     return $mailbox ?: null;
@@ -469,11 +545,18 @@ function findConversationForEmail(
     string $fromEmail,
     string $toEmails,
     ?string $subject,
-    ?string $activityAt
+    ?string $activityAt,
+    ?int $scopeTeamId = null,
+    ?int $scopeUserId = null
 ): ?int {
     $mailboxId = (int) ($mailbox['id'] ?? 0);
-    $teamId = (int) ($mailbox['team_id'] ?? 0);
-    if ($mailboxId <= 0 || $teamId <= 0) {
+    $teamId = $scopeTeamId !== null
+        ? (int) $scopeTeamId
+        : (!empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null);
+    $userId = $scopeUserId !== null
+        ? (int) $scopeUserId
+        : (!empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null);
+    if ($mailboxId <= 0 || (!$teamId && !$userId)) {
         return null;
     }
 
@@ -481,20 +564,35 @@ function findConversationForEmail(
     $participantKey = buildConversationParticipantKey(getMailboxPrimaryEmail($mailbox), $fromEmail, $toEmails);
     $activityAt = $activityAt ?: date('Y-m-d H:i:s');
 
+    $openConditions = [];
+    $openParams = [
+        ':subject_normalized' => $normalizedSubject,
+        ':participant_key' => $participantKey
+    ];
+
+    if ($teamId) {
+        $openConditions[] = '(team_id = :team_id AND user_id IS NULL)';
+        $openParams[':team_id'] = $teamId;
+    }
+    if ($userId) {
+        $openConditions[] = '(user_id = :user_id AND team_id IS NULL)';
+        $openParams[':user_id'] = $userId;
+    }
+
+    if (!$openConditions) {
+        return null;
+    }
+
     $stmt = $pdo->prepare(
         'SELECT id FROM email_conversations
-         WHERE mailbox_id = :mailbox_id
+         WHERE (' . implode(' OR ', $openConditions) . ')
            AND subject_normalized = :subject_normalized
            AND participant_key = :participant_key
            AND is_closed = 0
          ORDER BY id DESC
          LIMIT 1'
     );
-    $stmt->execute([
-        ':mailbox_id' => $mailboxId,
-        ':subject_normalized' => $normalizedSubject,
-        ':participant_key' => $participantKey
-    ]);
+    $stmt->execute($openParams);
     $conversationId = (int) $stmt->fetchColumn();
     if ($conversationId > 0) {
         $updateStmt = $pdo->prepare(
@@ -511,18 +609,14 @@ function findConversationForEmail(
 
     $closedStmt = $pdo->prepare(
         'SELECT id FROM email_conversations
-         WHERE mailbox_id = :mailbox_id
+         WHERE (' . implode(' OR ', $openConditions) . ')
            AND subject_normalized = :subject_normalized
            AND participant_key = :participant_key
            AND is_closed = 1
          ORDER BY id DESC
          LIMIT 1'
     );
-    $closedStmt->execute([
-        ':mailbox_id' => $mailboxId,
-        ':subject_normalized' => $normalizedSubject,
-        ':participant_key' => $participantKey
-    ]);
+    $closedStmt->execute($openParams);
     $closedConversationId = (int) $closedStmt->fetchColumn();
     if ($closedConversationId > 0) {
         $reopenStmt = $pdo->prepare(
@@ -549,11 +643,18 @@ function ensureConversationForEmail(
     string $toEmails,
     ?string $subject,
     bool $forceNew,
-    ?string $activityAt
+    ?string $activityAt,
+    ?int $scopeTeamId = null,
+    ?int $scopeUserId = null
 ): ?int {
     $mailboxId = (int) ($mailbox['id'] ?? 0);
-    $teamId = (int) ($mailbox['team_id'] ?? 0);
-    if ($mailboxId <= 0 || $teamId <= 0) {
+    $teamId = $scopeTeamId !== null
+        ? (int) $scopeTeamId
+        : (!empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null);
+    $userId = $scopeUserId !== null
+        ? (int) $scopeUserId
+        : (!empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null);
+    if ($mailboxId <= 0 || (!$teamId && !$userId)) {
         return null;
     }
 
@@ -569,7 +670,9 @@ function ensureConversationForEmail(
             $fromEmail,
             $toEmails,
             $subject,
-            $activityAt
+            $activityAt,
+            $teamId,
+            $userId
         );
         if ($conversationId !== null) {
             return $conversationId;
@@ -580,13 +683,14 @@ function ensureConversationForEmail(
 
     $insertStmt = $pdo->prepare(
         'INSERT INTO email_conversations
-         (mailbox_id, team_id, subject, subject_normalized, participant_key, last_activity_at)
+         (mailbox_id, team_id, user_id, subject, subject_normalized, participant_key, last_activity_at)
          VALUES
-         (:mailbox_id, :team_id, :subject, :subject_normalized, :participant_key, :last_activity_at)'
+         (:mailbox_id, :team_id, :user_id, :subject, :subject_normalized, :participant_key, :last_activity_at)'
     );
     $insertStmt->execute([
         ':mailbox_id' => $mailboxId,
         ':team_id' => $teamId,
+        ':user_id' => $userId,
         ':subject' => $displaySubject,
         ':subject_normalized' => $normalizedSubject,
         ':participant_key' => $participantKey,

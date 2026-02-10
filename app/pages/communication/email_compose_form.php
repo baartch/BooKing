@@ -2,7 +2,34 @@
 ?>
 <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/send.php">
   <?php renderCsrfField(); ?>
-  <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
+  <?php if (!empty($composeConversationId)): ?>
+    <input type="hidden" name="conversation_id" value="<?php echo (int) $composeConversationId; ?>">
+  <?php endif; ?>
+
+  <?php if (isset($teamMailboxes) && count($teamMailboxes) > 1): ?>
+    <div class="field">
+      <label for="compose_mailbox_id" class="label">From mailbox</label>
+      <div class="control">
+        <div class="select is-fullwidth">
+          <select id="compose_mailbox_id" name="mailbox_id">
+            <?php foreach ($teamMailboxes as $mailbox): ?>
+              <?php
+                $label = $mailbox['user_id']
+                    ? 'Personal · ' . $mailbox['name']
+                    : (($mailbox['team_name'] ?? 'Team') . ' · ' . $mailbox['name']);
+              ?>
+              <option value="<?php echo (int) $mailbox['id']; ?>" <?php echo (int) $selectedMailbox['id'] === (int) $mailbox['id'] ? 'selected' : ''; ?>>
+                <?php echo htmlspecialchars($label); ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+      </div>
+    </div>
+  <?php else: ?>
+    <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
+  <?php endif; ?>
+
   <input type="hidden" name="folder" value="<?php echo htmlspecialchars($folder); ?>">
   <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
   <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
