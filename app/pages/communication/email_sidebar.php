@@ -83,8 +83,8 @@
 
     <div class="block">
       <h3 class="title is-6">Attachment quota</h3>
-      <progress class="progress" value="<?php echo (int) $quotaUsed; ?>" max="<?php echo (int) $quotaTotal; ?>"></progress>
-      <p><?php echo htmlspecialchars(formatBytes($quotaUsed)); ?> / <?php echo htmlspecialchars(formatBytes($quotaTotal)); ?></p>
+      <progress class="progress is-small mb-0" value="<?php echo (int) $quotaUsed; ?>" max="<?php echo (int) $quotaTotal; ?>"></progress>
+      <p class="is-size-7"><?php echo htmlspecialchars(formatBytes($quotaUsed)); ?> / <?php echo htmlspecialchars(formatBytes($quotaTotal)); ?></p>
     </div>
   <?php endif; ?>
 </aside>
