@@ -4,71 +4,41 @@ require_once __DIR__ . '/../../src-php/communication/email_helpers.php';
 $errors = [];
 $conversations = [];
 $conversationMessages = [];
-$teamMailboxes = [];
-$selectedMailbox = null;
 $pdo = null;
 $userId = (int) ($currentUser['user_id'] ?? 0);
 $folderOptions = getEmailFolderOptions();
 
 try {
     $pdo = getDatabaseConnection();
-    $teamMailboxes = fetchAccessibleMailboxes($pdo, $userId);
 } catch (Throwable $error) {
-    $errors[] = 'Failed to load mailboxes.';
-    logAction($userId, 'conversation_mailbox_load_error', $error->getMessage());
-}
-
-$selectedMailboxId = (int) ($_GET['mailbox_id'] ?? 0);
-if ($selectedMailboxId <= 0 && $teamMailboxes) {
-    $selectedMailboxId = (int) ($teamMailboxes[0]['id'] ?? 0);
-}
-
-if ($pdo && $selectedMailboxId > 0) {
-    try {
-        $selectedMailbox = ensureMailboxAccess($pdo, $selectedMailboxId, $userId);
-        if (!$selectedMailbox) {
-            $errors[] = 'Mailbox access denied.';
-        }
-    } catch (Throwable $error) {
-        $errors[] = 'Failed to load mailbox.';
-        logAction($userId, 'conversation_mailbox_access_error', $error->getMessage());
-    }
+    $errors[] = 'Failed to load conversations.';
+    logAction($userId, 'conversation_db_error', $error->getMessage());
 }
 
 $conversationId = (int) ($_GET['conversation_id'] ?? 0);
 
-if ($pdo && $selectedMailbox) {
+if ($pdo) {
     try {
-        $conversationScopeSql = '';
-        $conversationParams = [];
-
-        if (!empty($selectedMailbox['team_id'])) {
-            $conversationScopeSql = 'c.team_id = :scope_team_id';
-            $conversationParams[':scope_team_id'] = (int) $selectedMailbox['team_id'];
-        } elseif (!empty($selectedMailbox['user_id'])) {
-            $conversationScopeSql = 'c.user_id = :scope_user_id';
-            $conversationParams[':scope_user_id'] = (int) $selectedMailbox['user_id'];
-        }
-
-        if ($conversationScopeSql === '') {
-            $conversations = [];
-        } else {
-            $stmt = $pdo->prepare(
-                'SELECT c.*, COUNT(em.id) AS message_count,
-                        (SELECT em2.folder
-                         FROM email_messages em2
-                         WHERE em2.conversation_id = c.id
-                         ORDER BY COALESCE(em2.received_at, em2.sent_at, em2.created_at) DESC, em2.id DESC
-                         LIMIT 1) AS last_message_folder
-                 FROM email_conversations c
-                 LEFT JOIN email_messages em ON em.conversation_id = c.id
-                 WHERE ' . $conversationScopeSql . '
-                 GROUP BY c.id
-                 ORDER BY c.last_activity_at DESC, c.id DESC'
-            );
-            $stmt->execute($conversationParams);
-            $conversations = $stmt->fetchAll();
-        }
+        $stmt = $pdo->prepare(
+            'SELECT c.*, COUNT(em.id) AS message_count,
+                    (SELECT em2.folder
+                     FROM email_messages em2
+                     WHERE em2.conversation_id = c.id
+                     ORDER BY COALESCE(em2.received_at, em2.sent_at, em2.created_at) DESC, em2.id DESC
+                     LIMIT 1) AS last_message_folder
+             FROM email_conversations c
+             LEFT JOIN team_members tm ON tm.team_id = c.team_id AND tm.user_id = :viewer_user_id_join
+             LEFT JOIN email_messages em ON em.conversation_id = c.id
+             WHERE (c.team_id IS NOT NULL AND tm.user_id = :viewer_user_id_team)
+                OR (c.user_id IS NOT NULL AND c.user_id = :viewer_user_id_owner)
+             GROUP BY c.id
+             ORDER BY c.last_activity_at DESC, c.id DESC'
+        );
+        $stmt->execute([
+            ':viewer_user_id_join' => $userId,
+            ':viewer_user_id_team' => $userId,
+            ':viewer_user_id_owner' => $userId
+        ]);
         $conversations = $stmt->fetchAll();
 
     } catch (Throwable $error) {
@@ -77,7 +47,7 @@ if ($pdo && $selectedMailbox) {
     }
 }
 
-if ($pdo && $selectedMailbox && $conversationId > 0) {
+if ($pdo && $conversationId > 0) {
     try {
         $conversationScope = ensureConversationAccess($pdo, $conversationId, $userId);
         if (!$conversationScope) {
@@ -97,7 +67,6 @@ if ($pdo && $selectedMailbox && $conversationId > 0) {
             ]);
             $conversationMessages = $stmt->fetchAll();
         }
-        $conversationMessages = $stmt->fetchAll();
     } catch (Throwable $error) {
         $errors[] = 'Failed to load conversation emails.';
         logAction($userId, 'conversation_messages_error', $error->getMessage());
@@ -106,11 +75,9 @@ if ($pdo && $selectedMailbox && $conversationId > 0) {
 
 $baseUrl = BASE_PATH . '/app/pages/communication/index.php';
 $baseQuery = [
-    'tab' => 'conversations',
-    'mailbox_id' => $selectedMailbox['id'] ?? null
+    'tab' => 'conversations'
 ];
 $baseQuery = array_filter($baseQuery, static fn($value) => $value !== null && $value !== '');
-$mailboxCount = count($teamMailboxes);
 $cooldownSeconds = 14 * 24 * 60 * 60;
 ?>
 <div class="columns is-variable is-4">
@@ -122,84 +89,50 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
         </div>
       </div>
 
-      <?php if (!$teamMailboxes): ?>
-        <p>No mailboxes assigned.</p>
-      <?php elseif ($mailboxCount > 1): ?>
-        <form method="GET" action="<?php echo htmlspecialchars($baseUrl); ?>" class="field has-addons">
-          <input type="hidden" name="tab" value="conversations">
-          <div class="control is-expanded">
-            <div class="select is-fullwidth">
-              <select name="mailbox_id">
-                <?php foreach ($teamMailboxes as $mailbox): ?>
-                  <?php
-                    $label = $mailbox['user_id']
-                        ? 'Personal · ' . $mailbox['name']
-                        : (($mailbox['team_name'] ?? 'Team') . ' · ' . $mailbox['name']);
-                  ?>
-                  <option value="<?php echo (int) $mailbox['id']; ?>" <?php echo (int) ($selectedMailbox['id'] ?? 0) === (int) $mailbox['id'] ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($label); ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-          </div>
-          <div class="control">
-            <button type="submit" class="button">Go</button>
-          </div>
-        </form>
-      <?php else: ?>
-        <?php
-          $singleLabel = $teamMailboxes[0]['user_id']
-              ? 'Personal · ' . $teamMailboxes[0]['name']
-              : (($teamMailboxes[0]['team_name'] ?? 'Team') . ' · ' . $teamMailboxes[0]['name']);
-        ?>
-        <p><?php echo htmlspecialchars($singleLabel); ?></p>
-      <?php endif; ?>
 
       <?php foreach ($errors as $error): ?>
         <div class="notification"><?php echo htmlspecialchars($error); ?></div>
       <?php endforeach; ?>
 
-      <?php if ($selectedMailbox): ?>
-        <?php
-          $openConversations = [];
-          $closedConversations = [];
+      <?php
+        $openConversations = [];
+        $closedConversations = [];
 
-          foreach ($conversations as $conversation) {
-              if (!empty($conversation['is_closed'])) {
-                  $closedConversations[] = $conversation;
-              } else {
-                  $openConversations[] = $conversation;
-              }
-          }
+        foreach ($conversations as $conversation) {
+            if (!empty($conversation['is_closed'])) {
+                $closedConversations[] = $conversation;
+            } else {
+                $openConversations[] = $conversation;
+            }
+        }
 
-          $incomingConversations = [];
-          $outgoingConversations = [];
+        $incomingConversations = [];
+        $outgoingConversations = [];
 
-          foreach ($openConversations as $conversation) {
-              $lastFolder = (string) ($conversation['last_message_folder'] ?? '');
-              if ($lastFolder === 'inbox') {
-                  $incomingConversations[] = $conversation;
-              } else {
-                  $outgoingConversations[] = $conversation;
-              }
-          }
+        foreach ($openConversations as $conversation) {
+            $lastFolder = (string) ($conversation['last_message_folder'] ?? '');
+            if ($lastFolder === 'inbox') {
+                $incomingConversations[] = $conversation;
+            } else {
+                $outgoingConversations[] = $conversation;
+            }
+        }
 
-          $sortByHeat = static function (array $left, array $right): int {
-              $leftActivity = $left['last_activity_at'] ?? $left['created_at'] ?? null;
-              $rightActivity = $right['last_activity_at'] ?? $right['created_at'] ?? null;
-              $leftTime = $leftActivity ? strtotime((string) $leftActivity) : 0;
-              $rightTime = $rightActivity ? strtotime((string) $rightActivity) : 0;
+        $sortByHeat = static function (array $left, array $right): int {
+            $leftActivity = $left['last_activity_at'] ?? $left['created_at'] ?? null;
+            $rightActivity = $right['last_activity_at'] ?? $right['created_at'] ?? null;
+            $leftTime = $leftActivity ? strtotime((string) $leftActivity) : 0;
+            $rightTime = $rightActivity ? strtotime((string) $rightActivity) : 0;
 
-              return $leftTime <=> $rightTime;
-          };
+            return $leftTime <=> $rightTime;
+        };
 
-          usort($incomingConversations, $sortByHeat);
-          usort($outgoingConversations, $sortByHeat);
-          usort($closedConversations, $sortByHeat);
+        usort($incomingConversations, $sortByHeat);
+        usort($outgoingConversations, $sortByHeat);
+        usort($closedConversations, $sortByHeat);
 
-          $orderedOpenConversations = array_merge($incomingConversations, $outgoingConversations);
-        ?>
+        $orderedOpenConversations = array_merge($incomingConversations, $outgoingConversations);
+      ?>
         <div class="menu">
           <ul class="menu-list">
             <?php if (!$conversations): ?>
@@ -245,7 +178,6 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                             <span class="tag is-small"><?php echo $messageCount; ?> <?php echo $messageLabel; ?></span>
                             <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/close_conversation.php" class="ml-2 is-flex is-align-items-center">
                               <?php renderCsrfField(); ?>
-                              <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
                               <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
                               <button type="submit" class="button is-small" aria-label="Close conversation" title="Close conversation">
                                 <span class="icon"><i class="fa-solid fa-circle-xmark"></i></span>
@@ -301,7 +233,6 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                               <span class="tag is-small"><?php echo $messageCount; ?> <?php echo $messageLabel; ?></span>
                               <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/reopen_conversation.php" class="ml-2 is-flex is-align-items-center">
                                 <?php renderCsrfField(); ?>
-                                <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
                                 <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
                                 <button type="submit" class="button is-small" aria-label="Reopen conversation" title="Reopen conversation">
                                   <span class="icon"><i class="fa-solid fa-rotate-left"></i></span>
@@ -309,7 +240,6 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                               </form>
                               <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/delete_conversation.php" class="ml-2 is-flex is-align-items-center" onsubmit="return confirm('Delete this conversation?');">
                                 <?php renderCsrfField(); ?>
-                                <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
                                 <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
                                 <button type="submit" class="button is-small" aria-label="Delete conversation" title="Delete conversation">
                                   <span class="icon"><i class="fa-solid fa-trash"></i></span>
@@ -326,7 +256,6 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
             </div>
           </div>
         <?php endif; ?>
-      <?php endif; ?>
     </div>
   </section>
 
@@ -338,9 +267,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
         </div>
       </div>
 
-      <?php if (!$selectedMailbox): ?>
-        <p>Select a mailbox to view conversations.</p>
-      <?php elseif (!$conversationId): ?>
+      <?php if (!$conversationId): ?>
         <p>Select a conversation to view emails.</p>
       <?php elseif (!$conversationMessages): ?>
         <p>No emails found for this conversation.</p>
@@ -361,7 +288,6 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
               $messageBody = (string) ($message['body'] ?? '');
               $isPersonalMessage = empty($message['team_id']) && !empty($message['user_id']);
               $isPersonalPlaceholder = $isPersonalMessage
-                  && !empty($selectedMailbox['team_id'])
                   && (int) $message['user_id'] !== (int) $userId;
               $placeholderLabel = $isPersonalPlaceholder
                   ? sprintf('Personal reply from %s (hidden)', $message['user_name'] ?? 'user')
@@ -383,7 +309,6 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                   <span><?php echo htmlspecialchars($dateLabel); ?></span>
                   <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/rm_conversation_message.php" class="ml-2" onsubmit="return confirm('Remove this email from the conversation?');">
                     <?php renderCsrfField(); ?>
-                    <input type="hidden" name="mailbox_id" value="<?php echo (int) ($selectedMailbox['id'] ?? 0); ?>">
                     <input type="hidden" name="conversation_id" value="<?php echo (int) $conversationId; ?>">
                     <input type="hidden" name="message_id" value="<?php echo (int) $message['id']; ?>">
                     <button type="submit" class="button is-small" aria-label="Remove from conversation" title="Remove from conversation">
