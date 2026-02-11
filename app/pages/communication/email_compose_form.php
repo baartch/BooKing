@@ -142,8 +142,13 @@
       <textarea id="email_body" name="body" class="textarea" rows="10"><?php echo htmlspecialchars($composeValues['body']); ?></textarea>
     </div>
   </div>
-  <div class="buttons">
-    <button type="submit" class="button is-primary" name="action" value="send_email">Send</button>
-    <button type="submit" class="button" name="action" value="save_draft">Save Draft</button>
+  <div class="field">
+    <div class="control">
+      <div class="buttons has-addons">
+        <button type="submit" class="button is-primary" name="action" value="send_email">Send</button>
+        <button type="submit" class="button" name="action" value="save_draft">Save Draft</button>
+        <a href="<?php echo htmlspecialchars($composeCancelUrl ?? ($baseEmailUrl . '?' . http_build_query($baseQuery))); ?>" class="button">Cancel</a>
+      </div>
+    </div>
   </div>
 </form>
