@@ -180,7 +180,10 @@
     <!-- Body -->
     <div class="email-detail-body content">
       <?php
-        $messageBody = (string) ($message['body'] ?? '');
+        $messageBody = (string) ($message['body_html'] ?? '');
+        if ($messageBody === '') {
+            $messageBody = (string) ($message['body'] ?? '');
+        }
         if ($messageBody !== '' && $messageBody !== strip_tags($messageBody)) {
             echo $messageBody;
         } else {

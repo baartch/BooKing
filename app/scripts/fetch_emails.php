@@ -298,10 +298,11 @@ foreach ($mailboxes as $mailbox) {
             collectParts($imap, $uid, $structure, '', $plainBody, $htmlBody, $attachments);
         }
 
-        $body = $plainBody !== '' ? $plainBody : ($htmlBody !== '' ? htmlToText($htmlBody) : '');
-        if ($body === '') {
+        $bodyHtml = $htmlBody !== '' ? $htmlBody : '';
+        $bodyText = $plainBody !== '' ? $plainBody : ($bodyHtml !== '' ? htmlToText($bodyHtml) : '');
+        if ($bodyText === '') {
             $fallback = (string) imap_body($imap, (string) $uid, FT_UID);
-            $body = trim($fallback);
+            $bodyText = trim($fallback);
         }
 
         try {
@@ -342,16 +343,17 @@ foreach ($mailboxes as $mailbox) {
 
             $stmt = $pdo->prepare(
                 'INSERT INTO email_messages
-                 (mailbox_id, team_id, user_id, folder, subject, body, from_name, from_email, to_emails, cc_emails, message_id, received_at, conversation_id)
+                 (mailbox_id, team_id, user_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, message_id, received_at, conversation_id)
                  VALUES
-                 (:mailbox_id, :team_id, :user_id, "inbox", :subject, :body, :from_name, :from_email, :to_emails, :cc_emails, :message_id, :received_at, :conversation_id)'
+                 (:mailbox_id, :team_id, :user_id, "inbox", :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :message_id, :received_at, :conversation_id)'
             );
             $stmt->execute([
                 ':mailbox_id' => $mailboxId,
                 ':team_id' => $mailbox['team_id'] ?? null,
                 ':user_id' => $mailbox['user_id'] ?? null,
                 ':subject' => $subject !== '' ? $subject : null,
-                ':body' => $body !== '' ? $body : null,
+                ':body' => $bodyText !== '' ? $bodyText : null,
+                ':body_html' => $bodyHtml !== '' ? $bodyHtml : null,
                 ':from_name' => $fromName !== '' ? $fromName : null,
                 ':from_email' => $fromEmail !== '' ? $fromEmail : null,
                 ':to_emails' => $toEmails !== '' ? $toEmails : null,
