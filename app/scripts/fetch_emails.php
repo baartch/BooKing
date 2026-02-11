@@ -313,17 +313,29 @@ foreach ($mailboxes as $mailbox) {
             $userScopeId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
             $conversationId = null;
             if ($teamScopeId || $userScopeId) {
-                $conversationId = ensureConversationForEmail(
+                $conversationId = findConversationForEmail(
                     $pdo,
                     $mailbox,
                     (string) $fromEmail,
                     $toEmails,
                     $subject,
-                    false,
                     $date !== '' ? date('Y-m-d H:i:s', strtotime($date)) : date('Y-m-d H:i:s'),
                     $teamScopeId,
                     $userScopeId
                 );
+                if ($conversationId === null && !empty($mailbox['auto_start_conversation_inbound'])) {
+                    $conversationId = ensureConversationForEmail(
+                        $pdo,
+                        $mailbox,
+                        (string) $fromEmail,
+                        $toEmails,
+                        $subject,
+                        true,
+                        $date !== '' ? date('Y-m-d H:i:s', strtotime($date)) : date('Y-m-d H:i:s'),
+                        $teamScopeId,
+                        $userScopeId
+                    );
+                }
             }
 
             $fromCandidate = $fromEmail !== '' ? strtolower(trim((string) $fromEmail)) : '';
