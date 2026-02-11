@@ -1,8 +1,11 @@
 <?php
 ?>
-<section class="column email-column">
+<section class="column email-column email-detail-column">
   <?php if (!$selectedMailbox): ?>
-    <p>Pick a mailbox to view details.</p>
+    <div class="email-detail-empty">
+      <span class="icon is-large has-text-grey"><i class="fa-solid fa-envelope fa-2x"></i></span>
+      <p class="has-text-grey mt-2">Pick a mailbox to view details.</p>
+    </div>
   <?php elseif ($composeMode): ?>
     <div class="level mb-3">
       <div class="level-left">
@@ -40,60 +43,55 @@
 
     <?php require __DIR__ . '/email_compose_form.php'; ?>
   <?php elseif ($message): ?>
-    <div class="level mb-3">
-      <div class="level-left">
-        <div>
-          <h2 class="title is-5"><?php echo htmlspecialchars($message['subject'] ?? '(No subject)'); ?></h2>
-          <?php
-            $senderName = trim((string) ($message['from_name'] ?? ''));
-            $senderEmail = trim((string) ($message['from_email'] ?? ''));
-            $senderLabel = $senderEmail !== '' ? $senderEmail : $senderName;
-            if ($senderName !== '' && $senderEmail !== '') {
-                $senderLabel = $senderName . ' <' . $senderEmail . '>';
-            } elseif ($senderName !== '') {
-                $senderLabel = $senderName;
-            }
+    <?php
+      $senderName = trim((string) ($message['from_name'] ?? ''));
+      $senderEmail = trim((string) ($message['from_email'] ?? ''));
+      $senderLabel = $senderEmail !== '' ? $senderEmail : $senderName;
+      if ($senderName !== '' && $senderEmail !== '') {
+          $senderLabel = $senderName . ' <' . $senderEmail . '>';
+      } elseif ($senderName !== '') {
+          $senderLabel = $senderName;
+      }
 
-            $linkItems = [];
-            if (!empty($messageLinks)) {
-                foreach ($messageLinks as $link) {
-                    if ($link['type'] === 'contact') {
-                        $url = BASE_PATH . '/app/pages/communication/index.php?tab=contacts&q=' . urlencode($link['label']);
-                        $linkItems[] = ['label' => $link['label'], 'url' => $url];
-                    } elseif ($link['type'] === 'venue') {
-                        $url = BASE_PATH . '/app/pages/venues/index.php?q=' . urlencode($link['label']);
-                        $linkItems[] = ['label' => $link['label'], 'url' => $url];
-                    } elseif ($link['type'] === 'email') {
-                        $url = $baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, [
-                            'message_id' => $link['id']
-                        ]));
-                        $linkItems[] = ['label' => $link['label'], 'url' => $url];
-                    }
-                }
-            }
-          ?>
-          <p class="is-size-7">
-            <?php if ($folder === 'inbox'): ?>
-              From: <?php echo htmlspecialchars($senderLabel); ?>
-            <?php else: ?>
-              To: <?php echo htmlspecialchars($message['to_emails'] ?? ''); ?>
-            <?php endif; ?>
-            · <?php echo htmlspecialchars($message['received_at'] ?? $message['sent_at'] ?? $message['created_at'] ?? ''); ?>
-          </p>
-          <?php if (!empty($linkItems)): ?>
-            <p class="is-size-7 has-text-grey">
-              Links:
-              <?php foreach ($linkItems as $index => $link): ?>
-                <a href="<?php echo htmlspecialchars($link['url']); ?>" class="has-text-weight-semibold">
-                  <?php echo htmlspecialchars($link['label']); ?>
-                </a><?php echo $index < count($linkItems) - 1 ? ', ' : ''; ?>
-              <?php endforeach; ?>
-            </p>
-          <?php endif; ?>
-        </div>
-      </div>
-      <div class="level-right">
-        <div class="field has-addons">
+      $recipientLabel = trim((string) ($message['to_emails'] ?? ''));
+
+      $dateLabel = $message['received_at'] ?? $message['sent_at'] ?? $message['created_at'] ?? '';
+
+      $linkItems = [];
+      if (!empty($messageLinks)) {
+          foreach ($messageLinks as $link) {
+              if ($link['type'] === 'contact') {
+                  $url = BASE_PATH . '/app/pages/communication/index.php?tab=contacts&q=' . urlencode($link['label']);
+                  $linkItems[] = ['label' => $link['label'], 'url' => $url];
+              } elseif ($link['type'] === 'venue') {
+                  $url = BASE_PATH . '/app/pages/venues/index.php?q=' . urlencode($link['label']);
+                  $linkItems[] = ['label' => $link['label'], 'url' => $url];
+              } elseif ($link['type'] === 'email') {
+                  $url = $baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, [
+                      'message_id' => $link['id']
+                  ]));
+                  $linkItems[] = ['label' => $link['label'], 'url' => $url];
+              }
+          }
+      }
+
+      $initials = '';
+      if ($senderName !== '') {
+          $parts = explode(' ', $senderName);
+          $initials = strtoupper(substr($parts[0], 0, 1));
+          if (count($parts) > 1) {
+              $initials .= strtoupper(substr(end($parts), 0, 1));
+          }
+      } elseif ($senderEmail !== '') {
+          $initials = strtoupper(substr($senderEmail, 0, 1));
+      }
+    ?>
+
+    <!-- Header: Subject + Actions -->
+    <div class="email-detail-header">
+      <div class="email-detail-subject-row">
+        <h2 class="email-detail-subject"><?php echo htmlspecialchars($message['subject'] ?? '(No subject)'); ?></h2>
+        <div class="field has-addons email-detail-actions">
           <div class="control">
             <a
               href="<?php echo htmlspecialchars($baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, ['compose' => 1, 'reply' => $message['id']]))); ?>"
@@ -145,9 +143,43 @@
           </form>
         </div>
       </div>
+
+      <!-- Metadata: Sender / Recipients / Date / Links -->
+      <div class="email-detail-meta">
+        <div class="email-detail-avatar"><?php echo htmlspecialchars($initials); ?></div>
+        <div class="email-detail-meta-info">
+          <div class="email-detail-meta-row">
+            <span class="email-detail-meta-label">From</span>
+            <span class="email-detail-meta-value"><?php echo htmlspecialchars($senderLabel); ?></span>
+          </div>
+          <?php if ($recipientLabel !== ''): ?>
+            <div class="email-detail-meta-row">
+              <span class="email-detail-meta-label">To</span>
+              <span class="email-detail-meta-value"><?php echo htmlspecialchars($recipientLabel); ?></span>
+            </div>
+          <?php endif; ?>
+          <div class="email-detail-meta-row">
+            <span class="email-detail-meta-label">Date</span>
+            <span class="email-detail-meta-value"><?php echo htmlspecialchars($dateLabel); ?></span>
+          </div>
+          <?php if (!empty($linkItems)): ?>
+            <div class="email-detail-meta-row">
+              <span class="email-detail-meta-label">Links</span>
+              <span class="email-detail-meta-value">
+                <?php foreach ($linkItems as $index => $link): ?>
+                  <a href="<?php echo htmlspecialchars($link['url']); ?>" class="email-detail-link-tag">
+                    <?php echo htmlspecialchars($link['label']); ?>
+                  </a>
+                <?php endforeach; ?>
+              </span>
+            </div>
+          <?php endif; ?>
+        </div>
+      </div>
     </div>
 
-    <div class="content">
+    <!-- Body -->
+    <div class="email-detail-body content">
       <?php
         $messageBody = (string) ($message['body'] ?? '');
         if ($messageBody !== '' && $messageBody !== strip_tags($messageBody)) {
@@ -158,21 +190,28 @@
       ?>
     </div>
 
+    <!-- Attachments -->
     <?php if ($attachments): ?>
-      <div class="content">
-        <h3 class="title is-6">Attachments</h3>
-        <ul>
+      <div class="email-detail-attachments">
+        <span class="email-detail-attachments-label">
+          <span class="icon is-small"><i class="fa-solid fa-paperclip"></i></span>
+          <span><?php echo count($attachments); ?> attachment<?php echo count($attachments) !== 1 ? 's' : ''; ?></span>
+        </span>
+        <div class="email-detail-attachments-list">
           <?php foreach ($attachments as $attachment): ?>
-            <li>
-              <a href="<?php echo BASE_PATH; ?>/app/routes/email/attachment.php?id=<?php echo (int) $attachment['id']; ?>">
-                <?php echo htmlspecialchars($attachment['filename'] ?? 'Attachment'); ?> (<?php echo htmlspecialchars(formatBytes((int) $attachment['file_size'])); ?>)
-              </a>
-            </li>
+            <a href="<?php echo BASE_PATH; ?>/app/routes/email/attachment.php?id=<?php echo (int) $attachment['id']; ?>" class="email-detail-attachment-chip">
+              <span class="icon is-small"><i class="fa-solid fa-file"></i></span>
+              <span><?php echo htmlspecialchars($attachment['filename'] ?? 'Attachment'); ?></span>
+              <span class="email-detail-attachment-size"><?php echo htmlspecialchars(formatBytes((int) $attachment['file_size'])); ?></span>
+            </a>
           <?php endforeach; ?>
-        </ul>
+        </div>
       </div>
     <?php endif; ?>
   <?php else: ?>
-    <p>Select an email to view its details.</p>
+    <div class="email-detail-empty">
+      <span class="icon is-large has-text-grey"><i class="fa-solid fa-envelope-open fa-2x"></i></span>
+      <p class="has-text-grey mt-2">Select an email to view its details.</p>
+    </div>
   <?php endif; ?>
 </section>

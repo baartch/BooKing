@@ -136,6 +136,189 @@
   }
 }
 
+/* ── Email detail panel ── */
+
+.email-detail-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+.email-detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  opacity: 0.5;
+}
+
+/* Header block: subject + actions + meta */
+.email-detail-header {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  margin-bottom: 0;
+}
+
+.email-detail-subject-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.email-detail-subject {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.email-detail-actions {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.email-detail-actions .button.is-small {
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.email-detail-actions .button.is-small:hover {
+  opacity: 1;
+}
+
+/* Metadata rows */
+.email-detail-meta {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.email-detail-avatar {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+.email-detail-meta-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.email-detail-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.email-detail-meta-label {
+  flex-shrink: 0;
+  width: 2.4rem;
+  opacity: 0.45;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.email-detail-meta-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+
+.email-detail-link-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0 0.35rem;
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  margin-right: 0.25rem;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.email-detail-link-tag:hover {
+  background: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+/* Body */
+.email-detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 0;
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+/* Attachments bar */
+.email-detail-attachments {
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  padding-top: 0.5rem;
+}
+
+.email-detail-attachments-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.45;
+  margin-bottom: 0.35rem;
+}
+
+.email-detail-attachments-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.email-detail-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s;
+}
+
+.email-detail-attachment-chip:hover {
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  color: inherit;
+}
+
+.email-detail-attachment-size {
+  opacity: 0.45;
+  font-size: 0.65rem;
+}
+
 /* Cooldown progress bar color steps - red to blue (no gradient)
    Uses discrete steps so we can avoid inline CSS while mapping cooldown percent to color.
    Colors are linearly interpolated between Bulma red (#ff3860) and Bulma blue (#209cee).
