@@ -151,10 +151,17 @@ $showOptions = $showOptions ?? true;
       Use the same username and password for SMTP and IMAP
     </label>
   </div>
+  <div class="field">
+    <label class="checkbox">
+      <input type="checkbox" name="auto_start_conversation_inbound" value="1" <?php echo !empty($formValues['auto_start_conversation_inbound']) ? 'checked' : ''; ?>>
+      Automatically start a new conversation on inbound
+    </label>
+  </div>
 </div>
 <?php else: ?>
   <input type="hidden" name="delete_after_retrieve" value="<?php echo !empty($formValues['delete_after_retrieve']) ? '1' : '0'; ?>">
   <input type="hidden" name="store_sent_on_server" value="<?php echo !empty($formValues['store_sent_on_server']) ? '1' : '0'; ?>">
+  <input type="hidden" name="auto_start_conversation_inbound" value="<?php echo !empty($formValues['auto_start_conversation_inbound']) ? '1' : '0'; ?>">
   <input type="hidden" name="use_same_credentials" value="<?php echo $useSameCredentials ? '1' : '0'; ?>">
 <?php endif; ?>
 

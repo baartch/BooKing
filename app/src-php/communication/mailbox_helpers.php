@@ -18,7 +18,8 @@ function mailboxFormDefaults(int $defaultImapPort = 993, int $defaultSmtpPort = 
         'smtp_username' => '',
         'smtp_encryption' => 'tls',
         'delete_after_retrieve' => false,
-        'store_sent_on_server' => false
+        'store_sent_on_server' => false,
+        'auto_start_conversation_inbound' => false
     ];
 }
 
@@ -38,7 +39,8 @@ function mailboxFormValuesFromRow(array $mailbox, int $defaultImapPort = 993, in
         'smtp_username' => (string) ($mailbox['smtp_username'] ?? ''),
         'smtp_encryption' => (string) ($mailbox['smtp_encryption'] ?? 'tls'),
         'delete_after_retrieve' => !empty($mailbox['delete_after_retrieve']),
-        'store_sent_on_server' => !empty($mailbox['store_sent_on_server'])
+        'store_sent_on_server' => !empty($mailbox['store_sent_on_server']),
+        'auto_start_conversation_inbound' => !empty($mailbox['auto_start_conversation_inbound'])
     ];
 }
 
@@ -69,6 +71,7 @@ function buildMailboxFormInput(array $post, array $options = []): array
     $imapEncryption = (string) ($post['imap_encryption'] ?? 'ssl');
     $deleteAfterRetrieve = ($post['delete_after_retrieve'] ?? '') === '1';
     $storeSentOnServer = ($post['store_sent_on_server'] ?? '') === '1';
+    $autoStartConversationInbound = ($post['auto_start_conversation_inbound'] ?? '') === '1';
     $smtpHost = trim((string) ($post['smtp_host'] ?? ''));
     $smtpPort = (int) ($post['smtp_port'] ?? $defaultSmtpPort);
     $smtpUsername = trim((string) ($post['smtp_username'] ?? ''));
@@ -143,6 +146,7 @@ function buildMailboxFormInput(array $post, array $options = []): array
         'imap_encryption' => $imapEncryption,
         'delete_after_retrieve' => $deleteAfterRetrieve,
         'store_sent_on_server' => $storeSentOnServer,
+        'auto_start_conversation_inbound' => $autoStartConversationInbound,
         'smtp_host' => $smtpHost,
         'smtp_port' => $smtpPort,
         'smtp_username' => $smtpUsername,
@@ -175,6 +179,7 @@ function persistMailbox(PDO $pdo, array $values, string $imapPassword, string $s
                  imap_encryption = :imap_encryption,
                  delete_after_retrieve = :delete_after_retrieve,
                  store_sent_on_server = :store_sent_on_server,
+                 auto_start_conversation_inbound = :auto_start_conversation_inbound,
                  smtp_host = :smtp_host,
                  smtp_port = :smtp_port,
                  smtp_username = :smtp_username,
@@ -192,6 +197,7 @@ function persistMailbox(PDO $pdo, array $values, string $imapPassword, string $s
             ':imap_encryption' => $values['imap_encryption'],
             ':delete_after_retrieve' => $values['delete_after_retrieve'] ? 1 : 0,
             ':store_sent_on_server' => $values['store_sent_on_server'] ? 1 : 0,
+            ':auto_start_conversation_inbound' => $values['auto_start_conversation_inbound'] ? 1 : 0,
             ':smtp_host' => $values['smtp_host'],
             ':smtp_port' => $values['smtp_port'],
             ':smtp_username' => $values['smtp_username'],
@@ -206,11 +212,11 @@ function persistMailbox(PDO $pdo, array $values, string $imapPassword, string $s
     $stmt = $pdo->prepare(
         'INSERT INTO mailboxes
          (team_id, user_id, name, display_name, imap_host, imap_port, imap_username, imap_password, imap_encryption,
-          delete_after_retrieve, store_sent_on_server,
+          delete_after_retrieve, store_sent_on_server, auto_start_conversation_inbound,
           smtp_host, smtp_port, smtp_username, smtp_password, smtp_encryption)
          VALUES
          (:team_id, :user_id, :name, :display_name, :imap_host, :imap_port, :imap_username, :imap_password, :imap_encryption,
-          :delete_after_retrieve, :store_sent_on_server,
+          :delete_after_retrieve, :store_sent_on_server, :auto_start_conversation_inbound,
           :smtp_host, :smtp_port, :smtp_username, :smtp_password, :smtp_encryption)'
     );
     $imapPasswordValue = encryptSettingValue($imapPassword) ?? '';
@@ -227,6 +233,7 @@ function persistMailbox(PDO $pdo, array $values, string $imapPassword, string $s
         ':imap_encryption' => $values['imap_encryption'],
         ':delete_after_retrieve' => $values['delete_after_retrieve'] ? 1 : 0,
         ':store_sent_on_server' => $values['store_sent_on_server'] ? 1 : 0,
+        ':auto_start_conversation_inbound' => $values['auto_start_conversation_inbound'] ? 1 : 0,
         ':smtp_host' => $values['smtp_host'],
         ':smtp_port' => $values['smtp_port'],
         ':smtp_username' => $values['smtp_username'],
