@@ -11,10 +11,9 @@
       <div class="level-left">
         <h2 class="title is-5">Compose</h2>
       </div>
-      <div class="level-right">
-        <a href="<?php echo htmlspecialchars($baseEmailUrl . '?' . http_build_query($baseQuery)); ?>" class="button">Cancel</a>
-      </div>
     </div>
+
+    <?php $composeCancelUrl = $baseEmailUrl . '?' . http_build_query($baseQuery); ?>
 
     <?php if ($templates): ?>
       <form method="GET" action="<?php echo htmlspecialchars($baseEmailUrl); ?>" class="field has-addons mb-4">
