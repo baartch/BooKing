@@ -119,7 +119,8 @@ try {
         'to_emails' => $email,
         'subject' => $subject,
         'body' => $body,
-        'from_email' => (string) ($mailbox['smtp_username'] ?? '')
+        'from_email' => (string) ($mailbox['smtp_username'] ?? ''),
+        'from_name' => $mailbox['display_name'] ?? ''
     ]);
 
     if (!$sent) {

@@ -8,6 +8,7 @@ function mailboxFormDefaults(int $defaultImapPort = 993, int $defaultSmtpPort = 
         'team_id' => null,
         'user_id' => null,
         'name' => '',
+        'display_name' => '',
         'imap_host' => '',
         'imap_port' => $defaultImapPort,
         'imap_username' => '',
@@ -27,6 +28,7 @@ function mailboxFormValuesFromRow(array $mailbox, int $defaultImapPort = 993, in
         'team_id' => isset($mailbox['team_id']) ? (int) $mailbox['team_id'] : null,
         'user_id' => isset($mailbox['user_id']) ? (int) $mailbox['user_id'] : null,
         'name' => (string) ($mailbox['name'] ?? ''),
+        'display_name' => (string) ($mailbox['display_name'] ?? ''),
         'imap_host' => (string) ($mailbox['imap_host'] ?? ''),
         'imap_port' => (int) ($mailbox['imap_port'] ?? $defaultImapPort),
         'imap_username' => (string) ($mailbox['imap_username'] ?? ''),
@@ -59,6 +61,7 @@ function buildMailboxFormInput(array $post, array $options = []): array
 
     $useSameCredentials = ($post['use_same_credentials'] ?? '') === '1';
     $mailboxName = trim((string) ($post['name'] ?? ''));
+    $displayName = trim((string) ($post['display_name'] ?? ''));
     $imapHost = trim((string) ($post['imap_host'] ?? ''));
     $imapPort = (int) ($post['imap_port'] ?? $defaultImapPort);
     $imapUsername = trim((string) ($post['imap_username'] ?? ''));
@@ -133,6 +136,7 @@ function buildMailboxFormInput(array $post, array $options = []): array
         'team_id' => $teamId,
         'user_id' => null,
         'name' => $mailboxName,
+        'display_name' => $displayName,
         'imap_host' => $imapHost,
         'imap_port' => $imapPort,
         'imap_username' => $imapUsername,
@@ -163,6 +167,7 @@ function persistMailbox(PDO $pdo, array $values, string $imapPassword, string $s
         $stmt = $pdo->prepare(
             'UPDATE mailboxes
              SET name = :name,
+                 display_name = :display_name,
                  imap_host = :imap_host,
                  imap_port = :imap_port,
                  imap_username = :imap_username,
@@ -179,6 +184,7 @@ function persistMailbox(PDO $pdo, array $values, string $imapPassword, string $s
         );
         $stmt->execute([
             ':name' => $values['name'],
+            ':display_name' => $values['display_name'],
             ':imap_host' => $values['imap_host'],
             ':imap_port' => $values['imap_port'],
             ':imap_username' => $values['imap_username'],
@@ -199,11 +205,11 @@ function persistMailbox(PDO $pdo, array $values, string $imapPassword, string $s
 
     $stmt = $pdo->prepare(
         'INSERT INTO mailboxes
-         (team_id, user_id, name, imap_host, imap_port, imap_username, imap_password, imap_encryption,
+         (team_id, user_id, name, display_name, imap_host, imap_port, imap_username, imap_password, imap_encryption,
           delete_after_retrieve, store_sent_on_server,
           smtp_host, smtp_port, smtp_username, smtp_password, smtp_encryption)
          VALUES
-         (:team_id, :user_id, :name, :imap_host, :imap_port, :imap_username, :imap_password, :imap_encryption,
+         (:team_id, :user_id, :name, :display_name, :imap_host, :imap_port, :imap_username, :imap_password, :imap_encryption,
           :delete_after_retrieve, :store_sent_on_server,
           :smtp_host, :smtp_port, :smtp_username, :smtp_password, :smtp_encryption)'
     );
@@ -213,6 +219,7 @@ function persistMailbox(PDO $pdo, array $values, string $imapPassword, string $s
         ':team_id' => $values['team_id'],
         ':user_id' => $values['user_id'],
         ':name' => $values['name'],
+        ':display_name' => $values['display_name'],
         ':imap_host' => $values['imap_host'],
         ':imap_port' => $values['imap_port'],
         ':imap_username' => $values['imap_username'],

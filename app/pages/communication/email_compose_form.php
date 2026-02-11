@@ -14,9 +14,11 @@
           <select id="compose_mailbox_id" name="mailbox_id">
             <?php foreach ($teamMailboxes as $mailbox): ?>
               <?php
+                $displayLabel = trim((string) ($mailbox['display_name'] ?? ''));
+                $nameLabel = $displayLabel !== '' ? $displayLabel : ($mailbox['name'] ?? '');
                 $label = $mailbox['user_id']
-                    ? 'Personal · ' . $mailbox['name']
-                    : (($mailbox['team_name'] ?? 'Team') . ' · ' . $mailbox['name']);
+                    ? 'Personal · ' . $nameLabel
+                    : (($mailbox['team_name'] ?? 'Team') . ' · ' . $nameLabel);
               ?>
               <option value="<?php echo (int) $mailbox['id']; ?>" <?php echo (int) $selectedMailbox['id'] === (int) $mailbox['id'] ? 'selected' : ''; ?>>
                 <?php echo htmlspecialchars($label); ?>

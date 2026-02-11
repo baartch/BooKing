@@ -95,6 +95,7 @@ CREATE TABLE mailboxes (
     team_id INT DEFAULT NULL,
     user_id INT DEFAULT NULL,
     name VARCHAR(120) NOT NULL,
+    display_name VARCHAR(120) DEFAULT NULL,
     imap_host VARCHAR(255) NOT NULL,
     imap_port INT NOT NULL DEFAULT 993,
     imap_username VARCHAR(255) NOT NULL,

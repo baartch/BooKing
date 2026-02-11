@@ -21,6 +21,7 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
     }
 
     $fromEmail = (string) ($payload['from_email'] ?? $username);
+    $fromName = trim((string) ($payload['from_name'] ?? ''));
     $toList = splitEmailList((string) ($payload['to_emails'] ?? ''));
     $ccList = splitEmailList((string) ($payload['cc_emails'] ?? ''));
     $bccList = splitEmailList((string) ($payload['bcc_emails'] ?? ''));
@@ -36,8 +37,13 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
     $isHtml = $body !== strip_tags($body);
     $contentType = $isHtml ? 'text/html' : 'text/plain';
 
+    $fromHeader = $fromEmail;
+    if ($fromName !== '') {
+        $fromHeader = sprintf('%s <%s>', $fromName, $fromEmail);
+    }
+
     $headers = [
-        'From: ' . $fromEmail,
+        'From: ' . $fromHeader,
         'To: ' . implode(', ', $toList),
         'Subject: ' . $subject,
         'Date: ' . date('r'),

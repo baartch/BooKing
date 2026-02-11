@@ -10,6 +10,9 @@ ALTER TABLE email_conversations
     ADD UNIQUE KEY uniq_email_conversation_team (team_id, subject_normalized, participant_key, is_closed),
     ADD UNIQUE KEY uniq_email_conversation_user (user_id, subject_normalized, participant_key, is_closed);
 
+ALTER TABLE mailboxes
+    ADD COLUMN display_name VARCHAR(120) DEFAULT NULL AFTER name;
+
 ALTER TABLE email_messages
     MODIFY team_id INT DEFAULT NULL,
     ADD COLUMN user_id INT DEFAULT NULL AFTER team_id,
