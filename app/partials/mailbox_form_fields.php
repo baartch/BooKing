@@ -49,8 +49,18 @@ $showOptions = $showOptions ?? true;
     </div>
   </div>
 </div>
+<div class="column is-4">
+  <div class="field">
+    <label for="mailbox_display_name" class="label">Display Name</label>
+    <div class="control">
+      <input type="text" id="mailbox_display_name" name="display_name" class="input" value="<?php echo htmlspecialchars((string) ($formValues['display_name'] ?? '')); ?>">
+    </div>
+    <p class="help">Shown as the sender name when you send mail.</p>
+  </div>
+</div>
 <?php else: ?>
   <input type="hidden" name="name" value="<?php echo htmlspecialchars((string) ($formValues['name'] ?? '')); ?>">
+  <input type="hidden" name="display_name" value="<?php echo htmlspecialchars((string) ($formValues['display_name'] ?? '')); ?>">
 <?php endif; ?>
 
 <?php if ($showImap): ?>

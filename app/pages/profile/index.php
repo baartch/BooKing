@@ -173,6 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <thead>
                       <tr>
                         <th>Name</th>
+                        <th>Display Name</th>
                         <th>IMAP Host</th>
                         <th>IMAP Port</th>
                         <th>IMAP User</th>
@@ -190,6 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       <?php foreach ($personalMailboxes as $mailbox): ?>
                         <tr>
                           <td><?php echo htmlspecialchars($mailbox['name'] ?? ''); ?></td>
+                          <td><?php echo htmlspecialchars($mailbox['display_name'] ?? ''); ?></td>
                           <td><?php echo htmlspecialchars($mailbox['imap_host'] ?? ''); ?></td>
                           <td><?php echo htmlspecialchars($mailbox['imap_port'] ?? ''); ?></td>
                           <td><?php echo htmlspecialchars($mailbox['imap_username'] ?? ''); ?></td>

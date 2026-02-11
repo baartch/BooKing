@@ -53,6 +53,8 @@ try {
 
     $linkTeamId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
     $linkUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
+    $fromEmail = (string) ($mailbox['smtp_username'] ?? '');
+    $fromName = (string) ($mailbox['display_name'] ?? '');
 
     if ($conversationId > 0) {
         $conversation = ensureConversationAccess($pdo, $conversationId, $userId);
@@ -72,6 +74,8 @@ try {
                 'UPDATE email_messages
                  SET subject = :subject,
                      body = :body,
+                     from_name = :from_name,
+                     from_email = :from_email,
                      to_emails = :to_emails,
                      cc_emails = :cc_emails,
                      bcc_emails = :bcc_emails,
@@ -84,6 +88,8 @@ try {
             $stmt->execute([
                 ':subject' => $subject !== '' ? $subject : null,
                 ':body' => $body !== '' ? $body : null,
+                ':from_name' => $fromName !== '' ? $fromName : null,
+                ':from_email' => $fromEmail !== '' ? $fromEmail : null,
                 ':to_emails' => $toEmails !== '' ? $toEmails : null,
                 ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
                 ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
@@ -118,9 +124,9 @@ try {
         } else {
             $stmt = $pdo->prepare(
                 'INSERT INTO email_messages
-                 (mailbox_id, team_id, user_id, conversation_id, folder, subject, body, to_emails, cc_emails, bcc_emails, created_by, created_at)
+                 (mailbox_id, team_id, user_id, conversation_id, folder, subject, body, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, created_at)
                  VALUES
-                 (:mailbox_id, :team_id, :user_id, :conversation_id, "drafts", :subject, :body, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW())'
+                 (:mailbox_id, :team_id, :user_id, :conversation_id, "drafts", :subject, :body, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW())'
             );
             $stmt->execute([
                 ':mailbox_id' => $mailbox['id'],
@@ -129,6 +135,8 @@ try {
                 ':conversation_id' => $conversationId > 0 ? $conversationId : null,
                 ':subject' => $subject !== '' ? $subject : null,
                 ':body' => $body !== '' ? $body : null,
+                ':from_name' => $fromName !== '' ? $fromName : null,
+                ':from_email' => $fromEmail !== '' ? $fromEmail : null,
                 ':to_emails' => $toEmails !== '' ? $toEmails : null,
                 ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
                 ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
@@ -164,7 +172,8 @@ try {
         'bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
         'subject' => $subject !== '' ? $subject : null,
         'body' => $body !== '' ? $body : null,
-        'from_email' => $mailbox['smtp_username'] ?? ''
+        'from_email' => $fromEmail,
+        'from_name' => $fromName
     ]);
 
     if (!$sent) {
@@ -225,9 +234,9 @@ try {
 
     $stmt = $pdo->prepare(
         'INSERT INTO email_messages
-         (mailbox_id, team_id, user_id, folder, subject, body, to_emails, cc_emails, bcc_emails, created_by, sent_at, created_at, conversation_id)
+         (mailbox_id, team_id, user_id, folder, subject, body, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, sent_at, created_at, conversation_id)
          VALUES
-         (:mailbox_id, :team_id, :user_id, "sent", :subject, :body, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), NOW(), :conversation_id)'
+         (:mailbox_id, :team_id, :user_id, "sent", :subject, :body, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), NOW(), :conversation_id)'
     );
     $stmt->execute([
         ':mailbox_id' => $mailbox['id'],
@@ -235,6 +244,8 @@ try {
         ':user_id' => $messageUserId,
         ':subject' => $subject !== '' ? $subject : null,
         ':body' => $body !== '' ? $body : null,
+        ':from_name' => $fromName !== '' ? $fromName : null,
+        ':from_email' => $fromEmail !== '' ? $fromEmail : null,
         ':to_emails' => $toEmails,
         ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
         ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,

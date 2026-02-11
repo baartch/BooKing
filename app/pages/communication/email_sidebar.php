@@ -12,9 +12,11 @@
           <select name="mailbox_id">
             <?php foreach ($teamMailboxes as $mailbox): ?>
               <?php
+                $displayLabel = trim((string) ($mailbox['display_name'] ?? ''));
+                $nameLabel = $displayLabel !== '' ? $displayLabel : ($mailbox['name'] ?? '');
                 $label = $mailbox['user_id']
-                    ? 'Personal · ' . $mailbox['name']
-                    : (($mailbox['team_name'] ?? 'Team') . ' · ' . $mailbox['name']);
+                    ? 'Personal · ' . $nameLabel
+                    : (($mailbox['team_name'] ?? 'Team') . ' · ' . $nameLabel);
               ?>
               <option value="<?php echo (int) $mailbox['id']; ?>" <?php echo (int) ($selectedMailbox['id'] ?? 0) === (int) $mailbox['id'] ? 'selected' : ''; ?>>
                 <?php echo htmlspecialchars($label); ?>
@@ -29,9 +31,11 @@
     </form>
   <?php else: ?>
     <?php
+      $singleDisplayLabel = trim((string) ($teamMailboxes[0]['display_name'] ?? ''));
+      $singleNameLabel = $singleDisplayLabel !== '' ? $singleDisplayLabel : ($teamMailboxes[0]['name'] ?? '');
       $singleLabel = $teamMailboxes[0]['user_id']
-          ? 'Personal · ' . $teamMailboxes[0]['name']
-          : (($teamMailboxes[0]['team_name'] ?? 'Team') . ' · ' . $teamMailboxes[0]['name']);
+          ? 'Personal · ' . $singleNameLabel
+          : (($teamMailboxes[0]['team_name'] ?? 'Team') . ' · ' . $singleNameLabel);
     ?>
     <p><?php echo htmlspecialchars($singleLabel); ?></p>
   <?php endif; ?>

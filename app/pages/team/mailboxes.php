@@ -103,6 +103,7 @@ if ($pdo && $teamIds) {
             <tr>
               <th>Team</th>
               <th>Name</th>
+              <th>Display Name</th>
               <th>IMAP Host</th>
               <th>IMAP Port</th>
               <th>IMAP User</th>
@@ -121,6 +122,7 @@ if ($pdo && $teamIds) {
               <tr>
                 <td><?php echo htmlspecialchars($mailbox['team_name'] ?? ''); ?></td>
                 <td><?php echo htmlspecialchars($mailbox['name'] ?? ''); ?></td>
+                <td><?php echo htmlspecialchars($mailbox['display_name'] ?? ''); ?></td>
                 <td><?php echo htmlspecialchars($mailbox['imap_host'] ?? ''); ?></td>
                 <td><?php echo htmlspecialchars($mailbox['imap_port'] ?? ''); ?></td>
                 <td><?php echo htmlspecialchars($mailbox['imap_username'] ?? ''); ?></td>
