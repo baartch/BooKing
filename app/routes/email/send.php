@@ -74,6 +74,7 @@ try {
                 'UPDATE email_messages
                  SET subject = :subject,
                      body = :body,
+                     body_html = :body_html,
                      from_name = :from_name,
                      from_email = :from_email,
                      to_emails = :to_emails,
@@ -87,7 +88,8 @@ try {
             );
             $stmt->execute([
                 ':subject' => $subject !== '' ? $subject : null,
-                ':body' => $body !== '' ? $body : null,
+                ':body' => $body !== '' ? strip_tags($body) : null,
+                ':body_html' => $body !== '' ? $body : null,
                 ':from_name' => $fromName !== '' ? $fromName : null,
                 ':from_email' => $fromEmail !== '' ? $fromEmail : null,
                 ':to_emails' => $toEmails !== '' ? $toEmails : null,
@@ -124,9 +126,9 @@ try {
         } else {
             $stmt = $pdo->prepare(
                 'INSERT INTO email_messages
-                 (mailbox_id, team_id, user_id, conversation_id, folder, subject, body, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, created_at)
+                 (mailbox_id, team_id, user_id, conversation_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, created_at)
                  VALUES
-                 (:mailbox_id, :team_id, :user_id, :conversation_id, "drafts", :subject, :body, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW())'
+                 (:mailbox_id, :team_id, :user_id, :conversation_id, "drafts", :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW())'
             );
             $stmt->execute([
                 ':mailbox_id' => $mailbox['id'],
@@ -134,7 +136,8 @@ try {
                 ':user_id' => $mailbox['user_id'] ?? null,
                 ':conversation_id' => $conversationId > 0 ? $conversationId : null,
                 ':subject' => $subject !== '' ? $subject : null,
-                ':body' => $body !== '' ? $body : null,
+                ':body' => $body !== '' ? strip_tags($body) : null,
+                ':body_html' => $body !== '' ? $body : null,
                 ':from_name' => $fromName !== '' ? $fromName : null,
                 ':from_email' => $fromEmail !== '' ? $fromEmail : null,
                 ':to_emails' => $toEmails !== '' ? $toEmails : null,
@@ -234,16 +237,17 @@ try {
 
     $stmt = $pdo->prepare(
         'INSERT INTO email_messages
-         (mailbox_id, team_id, user_id, folder, subject, body, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, sent_at, created_at, conversation_id)
+         (mailbox_id, team_id, user_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, sent_at, created_at, conversation_id)
          VALUES
-         (:mailbox_id, :team_id, :user_id, "sent", :subject, :body, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), NOW(), :conversation_id)'
+         (:mailbox_id, :team_id, :user_id, "sent", :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), NOW(), :conversation_id)'
     );
     $stmt->execute([
         ':mailbox_id' => $mailbox['id'],
         ':team_id' => $messageTeamId,
         ':user_id' => $messageUserId,
         ':subject' => $subject !== '' ? $subject : null,
-        ':body' => $body !== '' ? $body : null,
+        ':body' => $body !== '' ? strip_tags($body) : null,
+        ':body_html' => $body !== '' ? $body : null,
         ':from_name' => $fromName !== '' ? $fromName : null,
         ':from_email' => $fromEmail !== '' ? $fromEmail : null,
         ':to_emails' => $toEmails,

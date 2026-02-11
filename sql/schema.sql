@@ -152,6 +152,7 @@ CREATE TABLE email_messages (
     folder ENUM('inbox', 'drafts', 'sent', 'trash') NOT NULL DEFAULT 'inbox',
     subject VARCHAR(255) DEFAULT NULL,
     body TEXT DEFAULT NULL,
+    body_html TEXT DEFAULT NULL,
     from_name VARCHAR(255) DEFAULT NULL,
     from_email VARCHAR(255) DEFAULT NULL,
     to_emails TEXT DEFAULT NULL,

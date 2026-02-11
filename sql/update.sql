@@ -22,6 +22,9 @@ ALTER TABLE email_messages
     ADD CONSTRAINT email_messages_ibfk_3 FOREIGN KEY (conversation_id) REFERENCES email_conversations(id) ON DELETE SET NULL,
     ADD CONSTRAINT email_messages_ibfk_5 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 
+ALTER TABLE email_messages
+    ADD COLUMN body_html TEXT DEFAULT NULL AFTER body;
+
 ALTER TABLE email_conversations
     DROP INDEX uniq_email_conversation,
     ADD INDEX idx_email_conversations_mailbox (mailbox_id);

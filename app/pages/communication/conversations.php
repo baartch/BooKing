@@ -54,7 +54,7 @@ if ($pdo && $conversationId > 0) {
             $errors[] = 'Conversation access denied.';
         } else {
             $stmt = $pdo->prepare(
-                'SELECT em.id, em.subject, em.body, em.from_name, em.from_email, em.to_emails, em.folder,
+                'SELECT em.id, em.subject, em.body, em.body_html, em.from_name, em.from_email, em.to_emails, em.folder,
                         em.is_read, em.received_at, em.sent_at, em.created_at,
                         em.team_id, em.user_id, u.username AS user_name
                  FROM email_messages em
@@ -285,7 +285,10 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
               $dateLabel = $dateValue ? date('Y-m-d H:i', strtotime((string) $dateValue)) : '';
               $folderLabel = $folderOptions[$messageFolder] ?? ucfirst($messageFolder);
               $isUnread = empty($message['is_read']) && $messageFolder === 'inbox';
-              $messageBody = (string) ($message['body'] ?? '');
+              $messageBody = (string) ($message['body_html'] ?? '');
+              if ($messageBody === '') {
+                  $messageBody = (string) ($message['body'] ?? '');
+              }
               $isPersonalMessage = empty($message['team_id']) && !empty($message['user_id']);
               $isPersonalPlaceholder = $isPersonalMessage
                   && (int) $message['user_id'] !== (int) $userId;

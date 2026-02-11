@@ -120,7 +120,10 @@ if ($pdo && $selectedMailbox && $selectedMessageId > 0) {
             $composeValues['cc_emails'] = (string) ($message['cc_emails'] ?? '');
             $composeValues['bcc_emails'] = (string) ($message['bcc_emails'] ?? '');
             $composeValues['subject'] = (string) ($message['subject'] ?? '');
-            $composeValues['body'] = (string) ($message['body'] ?? '');
+            $composeValues['body'] = (string) ($message['body_html'] ?? '');
+            if ($composeValues['body'] === '') {
+                $composeValues['body'] = (string) ($message['body'] ?? '');
+            }
             $composeMode = true;
         } elseif ($message && !(bool) $message['is_read']) {
             $updateStmt = $pdo->prepare('UPDATE email_messages SET is_read = 1 WHERE id = :id');
@@ -194,7 +197,10 @@ if ($pdo && $selectedMailbox && $prefillMessageId > 0) {
             $composeConversationId = !empty($prefillMessage['conversation_id'])
                 ? (int) $prefillMessage['conversation_id']
                 : null;
-            $originalBody = (string) ($prefillMessage['body'] ?? '');
+            $originalBody = (string) ($prefillMessage['body_html'] ?? '');
+            if ($originalBody === '') {
+                $originalBody = (string) ($prefillMessage['body'] ?? '');
+            }
             $isHtml = $originalBody !== '' && $originalBody !== strip_tags($originalBody);
             $quotedBody = $isHtml ? $originalBody : nl2br(htmlspecialchars($originalBody));
 
