@@ -193,6 +193,26 @@ const initEmailValidation = (): void => {
   });
 };
 
+const initMailboxSwitch = (): void => {
+  const selects = Array.from(
+    document.querySelectorAll<HTMLSelectElement>("[data-mailbox-switch]"),
+  );
+
+  selects.forEach((select) => {
+    if (select.dataset.mailboxSwitchBound === "true") {
+      return;
+    }
+    select.dataset.mailboxSwitchBound = "true";
+
+    select.addEventListener("change", () => {
+      const form = select.closest("form");
+      if (form instanceof HTMLFormElement) {
+        form.submit();
+      }
+    });
+  });
+};
+
 const initRecipientLookup = (): void => {
   const lookups = Array.from(
     document.querySelectorAll<HTMLElement>("[data-email-lookup]"),
@@ -396,11 +416,13 @@ const bindWysiEditor = (): void => {
   initEmailValidation();
   initRecipientLookup();
   initLinkList();
+  initMailboxSwitch();
   document.addEventListener("tab:activated", () => {
     initWysiEditor();
     initEmailValidation();
     initRecipientLookup();
     initLinkList();
+    initMailboxSwitch();
   });
 };
 
