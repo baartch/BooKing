@@ -5,11 +5,11 @@
   <?php if (!$teamMailboxes): ?>
     <p>No mailboxes assigned.</p>
   <?php elseif ($mailboxCount > 1): ?>
-    <form method="GET" action="<?php echo htmlspecialchars($baseEmailUrl); ?>" class="field has-addons">
+    <form method="GET" action="<?php echo htmlspecialchars($baseEmailUrl); ?>" class="field">
       <input type="hidden" name="tab" value="email">
       <div class="control is-expanded">
         <div class="select is-fullwidth">
-          <select name="mailbox_id">
+          <select name="mailbox_id" data-mailbox-switch>
             <?php foreach ($teamMailboxes as $mailbox): ?>
               <?php
                 $displayLabel = trim((string) ($mailbox['display_name'] ?? ''));
@@ -24,9 +24,6 @@
             <?php endforeach; ?>
           </select>
         </div>
-      </div>
-      <div class="control">
-        <button type="submit" class="button">Go</button>
       </div>
     </form>
   <?php else: ?>
