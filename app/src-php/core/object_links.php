@@ -66,8 +66,8 @@ function clearObjectLinks(PDO $pdo, string $type, int $id, ?int $teamId, ?int $u
 
     $sql =
         'DELETE FROM object_links
-         WHERE ((left_type = :type AND left_id = :id)
-            OR (right_type = :type AND right_id = :id))
+         WHERE ((left_type = :left_type AND left_id = :left_id)
+            OR (right_type = :right_type AND right_id = :right_id))
            AND ';
 
     if ($userId !== null) {
@@ -78,8 +78,10 @@ function clearObjectLinks(PDO $pdo, string $type, int $id, ?int $teamId, ?int $u
 
     $stmt = $pdo->prepare($sql);
     $params = [
-        ':type' => $type,
-        ':id' => $id
+        ':left_type' => $type,
+        ':left_id' => $id,
+        ':right_type' => $type,
+        ':right_id' => $id
     ];
 
     if ($userId !== null) {
