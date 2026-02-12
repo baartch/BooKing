@@ -45,8 +45,7 @@
   flex-direction: column;
   position: relative;
   flex: 1 1 0;
-  border-right: 1px solid currentColor;
-  border-right-color: color-mix(in srgb, currentColor 50%, transparent);
+  border-right: 1px solid color-mix(in srgb, currentColor 50%, transparent);
   padding-right: 0.75rem;
 }
 
@@ -69,32 +68,8 @@
 }
 
 .email-recipient-dropdown .dropdown-menu {
-  width: 100%;
   left: 0;
   right: 0;
-}
-
-.email-recipient-badge {
-  background-color: color-mix(in srgb, currentColor 18%, transparent);
-  color: currentColor;
-  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
-}
-
-.email-link-metadata {
-  margin-top: 0.35rem;
-}
-
-.email-link-item {
-  display: inline-flex;
-  align-items: center;
-}
-
-.email-link-item .delete {
-  margin-left: 0.25rem;
-}
-
-.email-link-item + .email-link-item {
-  margin-left: 0.25rem;
 }
 
 .email-recipient-badge {
@@ -234,7 +209,6 @@
 .email-detail-meta-label {
   flex-shrink: 0;
   width: 2.4rem;
-  opacity: 0.45;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -245,7 +219,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  opacity: 0.8;
 }
 
 .email-detail-link-tag {
@@ -285,7 +258,6 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  opacity: 0.45;
   margin-bottom: 0.35rem;
 }
 
@@ -302,20 +274,19 @@
   font-size: 0.75rem;
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
-  background: color-mix(in srgb, currentColor 8%, transparent);
-  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
   text-decoration: none;
   color: inherit;
   transition: background 0.15s;
 }
 
 .email-detail-attachment-chip:hover {
-  background: color-mix(in srgb, currentColor 16%, transparent);
+  background: color-mix(in srgb, currentColor 20%, transparent);
   color: inherit;
 }
 
 .email-detail-attachment-size {
-  opacity: 0.45;
   font-size: 0.65rem;
 }
 

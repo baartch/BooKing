@@ -148,22 +148,22 @@
         <div class="email-detail-avatar"><?php echo htmlspecialchars($initials); ?></div>
         <div class="email-detail-meta-info">
           <div class="email-detail-meta-row">
-            <span class="email-detail-meta-label">From</span>
+            <span class="email-detail-meta-label">From:</span>
             <span class="email-detail-meta-value"><?php echo htmlspecialchars($senderLabel); ?></span>
           </div>
           <?php if ($recipientLabel !== ''): ?>
             <div class="email-detail-meta-row">
-              <span class="email-detail-meta-label">To</span>
+              <span class="email-detail-meta-label">To:</span>
               <span class="email-detail-meta-value"><?php echo htmlspecialchars($recipientLabel); ?></span>
             </div>
           <?php endif; ?>
           <div class="email-detail-meta-row">
-            <span class="email-detail-meta-label">Date</span>
+            <span class="email-detail-meta-label">Date:</span>
             <span class="email-detail-meta-value"><?php echo htmlspecialchars($dateLabel); ?></span>
           </div>
           <?php if (!empty($linkItems)): ?>
             <div class="email-detail-meta-row">
-              <span class="email-detail-meta-label">Links</span>
+              <span class="email-detail-meta-label">Links:</span>
               <span class="email-detail-meta-value">
                 <?php foreach ($linkItems as $index => $link): ?>
                   <a href="<?php echo htmlspecialchars($link['url']); ?>" class="email-detail-link-tag">
