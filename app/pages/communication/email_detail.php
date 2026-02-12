@@ -57,21 +57,61 @@
       $dateLabel = $message['received_at'] ?? $message['sent_at'] ?? $message['created_at'] ?? '';
 
       $linkItems = [];
+      $linkEditorLinks = [];
       if (!empty($messageLinks)) {
           foreach ($messageLinks as $link) {
               if ($link['type'] === 'contact') {
                   $url = BASE_PATH . '/app/pages/communication/index.php?tab=contacts&q=' . urlencode($link['label']);
-                  $linkItems[] = ['label' => $link['label'], 'url' => $url];
+                  $linkItems[] = ['type' => 'contact', 'label' => $link['label'], 'url' => $url];
               } elseif ($link['type'] === 'venue') {
                   $url = BASE_PATH . '/app/pages/venues/index.php?q=' . urlencode($link['label']);
-                  $linkItems[] = ['label' => $link['label'], 'url' => $url];
+                  $linkItems[] = ['type' => 'venue', 'label' => $link['label'], 'url' => $url];
               } elseif ($link['type'] === 'email') {
                   $url = $baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, [
                       'message_id' => $link['id']
                   ]));
-                  $linkItems[] = ['label' => $link['label'], 'url' => $url];
+                  $linkItems[] = ['type' => 'email', 'label' => $link['label'], 'url' => $url];
               }
+              $linkEditorLinks[] = [
+                  'type' => $link['type'],
+                  'id' => (int) $link['id'],
+                  'label' => $link['label']
+              ];
           }
+      }
+
+      $linkEditorConversationId = !empty($message['conversation_id']) ? (int) $message['conversation_id'] : null;
+      $linkEditorConversationLabel = '';
+      if ($linkEditorConversationId !== null && isset($pdo)) {
+          try {
+              $convStmt = $pdo->prepare('SELECT subject FROM email_conversations WHERE id = :id LIMIT 1');
+              $convStmt->execute([':id' => $linkEditorConversationId]);
+              $convRow = $convStmt->fetch();
+              $linkEditorConversationLabel = $convRow ? trim((string) ($convRow['subject'] ?? '')) : '';
+              if ($linkEditorConversationLabel === '') {
+                  $linkEditorConversationLabel = 'Conversation #' . $linkEditorConversationId;
+              }
+          } catch (Throwable $e) {
+              $linkEditorConversationLabel = 'Conversation #' . $linkEditorConversationId;
+          }
+      }
+
+      $linkIcons = [
+          'contact' => 'fa-user',
+          'venue' => 'fa-location-dot',
+          'email' => 'fa-envelope',
+          'conversation' => 'fa-comments'
+      ];
+
+      if ($linkEditorConversationId !== null) {
+          $conversationUrl = BASE_PATH . '/app/pages/communication/index.php?tab=conversations&conversation_id=' . $linkEditorConversationId;
+          $linkItems = array_merge([
+              [
+                  'type' => 'conversation',
+                  'label' => $linkEditorConversationLabel,
+                  'url' => $conversationUrl
+              ]
+          ], $linkItems);
       }
 
       $initials = '';
@@ -161,18 +201,20 @@
             <span class="email-detail-meta-label">Date:</span>
             <span class="email-detail-meta-value"><?php echo htmlspecialchars($dateLabel); ?></span>
           </div>
-          <?php if (!empty($linkItems)): ?>
-            <div class="email-detail-meta-row">
-              <span class="email-detail-meta-label">Links:</span>
-              <span class="email-detail-meta-value">
-                <?php foreach ($linkItems as $index => $link): ?>
-                  <a href="<?php echo htmlspecialchars($link['url']); ?>" class="email-detail-link-tag">
-                    <?php echo htmlspecialchars($link['label']); ?>
-                  </a>
-                <?php endforeach; ?>
-              </span>
-            </div>
-          <?php endif; ?>
+          <div class="email-detail-meta-row">
+            <span class="email-detail-meta-label">Links:</span>
+            <span class="email-detail-meta-value email-detail-link-list">
+              <?php foreach ($linkItems as $index => $link): ?>
+                <a href="<?php echo htmlspecialchars($link['url']); ?>" class="email-detail-link-pill">
+                  <span class="icon is-small"><i class="fa-solid <?php echo htmlspecialchars($linkIcons[$link['type']] ?? 'fa-link'); ?>"></i></span>
+                  <span><?php echo htmlspecialchars($link['label']); ?></span>
+                </a>
+              <?php endforeach; ?>
+              <a href="#" class="email-detail-link-edit" data-link-editor-trigger title="Edit links">
+                <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
+              </a>
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -210,6 +252,12 @@
         </div>
       </div>
     <?php endif; ?>
+    <?php
+      $linkEditorSourceType = 'email';
+      $linkEditorSourceId = (int) $message['id'];
+      $linkEditorMailboxId = (int) $selectedMailbox['id'];
+      require __DIR__ . '/../../partials/link_editor_modal.php';
+    ?>
   <?php else: ?>
     <div class="email-detail-empty">
       <span class="icon is-large has-text-grey"><i class="fa-solid fa-envelope-open fa-2x"></i></span>
