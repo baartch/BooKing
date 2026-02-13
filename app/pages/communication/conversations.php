@@ -163,6 +163,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                   $messageLabel = $messageCount === 1 ? 'mail' : 'mails';
                   $lastFolder = (string) ($conversation['last_message_folder'] ?? '');
                   $arrowIcon = $lastFolder === 'inbox' ? 'fa-arrow-right' : 'fa-arrow-left';
+                  $scopeIcon = !empty($conversation['team_id']) ? 'fa-users' : 'fa-user';
                 ?>
                 <li class="mb-3">
                   <div class="is-flex is-justify-content-space-between">
@@ -170,6 +171,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                       <div class="is-flex is-justify-content-space-between">
                         <div>
                           <div class="has-text-weight-semibold">
+                            <span class="icon is-small"><i class="fa-solid <?php echo $scopeIcon; ?>"></i></span>
                             <span class="icon is-small"><i class="fa-solid <?php echo $arrowIcon; ?>"></i></span>
                             <?php echo (int) $conversation['id']; ?>: <?php echo htmlspecialchars($conversation['subject'] ?? '(No subject)'); ?>
                           </div>
@@ -220,6 +222,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                     $messageLabel = $messageCount === 1 ? 'mail' : 'mails';
                     $lastFolder = (string) ($conversation['last_message_folder'] ?? '');
                     $arrowIcon = $lastFolder === 'inbox' ? 'fa-arrow-right' : 'fa-arrow-left';
+                    $scopeIcon = !empty($conversation['team_id']) ? 'fa-users' : 'fa-user';
                   ?>
                   <li class="mb-3">
                     <div class="is-flex is-justify-content-space-between">
@@ -227,6 +230,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                         <div class="is-flex is-justify-content-space-between">
                           <div>
                             <div class="has-text-weight-semibold">
+                              <span class="icon is-small"><i class="fa-solid <?php echo $scopeIcon; ?>"></i></span>
                               <span class="icon is-small"><i class="fa-solid <?php echo $arrowIcon; ?>"></i></span>
                               <?php echo (int) $conversation['id']; ?>: <?php echo htmlspecialchars($conversation['subject'] ?? '(No subject)'); ?>
                               <span class="tag is-small has-background-success-dark ml-2">Closed</span>
