@@ -38,6 +38,7 @@ function renderPageStart(string $title, array $options = []): void
         echo "  <link rel=\"stylesheet\" href=\"{$styleUrl}\">\n";
     }
 
+    echo "  <script type=\"module\" src=\"" . BASE_PATH . "/app/public/js/appearance.js\"></script>\n";
 
     foreach ($extraScripts as $scriptTag) {
         echo $scriptTag . "\n";
