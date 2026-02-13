@@ -54,7 +54,7 @@ if ($pdo && $conversationId > 0) {
             $errors[] = 'Conversation access denied.';
         } else {
             $stmt = $pdo->prepare(
-                'SELECT em.id, em.subject, em.body, em.body_html, em.from_name, em.from_email, em.to_emails, em.folder,
+                'SELECT em.id, em.mailbox_id, em.subject, em.body, em.body_html, em.from_name, em.from_email, em.to_emails, em.folder,
                         em.is_read, em.received_at, em.sent_at, em.created_at,
                         em.team_id, em.user_id, u.username AS user_name
                  FROM email_messages em
@@ -283,68 +283,89 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
         <p>No emails found for this conversation.</p>
       <?php else: ?>
         <div class="content">
-          <?php foreach ($conversationMessages as $message): ?>
+          <?php foreach ($conversationMessages as $messageItem): ?>
             <?php
-              $messageFolder = $message['folder'] ?? 'inbox';
+              $messageFolder = $messageItem['folder'] ?? 'inbox';
               $displayName = $messageFolder === 'inbox'
-                  ? trim(($message['from_name'] ?? '') !== '' ? $message['from_name'] : ($message['from_email'] ?? 'Unknown'))
-                  : trim((string) ($message['to_emails'] ?? ''));
+                  ? trim(($messageItem['from_name'] ?? '') !== '' ? $messageItem['from_name'] : ($messageItem['from_email'] ?? 'Unknown'))
+                  : trim((string) ($messageItem['to_emails'] ?? ''));
               $dateValue = $messageFolder === 'inbox'
-                  ? ($message['received_at'] ?? $message['created_at'])
-                  : ($message['sent_at'] ?? $message['created_at']);
+                  ? ($messageItem['received_at'] ?? $messageItem['created_at'])
+                  : ($messageItem['sent_at'] ?? $messageItem['created_at']);
               $dateLabel = $dateValue ? date('Y-m-d H:i', strtotime((string) $dateValue)) : '';
               $folderLabel = $folderOptions[$messageFolder] ?? ucfirst($messageFolder);
-              $isUnread = empty($message['is_read']) && $messageFolder === 'inbox';
-              $messageBody = (string) ($message['body_html'] ?? '');
+              $isUnread = empty($messageItem['is_read']) && $messageFolder === 'inbox';
+              $messageBody = (string) ($messageItem['body_html'] ?? '');
               if ($messageBody === '') {
-                  $messageBody = (string) ($message['body'] ?? '');
+                  $messageBody = (string) ($messageItem['body'] ?? '');
               }
-              $isPersonalMessage = empty($message['team_id']) && !empty($message['user_id']);
+              $isPersonalMessage = empty($messageItem['team_id']) && !empty($messageItem['user_id']);
               $isPersonalPlaceholder = $isPersonalMessage
-                  && (int) $message['user_id'] !== (int) $userId;
+                  && (int) $messageItem['user_id'] !== (int) $userId;
               $placeholderLabel = $isPersonalPlaceholder
-                  ? sprintf('Personal reply from %s (hidden)', $message['user_name'] ?? 'user')
+                  ? sprintf('Personal reply from %s (hidden)', $messageItem['user_name'] ?? 'user')
                   : '';
+              $selectedMailbox = [
+                  'id' => (int) ($messageItem['mailbox_id'] ?? 0),
+                  'team_id' => $messageItem['team_id'] ?? null,
+                  'user_id' => $messageItem['user_id'] ?? null,
+                  'display_name' => ''
+              ];
+              $messageLinks = [];
+              if ($pdo && !empty($messageItem['id'])) {
+                  try {
+                      $linkTeamId = !empty($messageItem['team_id']) ? (int) $messageItem['team_id'] : null;
+                      $linkUserId = !empty($messageItem['user_id']) ? (int) $messageItem['user_id'] : null;
+                      $messageLinks = fetchLinkedObjects(
+                          $pdo,
+                          'email',
+                          (int) $messageItem['id'],
+                          $linkTeamId,
+                          $linkUserId
+                      );
+                  } catch (Throwable $error) {
+                      logAction($userId, 'conversation_message_links_error', $error->getMessage());
+                  }
+              }
+              $baseEmailUrl = BASE_PATH . '/app/pages/communication/index.php';
+              $baseQuery = [
+                  'tab' => 'conversations',
+                  'conversation_id' => $conversationId
+              ];
+              $emailDetailWrapperTag = 'article';
+              $emailDetailWrapperClass = 'box mb-4';
+              $emailDetailIncludeLinkEditor = false;
+              $emailDetailShowActions = false;
+              $emailDetailShowLinks = false;
+              $emailDetailShowAttachments = false;
+              $composeMode = false;
+              $templates = [];
+              $attachments = [];
+              $sortKey = 'received_desc';
+              $filter = '';
+              $page = 1;
+              $message = $messageItem;
+              require __DIR__ . '/email_detail.php';
             ?>
-            <article class="box mb-4">
-              <div class="is-flex is-justify-content-space-between is-align-items-flex-start is-size-7 mb-2">
-                <div>
-                  <span class="has-text-weight-semibold">
-                    <?php echo htmlspecialchars($isPersonalPlaceholder ? $placeholderLabel : $displayName); ?>
-                  </span>
-                  <span class="mx-1">·</span>
-                  <span><?php echo htmlspecialchars($folderLabel); ?></span>
-                  <?php if ($isUnread): ?>
-                    <span class="tag is-small ml-2">Unread</span>
-                  <?php endif; ?>
-                </div>
-                <div class="is-flex is-align-items-center">
-                  <span><?php echo htmlspecialchars($dateLabel); ?></span>
-                  <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/rm_conversation_message.php" class="ml-2" onsubmit="return confirm('Remove this email from the conversation?');">
-                    <?php renderCsrfField(); ?>
-                    <input type="hidden" name="conversation_id" value="<?php echo (int) $conversationId; ?>">
-                    <input type="hidden" name="message_id" value="<?php echo (int) $message['id']; ?>">
-                    <button type="submit" class="button is-small" aria-label="Remove from conversation" title="Remove from conversation">
-                      <span class="icon"><i class="fa-solid fa-link-slash"></i></span>
-                    </button>
-                  </form>
-                </div>
-              </div>
-              <h3 class="title is-6 mb-2"><?php echo htmlspecialchars($message['subject'] ?? '(No subject)'); ?></h3>
-              <div class="content is-size-7">
-                <?php if ($isPersonalPlaceholder): ?>
-                  <em>Personal message hidden.</em>
-                <?php else: ?>
-                  <?php
-                    if ($messageBody !== '' && $messageBody !== strip_tags($messageBody)) {
-                        echo $messageBody;
-                    } else {
-                        echo nl2br(htmlspecialchars($messageBody));
-                    }
-                  ?>
-                <?php endif; ?>
-              </div>
-            </article>
+            <div class="is-flex is-align-items-center is-size-7 mt-2">
+              <span><?php echo htmlspecialchars($dateLabel); ?></span>
+              <?php if ($isUnread): ?>
+                <span class="tag is-small ml-2">Unread</span>
+              <?php endif; ?>
+              <span class="ml-2">· <?php echo htmlspecialchars($folderLabel); ?></span>
+              <span class="ml-2 has-text-weight-semibold">
+                <?php echo htmlspecialchars($isPersonalPlaceholder ? $placeholderLabel : $displayName); ?>
+              </span>
+              <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/rm_conversation_message.php" class="ml-2" onsubmit="return confirm('Remove this email from the conversation?');">
+                <?php renderCsrfField(); ?>
+                <input type="hidden" name="conversation_id" value="<?php echo (int) $conversationId; ?>">
+                <input type="hidden" name="message_id" value="<?php echo (int) $messageItem['id']; ?>">
+                <button type="submit" class="button is-small" aria-label="Remove from conversation" title="Remove from conversation">
+                  <span class="icon"><i class="fa-solid fa-link-slash"></i></span>
+                </button>
+              </form>
+            </div>
+            <?php $message = null; ?>
           <?php endforeach; ?>
         </div>
       <?php endif; ?>

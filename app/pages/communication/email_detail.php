@@ -1,6 +1,18 @@
 <?php
+$emailDetailWrapperTag = $emailDetailWrapperTag ?? 'section';
+$emailDetailWrapperClass = $emailDetailWrapperClass ?? 'column email-column email-detail-column';
+$emailDetailIncludeLinkEditor = $emailDetailIncludeLinkEditor ?? true;
+$emailDetailShowActions = $emailDetailShowActions ?? true;
+$emailDetailShowLinks = $emailDetailShowLinks ?? true;
+$emailDetailShowAttachments = $emailDetailShowAttachments ?? true;
+$messageLinks = $messageLinks ?? [];
+$attachments = $attachments ?? [];
+$composeMode = $composeMode ?? false;
+$templates = $templates ?? [];
+$selectedMailbox = $selectedMailbox ?? null;
+
+echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' class="' . htmlspecialchars($emailDetailWrapperClass) . '">';
 ?>
-<section class="column email-column email-detail-column">
   <?php if (!$selectedMailbox): ?>
     <div class="email-detail-empty">
       <span class="icon is-large has-text-grey"><i class="fa-solid fa-envelope fa-2x"></i></span>
@@ -130,57 +142,59 @@
     <div class="email-detail-header">
       <div class="email-detail-subject-row">
         <h2 class="email-detail-subject"><?php echo htmlspecialchars($message['subject'] ?? '(No subject)'); ?></h2>
-        <div class="field has-addons email-detail-actions">
-          <div class="control">
-            <a
-              href="<?php echo htmlspecialchars($baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, ['compose' => 1, 'reply' => $message['id']]))); ?>"
-              class="button is-small"
-              aria-label="Reply"
-              title="Reply"
-            >
-              <span class="icon is-small"><i class="fa-solid fa-reply"></i></span>
-            </a>
+        <?php if ($emailDetailShowActions): ?>
+          <div class="field has-addons email-detail-actions">
+            <div class="control">
+              <a
+                href="<?php echo htmlspecialchars($baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, ['compose' => 1, 'reply' => $message['id']]))); ?>"
+                class="button is-small"
+                aria-label="Reply"
+                title="Reply"
+              >
+                <span class="icon is-small"><i class="fa-solid fa-reply"></i></span>
+              </a>
+            </div>
+
+            <div class="control">
+              <a
+                href="<?php echo htmlspecialchars($baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, ['compose' => 1, 'forward' => $message['id']]))); ?>"
+                class="button is-small"
+                aria-label="Forward"
+                title="Forward"
+              >
+                <span class="icon is-small"><i class="fa-solid fa-forward"></i></span>
+              </a>
+            </div>
+
+            <form class="control" method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/mark_unread.php">
+              <?php renderCsrfField(); ?>
+              <input type="hidden" name="email_id" value="<?php echo (int) $message['id']; ?>">
+              <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
+              <input type="hidden" name="folder" value="<?php echo htmlspecialchars($folder); ?>">
+              <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
+              <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+              <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
+              <input type="hidden" name="tab" value="email">
+              <button type="submit" class="button is-small" aria-label="Mark as unread" title="Mark as unread">
+                <span class="icon is-small"><i class="fa-solid fa-envelope"></i></span>
+              </button>
+            </form>
+
+            <form class="control" method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/delete.php">
+              <?php renderCsrfField(); ?>
+              <input type="hidden" name="email_id" value="<?php echo (int) $message['id']; ?>">
+              <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
+              <input type="hidden" name="folder" value="<?php echo htmlspecialchars($folder); ?>">
+              <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
+              <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+              <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
+              <input type="hidden" name="tab" value="email">
+              <button type="submit" class="button is-small" aria-label="Move email to trash" title="Move email to trash">
+                <span class="icon is-small"><i class="fa-solid fa-trash"></i></span>
+              </button>
+            </form>
           </div>
-
-          <div class="control">
-            <a
-              href="<?php echo htmlspecialchars($baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, ['compose' => 1, 'forward' => $message['id']]))); ?>"
-              class="button is-small"
-              aria-label="Forward"
-              title="Forward"
-            >
-              <span class="icon is-small"><i class="fa-solid fa-forward"></i></span>
-            </a>
-          </div>
-
-          <form class="control" method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/mark_unread.php">
-            <?php renderCsrfField(); ?>
-            <input type="hidden" name="email_id" value="<?php echo (int) $message['id']; ?>">
-            <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
-            <input type="hidden" name="folder" value="<?php echo htmlspecialchars($folder); ?>">
-            <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
-            <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
-            <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
-            <input type="hidden" name="tab" value="email">
-            <button type="submit" class="button is-small" aria-label="Mark as unread" title="Mark as unread">
-              <span class="icon is-small"><i class="fa-solid fa-envelope"></i></span>
-            </button>
-          </form>
-
-          <form class="control" method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/delete.php">
-            <?php renderCsrfField(); ?>
-            <input type="hidden" name="email_id" value="<?php echo (int) $message['id']; ?>">
-            <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
-            <input type="hidden" name="folder" value="<?php echo htmlspecialchars($folder); ?>">
-            <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
-            <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
-            <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
-            <input type="hidden" name="tab" value="email">
-            <button type="submit" class="button is-small" aria-label="Move email to trash" title="Move email to trash">
-              <span class="icon is-small"><i class="fa-solid fa-trash"></i></span>
-            </button>
-          </form>
-        </div>
+        <?php endif; ?>
       </div>
 
       <!-- Metadata: Sender / Recipients / Date / Links -->
@@ -201,20 +215,22 @@
             <span class="email-detail-meta-label">Date:</span>
             <span class="email-detail-meta-value"><?php echo htmlspecialchars($dateLabel); ?></span>
           </div>
-          <div class="email-detail-meta-row">
-            <span class="email-detail-meta-label">Links:</span>
-            <span class="email-detail-meta-value email-detail-link-list">
-              <?php foreach ($linkItems as $index => $link): ?>
-                <a href="<?php echo htmlspecialchars($link['url']); ?>" class="email-detail-link-pill">
-                  <span class="icon is-small"><i class="fa-solid <?php echo htmlspecialchars($linkIcons[$link['type']] ?? 'fa-link'); ?>"></i></span>
-                  <span><?php echo htmlspecialchars($link['label']); ?></span>
+          <?php if ($emailDetailShowLinks): ?>
+            <div class="email-detail-meta-row">
+              <span class="email-detail-meta-label">Links:</span>
+              <span class="email-detail-meta-value email-detail-link-list">
+                <?php foreach ($linkItems as $index => $link): ?>
+                  <a href="<?php echo htmlspecialchars($link['url']); ?>" class="email-detail-link-pill">
+                    <span class="icon is-small"><i class="fa-solid <?php echo htmlspecialchars($linkIcons[$link['type']] ?? 'fa-link'); ?>"></i></span>
+                    <span><?php echo htmlspecialchars($link['label']); ?></span>
+                  </a>
+                <?php endforeach; ?>
+                <a href="#" class="email-detail-link-edit" data-link-editor-trigger title="Edit links">
+                  <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
                 </a>
-              <?php endforeach; ?>
-              <a href="#" class="email-detail-link-edit" data-link-editor-trigger title="Edit links">
-                <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
-              </a>
-            </span>
-          </div>
+              </span>
+            </div>
+          <?php endif; ?>
         </div>
       </div>
     </div>
@@ -235,7 +251,7 @@
     </div>
 
     <!-- Attachments -->
-    <?php if ($attachments): ?>
+    <?php if ($emailDetailShowAttachments && $attachments): ?>
       <div class="email-detail-attachments">
         <span class="email-detail-attachments-label">
           <span class="icon is-small"><i class="fa-solid fa-paperclip"></i></span>
@@ -252,16 +268,18 @@
         </div>
       </div>
     <?php endif; ?>
-    <?php
-      $linkEditorSourceType = 'email';
-      $linkEditorSourceId = (int) $message['id'];
-      $linkEditorMailboxId = (int) $selectedMailbox['id'];
-      require __DIR__ . '/../../partials/link_editor_modal.php';
-    ?>
+    <?php if ($emailDetailIncludeLinkEditor && $selectedMailbox): ?>
+      <?php
+        $linkEditorSourceType = 'email';
+        $linkEditorSourceId = (int) $message['id'];
+        $linkEditorMailboxId = (int) $selectedMailbox['id'];
+        require __DIR__ . '/../../partials/link_editor_modal.php';
+      ?>
+    <?php endif; ?>
   <?php else: ?>
     <div class="email-detail-empty">
       <span class="icon is-large has-text-grey"><i class="fa-solid fa-envelope-open fa-2x"></i></span>
       <p class="has-text-grey mt-2">Select an email to view its details.</p>
     </div>
   <?php endif; ?>
-</section>
+<?php echo '</' . htmlspecialchars($emailDetailWrapperTag) . '>'; ?>
