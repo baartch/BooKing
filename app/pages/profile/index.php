@@ -12,7 +12,7 @@ $maxPageSize = 500;
 $currentPageSize = (int) ($currentUser['venues_page_size'] ?? $defaultPageSize);
 $currentPageSize = max($minPageSize, min($maxPageSize, $currentPageSize));
 $activeTab = $_GET['tab'] ?? 'venues';
-$validTabs = ['venues', 'mailboxes'];
+$validTabs = ['venues', 'mailboxes', 'appearance'];
 if (!in_array($activeTab, $validTabs, true)) {
     $activeTab = 'venues';
 }
@@ -89,7 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php renderPageStart('Profile', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',
     'extraScripts' => [
-        '<script type="module" src="' . BASE_PATH . '/app/public/js/tabs.js" defer></script>'
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/tabs.js" defer></script>',
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/appearance.js" defer></script>'
     ]
 ]); ?>
       <section class="section">
@@ -115,6 +116,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               </li>
               <li class="<?php echo $activeTab === 'mailboxes' ? 'is-active' : ''; ?>">
                 <a href="#" data-tab="mailboxes" role="tab" aria-selected="<?php echo $activeTab === 'mailboxes' ? 'true' : 'false'; ?>">Mailboxes</a>
+              </li>
+              <li class="<?php echo $activeTab === 'appearance' ? 'is-active' : ''; ?>">
+                <a href="#" data-tab="appearance" role="tab" aria-selected="<?php echo $activeTab === 'appearance' ? 'true' : 'false'; ?>">Appearance</a>
               </li>
             </ul>
           </div>
@@ -223,6 +227,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   </table>
                 </div>
               <?php endif; ?>
+            </div>
+          </div>
+
+          <div class="tab-panel <?php echo $activeTab === 'appearance' ? '' : 'is-hidden'; ?>" data-tab-panel="appearance" role="tabpanel">
+            <div class="columns is-multiline">
+              <div class="column is-12">
+                <div class="box">
+                  <h2 class="title is-5">Appearance</h2>
+                  <div class="field">
+                    <label class="label" for="appearance_theme">Theme</label>
+                    <div class="control">
+                      <div class="select">
+                        <select id="appearance_theme" name="appearance_theme" data-appearance-theme>
+                          <option value="system">System</option>
+                          <option value="light">Light</option>
+                          <option value="dark">Dark</option>
+                        </select>
+                      </div>
+                    </div>
+                    <p class="help">Choose a theme preference for this browser.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
