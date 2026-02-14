@@ -15,7 +15,15 @@ PHP + TypeScript app for venue mapping with MariaDB-backed authentication, sessi
 
 ```
 ├── app/                     # Application codebase (PHP pages/routes, assets, scripts, TS)
-│   ├── pages/               # Server-rendered pages (auth, admin, venues, profile, team)
+│   ├── pages/               # Server-rendered pages
+│   │   ├── admin/           # Admin area (users, teams, SMTP, API keys)
+│   │   ├── auth/            # Authentication pages (login/logout)
+│   │   ├── communication/   # Communication UI (email, contacts, conversations)
+│   │   ├── dashboard/       # Dashboard/overview landing page
+│   │   ├── map/             # Map UI (Leaflet-based venue map)
+│   │   ├── profile/         # User profile + mailbox settings
+│   │   ├── team/            # Team settings (mailboxes, templates)
+│   │   └── venues/          # Venue pages (list/add)
 │   ├── partials/            # Shared PHP view fragments
 │   ├── public/              # Public static assets
 │   │   ├── assets/          # Icons and imagery
