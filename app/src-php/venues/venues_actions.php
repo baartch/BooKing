@@ -134,6 +134,11 @@ function handleVenueDelete(array $currentUser, int $venueId): array
     $errors = [];
     $notice = '';
 
+    if (($currentUser['role'] ?? '') !== 'admin') {
+        $errors[] = 'You are not authorized to delete venues.';
+        return ['errors' => $errors, 'notice' => $notice];
+    }
+
     if ($venueId <= 0) {
         $errors[] = 'Select a venue to delete.';
         return ['errors' => $errors, 'notice' => $notice];

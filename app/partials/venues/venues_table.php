@@ -10,7 +10,7 @@
         <th>Contact</th>
         <th data-sort>Contact Person</th>
         <th data-sort data-sort-type="number">Capacity</th>
-        <th>Actions</th>
+        <th><?php echo (($currentUser['role'] ?? '') === 'admin') ? 'Actions' : 'Details'; ?></th>
       </tr>
     </thead>
     <tbody>
@@ -77,17 +77,19 @@
               <button type="button" class="button" data-venue-info-toggle aria-label="Show venue details" title="Show venue details">
                 <span class="icon"><i class="fa-solid fa-circle-info"></i></span>
               </button>
-              <a href="<?php echo BASE_PATH; ?>/app/pages/venues/add.php?edit=<?php echo (int) $venue['id']; ?>" class="button" aria-label="Edit venue" title="Edit venue">
-                <span class="icon"><i class="fa-solid fa-pen"></i></span>
-              </a>
-              <form method="POST" action="" onsubmit="return confirm('Delete this venue?');">
-                <?php renderCsrfField(); ?>
-                <input type="hidden" name="action" value="delete">
-                <input type="hidden" name="venue_id" value="<?php echo (int) $venue['id']; ?>">
-                <button type="submit" class="button" aria-label="Delete venue" title="Delete venue">
-                  <span class="icon"><i class="fa-solid fa-trash"></i></span>
-                </button>
-              </form>
+              <?php if (($currentUser['role'] ?? '') === 'admin'): ?>
+                <a href="<?php echo BASE_PATH; ?>/app/pages/venues/add.php?edit=<?php echo (int) $venue['id']; ?>" class="button" aria-label="Edit venue" title="Edit venue">
+                  <span class="icon"><i class="fa-solid fa-pen"></i></span>
+                </a>
+                <form method="POST" action="" onsubmit="return confirm('Delete this venue?');">
+                  <?php renderCsrfField(); ?>
+                  <input type="hidden" name="action" value="delete">
+                  <input type="hidden" name="venue_id" value="<?php echo (int) $venue['id']; ?>">
+                  <button type="submit" class="button" aria-label="Delete venue" title="Delete venue">
+                    <span class="icon"><i class="fa-solid fa-trash"></i></span>
+                  </button>
+                </form>
+              <?php endif; ?>
             </div>
           </td>
         </tr>
