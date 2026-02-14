@@ -89,7 +89,6 @@ try {
     header('Content-Disposition: inline; filename="waypoints.gpx"');
     header('Cache-Control: private, max-age=3600');
     echo $xml->saveXML();
-    logAction($currentUser['user_id'] ?? null, 'fetch_waypoints', 'Fetched venues from database');
 } catch (Throwable $error) {
     http_response_code(500);
     logAction($currentUser['user_id'] ?? null, 'fetch_waypoints_error', $error->getMessage());
