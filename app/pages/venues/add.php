@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../routes/auth/check.php';
+require_once __DIR__ . '/../../src-php/auth/admin_check.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
 require_once __DIR__ . '/../../src-php/core/form_helpers.php';
 require_once __DIR__ . '/../../src-php/core/search_helpers.php';
