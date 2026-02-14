@@ -26,14 +26,14 @@ const createDebounce = (callback: () => void, delay: number) => {
   return { trigger, flush, clear: clearTimer };
 };
 
-const initContactsSearch = (): void => {
+const initListSearch = (): void => {
   const searchForm = qs<HTMLFormElement>('[data-filter-form]');
-  const searchInput = searchForm ? qs<HTMLInputElement>('input[name="q"]', searchForm) : null;
+  const searchInput = searchForm ? qs<HTMLInputElement>('input[type="text"]', searchForm) : null;
   if (!searchForm || !searchInput) {
     return;
   }
 
-  const focusKey = 'contactsSearchFocus';
+  const focusKey = 'listFilterFocus';
 
   const submitSearch = (): void => {
     sessionStorage.setItem(focusKey, '1');
@@ -69,8 +69,4 @@ const initContactsSearch = (): void => {
   });
 };
 
-const initContactsPage = (): void => {
-  initContactsSearch();
-};
-
-initContactsPage();
+initListSearch();
