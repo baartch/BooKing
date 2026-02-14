@@ -198,34 +198,38 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' class="' . htmlspecialch
       </div>
 
       <!-- Metadata: Sender / Recipients / Date / Links -->
-      <div class="email-detail-meta">
-        <div class="email-detail-avatar"><?php echo htmlspecialchars($initials); ?></div>
-        <div class="email-detail-meta-info">
-          <div class="email-detail-meta-row">
-            <span class="email-detail-meta-label">From:</span>
-            <span class="email-detail-meta-value"><?php echo htmlspecialchars($senderLabel); ?></span>
+      <div class="detail-meta">
+        <div class="detail-avatar"><?php echo htmlspecialchars($initials); ?></div>
+        <div class="detail-meta-info">
+          <div class="detail-meta-row">
+            <span class="detail-meta-label">From:</span>
+            <span class="detail-meta-value"><?php echo htmlspecialchars($senderLabel); ?></span>
           </div>
           <?php if ($recipientLabel !== ''): ?>
-            <div class="email-detail-meta-row">
-              <span class="email-detail-meta-label">To:</span>
-              <span class="email-detail-meta-value"><?php echo htmlspecialchars($recipientLabel); ?></span>
+            <div class="detail-meta-row">
+              <span class="detail-meta-label">To:</span>
+              <span class="detail-meta-value"><?php echo htmlspecialchars($recipientLabel); ?></span>
             </div>
           <?php endif; ?>
-          <div class="email-detail-meta-row">
-            <span class="email-detail-meta-label">Date:</span>
-            <span class="email-detail-meta-value"><?php echo htmlspecialchars($dateLabel); ?></span>
+          <div class="detail-meta-row">
+            <span class="detail-meta-label">Date:</span>
+            <span class="detail-meta-value"><?php echo htmlspecialchars($dateLabel); ?></span>
           </div>
           <?php if ($emailDetailShowLinks): ?>
-            <div class="email-detail-meta-row">
-              <span class="email-detail-meta-label">Links:</span>
-              <span class="email-detail-meta-value email-detail-link-list">
-                <?php foreach ($linkItems as $index => $link): ?>
-                  <a href="<?php echo htmlspecialchars($link['url']); ?>" class="email-detail-link-pill">
-                    <span class="icon is-small"><i class="fa-solid <?php echo htmlspecialchars($linkIcons[$link['type']] ?? 'fa-link'); ?>"></i></span>
-                    <span><?php echo htmlspecialchars($link['label']); ?></span>
-                  </a>
-                <?php endforeach; ?>
-                <a href="#" class="email-detail-link-edit" data-link-editor-trigger title="Edit links">
+            <div class="detail-meta-row">
+              <span class="detail-meta-label">Links:</span>
+              <span class="detail-meta-value detail-link-list">
+                <?php if (!$linkItems): ?>
+                  <span class="has-text-grey is-size-7">No links yet</span>
+                <?php else: ?>
+                  <?php foreach ($linkItems as $index => $link): ?>
+                    <a href="<?php echo htmlspecialchars($link['url']); ?>" class="detail-link-pill">
+                      <span class="icon is-small"><i class="fa-solid <?php echo htmlspecialchars($linkIcons[$link['type']] ?? 'fa-link'); ?>"></i></span>
+                      <span><?php echo htmlspecialchars($link['label']); ?></span>
+                    </a>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+                <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars('link-editor-email-' . (int) $message['id']); ?>" title="Edit links">
                   <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
                 </a>
               </span>
@@ -273,6 +277,7 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' class="' . htmlspecialch
         $linkEditorSourceType = 'email';
         $linkEditorSourceId = (int) $message['id'];
         $linkEditorMailboxId = (int) $selectedMailbox['id'];
+        $linkEditorSearchTypes = 'contact,venue,email';
         require __DIR__ . '/../../partials/link_editor_modal.php';
       ?>
     <?php endif; ?>

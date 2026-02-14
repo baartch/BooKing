@@ -71,6 +71,35 @@ try {
         }
     }
 
+    if (in_array('email', $types, true)) {
+        $mailboxes = fetchAccessibleMailboxes($pdo, $userId);
+        $mailboxIds = array_values(array_filter(array_map('intval', array_column($mailboxes, 'id'))));
+        if ($mailboxIds) {
+            $placeholders = implode(',', array_fill(0, count($mailboxIds), '?'));
+            $stmt = $pdo->prepare(
+                'SELECT id, subject, from_email, to_emails
+                 FROM email_messages
+                 WHERE mailbox_id IN (' . $placeholders . ')
+                   AND (subject LIKE ? OR from_email LIKE ? OR to_emails LIKE ?)
+                 ORDER BY created_at DESC
+                 LIMIT 8'
+            );
+            $params = array_merge($mailboxIds, [$term, $term, $term]);
+            $stmt->execute($params);
+            foreach ($stmt->fetchAll() as $row) {
+                $subject = trim((string) ($row['subject'] ?? ''));
+                $from = trim((string) ($row['from_email'] ?? ''));
+                $label = $subject !== '' ? $subject : ($from !== '' ? $from : 'Email #' . $row['id']);
+                $items[] = [
+                    'id' => (int) $row['id'],
+                    'type' => 'email',
+                    'label' => $label,
+                    'detail' => $from
+                ];
+            }
+        }
+    }
+
     if (in_array('conversation', $types, true) && $scopeMailboxId > 0) {
         $mailbox = ensureMailboxAccess($pdo, $scopeMailboxId, $userId);
         if ($mailbox) {

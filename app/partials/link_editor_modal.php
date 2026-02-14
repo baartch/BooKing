@@ -17,11 +17,15 @@ $linkEditorMailboxId = (int) ($linkEditorMailboxId ?? 0);
 $linkEditorLinks = $linkEditorLinks ?? [];
 $linkEditorConversationId = $linkEditorConversationId ?? null;
 $linkEditorConversationLabel = $linkEditorConversationLabel ?? '';
+$linkEditorSearchTypes = $linkEditorSearchTypes ?? 'contact,venue';
 
 $linkEditorSearchUrl = BASE_PATH . '/app/routes/communication/link_search.php';
 $linkEditorSaveUrl = BASE_PATH . '/app/routes/communication/save_links.php';
 ?>
-<div class="modal" data-link-editor-modal>
+<?php
+$linkEditorModalId = htmlspecialchars('link-editor-' . $linkEditorSourceType . '-' . $linkEditorSourceId);
+?>
+<div class="modal" data-link-editor-modal id="<?php echo $linkEditorModalId; ?>">
   <div class="modal-background" data-link-editor-close></div>
   <div class="modal-card">
     <header class="modal-card-head">
@@ -40,13 +44,14 @@ $linkEditorSaveUrl = BASE_PATH . '/app/routes/communication/save_links.php';
         data-links="<?php echo htmlspecialchars(json_encode($linkEditorLinks, JSON_UNESCAPED_UNICODE)); ?>"
         data-conversation-id="<?php echo $linkEditorConversationId !== null ? (int) $linkEditorConversationId : ''; ?>"
         data-conversation-label="<?php echo htmlspecialchars($linkEditorConversationLabel); ?>"
+        data-link-editor-types="<?php echo htmlspecialchars($linkEditorSearchTypes); ?>"
       >
         <!-- Contact / Venue links -->
         <div class="field">
-          <label class="label is-small">Links to Contacts &amp; Venues</label>
+          <label class="label is-small">Links</label>
           <div data-link-editor-tags class="field is-grouped is-grouped-multiline mb-2"></div>
           <div class="control has-icons-left">
-            <input class="input is-small" type="text" placeholder="Search contacts or venues…" data-link-editor-search>
+            <input class="input is-small" type="text" placeholder="Search contacts, venues, or emails…" data-link-editor-search>
             <span class="icon is-small is-left"><i class="fa-solid fa-search"></i></span>
           </div>
           <div class="dropdown is-fullwidth" data-link-editor-dropdown>

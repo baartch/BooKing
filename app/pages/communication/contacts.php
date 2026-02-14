@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../src-php/core/database.php';
 require_once __DIR__ . '/../../src-php/communication/contacts_helpers.php';
+require_once __DIR__ . '/../../src-php/communication/email_helpers.php';
 
 $errors = [];
 $notice = '';
@@ -129,6 +130,15 @@ if ($showForm && $isEdit && $contactRecord) {
 }
 
 $activeContact = null;
+$contactLinks = [];
+if ($contactRecord && $pdo && $activeTeamId > 0) {
+    try {
+        $contactLinks = fetchLinkedObjects($pdo, 'contact', (int) $contactRecord['id'], $activeTeamId, null);
+    } catch (Throwable $error) {
+        logAction($userId, 'contacts_links_load_error', $error->getMessage());
+    }
+}
+
 if (!$showForm && $contactRecord) {
     $activeContact = $contactRecord;
 }

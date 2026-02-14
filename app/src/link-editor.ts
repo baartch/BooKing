@@ -18,11 +18,13 @@ type LinkEditorState = {
   detachConversation: boolean;
 };
 
-const initLinkEditorModal = (): void => {
-  const modal = document.querySelector<HTMLElement>("[data-link-editor-modal]");
-  const trigger = document.querySelector<HTMLElement>("[data-link-editor-trigger]");
-  const editor = document.querySelector<HTMLElement>("[data-link-editor]");
-  if (!modal || !trigger || !editor) {
+const initLinkEditorModal = (modal: HTMLElement): void => {
+  const trigger = document.querySelector<HTMLElement>(`[data-link-editor-trigger][data-link-editor-modal-id="${modal.id}"]`);
+  if (!trigger) {
+    return;
+  }
+  const editor = modal.querySelector<HTMLElement>("[data-link-editor]");
+  if (!editor) {
     return;
   }
 
@@ -32,6 +34,7 @@ const initLinkEditorModal = (): void => {
   const sourceType = editor.dataset.sourceType ?? "";
   const sourceId = Number(editor.dataset.sourceId ?? 0);
   const mailboxId = Number(editor.dataset.mailboxId ?? 0);
+  const searchTypes = editor.dataset.linkEditorTypes ?? "contact,venue";
 
   const tagsContainer = editor.querySelector<HTMLElement>("[data-link-editor-tags]");
   const searchInput = editor.querySelector<HTMLInputElement>("[data-link-editor-search]");
@@ -75,6 +78,7 @@ const initLinkEditorModal = (): void => {
   const typeIcon = (type: string): string => {
     if (type === "contact") return "fa-solid fa-user";
     if (type === "venue") return "fa-solid fa-location-dot";
+    if (type === "email") return "fa-solid fa-envelope";
     return "fa-solid fa-link";
   };
 
@@ -208,7 +212,7 @@ const initLinkEditorModal = (): void => {
   searchInput.addEventListener("input", () => {
     if (linkDebounce) window.clearTimeout(linkDebounce);
     linkDebounce = window.setTimeout(() => {
-      void performSearch(searchInput.value.trim(), "contact,venue", resultsContainer, dropdown, (item) => {
+      void performSearch(searchInput.value.trim(), searchTypes, resultsContainer, dropdown, (item) => {
         const exists = state.links.some((l) => l.type === item.type && l.id === item.id);
         if (!exists) {
           state.links.push({ type: item.type, id: item.id, label: item.label });
@@ -298,10 +302,19 @@ const initLinkEditorModal = (): void => {
   });
 };
 
+const initLinkEditorModals = (): void => {
+  document.querySelectorAll<HTMLElement>("[data-link-editor-modal]").forEach((modal) => {
+    if (!modal.id) {
+      return;
+    }
+    initLinkEditorModal(modal);
+  });
+};
+
 document.addEventListener("DOMContentLoaded", () => {
-  initLinkEditorModal();
+  initLinkEditorModals();
 });
 
 document.addEventListener("tab:activated", () => {
-  initLinkEditorModal();
+  initLinkEditorModals();
 });
