@@ -94,10 +94,4 @@ The database schema is in `sql/schema.sql` and includes the following tables:
 - Logs written via `logAction()` in `app/src-php/core/database.php` (do NOT log sensitive data like cookies)
 - **NEVER** edit JS files! Edit TypeScript sources (not compiled JS) when JS logic changes; rebuild the JS output as needed. TypeScript sources live in `app/src/`.
 - Do NOT create a new markdown file to document each change or summarize your work unless specifically requested by the user.
-- Do NOT automatically create GIT commits. But when user asks for it, commit only the changes you made.
-
-## Deploy
-
-```bash
-./scripts/deploy_ftp.sh
-```
+- **DO NOT COMMIT** unless the user tells you to. Commit only changes you made.
