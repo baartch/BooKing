@@ -58,7 +58,7 @@ if (!isset($users, $teamsByUser)):
     </div>
     <?php if ($isEditing): ?>
       <div class="column is-12">
-        <a href="<?php echo BASE_PATH; ?>/app/pages/admin/user_management.php?tab=users" class="button">Cancel</a>
+        <a href="<?php echo BASE_PATH; ?>/app/pages/admin/index.php?tab=users" class="button">Cancel</a>
       </div>
     <?php endif; ?>
   </form>
@@ -97,7 +97,7 @@ if (!isset($users, $teamsByUser)):
             <td><?php echo htmlspecialchars($user['created_at']); ?></td>
             <td>
               <div class="buttons are-small">
-                <a class="button" href="<?php echo BASE_PATH; ?>/app/pages/admin/user_management.php?tab=users&edit_user_id=<?php echo $userId; ?>" aria-label="Edit user" title="Edit user">
+                <a class="button" href="<?php echo BASE_PATH; ?>/app/pages/admin/index.php?tab=users&edit_user_id=<?php echo $userId; ?>" aria-label="Edit user" title="Edit user">
                   <span class="icon"><i class="fa-solid fa-pen"></i></span>
                 </a>
                 <form method="POST" action="" onsubmit="return confirm('Delete this user?');">

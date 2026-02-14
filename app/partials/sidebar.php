@@ -50,7 +50,7 @@ $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
         <?php endif; ?>
         <?php if (($currentUser['role'] ?? '') === 'admin'): ?>
           <li>
-            <a href="<?php echo BASE_PATH; ?>/app/pages/admin/user_management.php" class="<?php echo $isAdmin ? 'is-active' : ''; ?>" aria-label="Admin">
+            <a href="<?php echo BASE_PATH; ?>/app/pages/admin/index.php" class="<?php echo $isAdmin ? 'is-active' : ''; ?>" aria-label="Admin">
               <span class="icon"><i class="fa-solid fa-gear"></i></span>
             </a>
           </li>

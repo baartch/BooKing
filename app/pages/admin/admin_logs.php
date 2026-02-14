@@ -13,7 +13,7 @@ $logsTotal = (int) ($logsPagination['total'] ?? 0);
 $logsTotalPages = (int) ($logsPagination['totalPages'] ?? 1);
 $logsQuery = (string) ($logsPagination['query'] ?? '');
 
-$baseUrl = BASE_PATH . '/app/pages/admin/user_management.php?tab=logs';
+$baseUrl = BASE_PATH . '/app/pages/admin/index.php?tab=logs';
 $buildUrl = static function (int $page) use ($baseUrl, $logsPerPage, $logsQuery): string {
     $params = [
         'tab' => 'logs',
@@ -25,7 +25,7 @@ $buildUrl = static function (int $page) use ($baseUrl, $logsPerPage, $logsQuery)
         $params['logs_q'] = $logsQuery;
     }
 
-    return BASE_PATH . '/app/pages/admin/user_management.php?' . http_build_query($params);
+    return BASE_PATH . '/app/pages/admin/index.php?' . http_build_query($params);
 };
 ?>
 
