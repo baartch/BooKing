@@ -11,6 +11,8 @@ $userId = (int) ($currentUser['user_id'] ?? 0);
 $baseUrl = BASE_PATH . '/app/pages/communication/index.php';
 $searchQuery = trim((string) ($_GET['q'] ?? ''));
 $requestedTeamId = (int) ($_GET['team_id'] ?? 0);
+$contactId = (int) ($_GET['contact_id'] ?? 0);
+$mode = (string) ($_GET['mode'] ?? '');
 
 $baseQuery = ['tab' => 'contacts'];
 if ($searchQuery !== '') {
@@ -18,12 +20,6 @@ if ($searchQuery !== '') {
 }
 if ($requestedTeamId > 0) {
     $baseQuery['team_id'] = $requestedTeamId;
-}
-
-$hasContactSelection = array_key_exists('contact_id', $_GET);
-$contactId = $hasContactSelection ? (int) ($_GET['contact_id'] ?? 0) : 0;
-if ($contactId > 0) {
-    $baseQuery['contact_id'] = $contactId;
 }
 
 $noticeKey = (string) ($_GET['notice'] ?? '');
@@ -78,7 +74,6 @@ if ($pdo && $activeTeamId > 0) {
 }
 
 $activeContactId = $contactId;
-
 $formValues = [
     'firstname' => '',
     'surname' => '',
@@ -92,43 +87,79 @@ $formValues = [
     'notes' => ''
 ];
 
-$editContact = null;
-$isEdit = $contactId > 0;
-$showForm = $hasContactSelection;
+$showForm = in_array($mode, ['edit', 'new'], true);
+$isEdit = $mode === 'edit' && $contactId > 0;
 
-if ($pdo && $isEdit && $activeTeamId > 0) {
+$contactRecord = null;
+if ($pdo && $contactId > 0 && $activeTeamId > 0) {
     try {
-        $editContact = fetchContact($pdo, $activeTeamId, $contactId);
-        if (!$editContact) {
+        $contactRecord = fetchContact($pdo, $activeTeamId, $contactId);
+        if (!$contactRecord) {
             $errors[] = 'Contact not found.';
+            $contactRecord = null;
             $isEdit = false;
-        } else {
-            $formValues = [
-                'firstname' => (string) ($editContact['firstname'] ?? ''),
-                'surname' => (string) ($editContact['surname'] ?? ''),
-                'email' => (string) ($editContact['email'] ?? ''),
-                'phone' => (string) ($editContact['phone'] ?? ''),
-                'address' => (string) ($editContact['address'] ?? ''),
-                'postal_code' => (string) ($editContact['postal_code'] ?? ''),
-                'city' => (string) ($editContact['city'] ?? ''),
-                'country' => (string) ($editContact['country'] ?? ''),
-                'website' => (string) ($editContact['website'] ?? ''),
-                'notes' => (string) ($editContact['notes'] ?? '')
-            ];
+            $showForm = $mode === 'new';
         }
     } catch (Throwable $error) {
         $errors[] = 'Failed to load contact.';
         logAction($userId, 'contacts_load_error', $error->getMessage());
+        $contactRecord = null;
         $isEdit = false;
+        $showForm = $mode === 'new';
     }
+}
+
+$editContact = null;
+if ($showForm && $isEdit && $contactRecord) {
+    $editContact = $contactRecord;
+    $formValues = [
+        'firstname' => (string) ($contactRecord['firstname'] ?? ''),
+        'surname' => (string) ($contactRecord['surname'] ?? ''),
+        'email' => (string) ($contactRecord['email'] ?? ''),
+        'phone' => (string) ($contactRecord['phone'] ?? ''),
+        'address' => (string) ($contactRecord['address'] ?? ''),
+        'postal_code' => (string) ($contactRecord['postal_code'] ?? ''),
+        'city' => (string) ($contactRecord['city'] ?? ''),
+        'country' => (string) ($contactRecord['country'] ?? ''),
+        'website' => (string) ($contactRecord['website'] ?? ''),
+        'notes' => (string) ($contactRecord['notes'] ?? '')
+    ];
+} elseif ($showForm && $isEdit && !$contactRecord) {
+    $showForm = false;
+}
+
+$activeContact = null;
+if (!$showForm && $contactRecord) {
+    $activeContact = $contactRecord;
 }
 
 $cancelQuery = array_filter([
     'tab' => 'contacts',
     'q' => $searchQuery !== '' ? $searchQuery : null,
-    'team_id' => $activeTeamId > 0 ? $activeTeamId : null
+    'team_id' => $activeTeamId > 0 ? $activeTeamId : null,
+    'contact_id' => $isEdit ? $contactId : null
 ], static fn($value) => $value !== null && $value !== '');
 $cancelUrl = $baseUrl . '?' . http_build_query($cancelQuery);
+
+$listTitle = 'Contacts';
+$listSummaryTags = [sprintf('%d contacts', count($contacts))];
+$addContactUrl = $baseUrl . '?' . http_build_query(array_merge($baseQuery, ['mode' => 'new']));
+$listPrimaryActionHtml = '<a href="' . htmlspecialchars($addContactUrl) . '" class="button is-primary">Add Contact</a>';
+
+$listSearch = [
+    'action' => $baseUrl,
+    'inputName' => 'q',
+    'inputValue' => $searchQuery,
+    'placeholder' => 'Search for contacts...',
+    'inputId' => 'contact-filter',
+    'hiddenFields' => [
+        'tab' => 'contacts',
+        'team_id' => $activeTeamId
+    ]
+];
+
+$listContentPath = __DIR__ . '/contacts_list.php';
+$detailContentPath = $showForm ? __DIR__ . '/contacts_form.php' : __DIR__ . '/contacts_detail.php';
 ?>
 
 <?php if ($notice): ?>
@@ -167,8 +198,4 @@ $cancelUrl = $baseUrl . '?' . http_build_query($cancelQuery);
   </div>
 <?php endif; ?>
 
-<?php if ($showForm): ?>
-  <?php require __DIR__ . '/contacts_form.php'; ?>
-<?php else: ?>
-  <?php require __DIR__ . '/contacts_list.php'; ?>
-<?php endif; ?>
+<?php require __DIR__ . '/../../partials/list_two_column.php'; ?>
