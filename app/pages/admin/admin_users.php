@@ -27,6 +27,16 @@ if (!isset($users, $teamsByUser)):
         </div>
       </div>
     </div>
+
+    <div class="column is-3">
+      <div class="field">
+        <label for="display_name" class="label">Displayname</label>
+        <div class="control">
+          <input type="text" id="display_name" name="display_name" class="input" maxlength="120" value="<?php echo $isEditing ? htmlspecialchars((string) ($editUser['display_name'] ?? '')) : ''; ?>">
+        </div>
+        <p class="help">Shown in the UI. Leave empty to fall back to email.</p>
+      </div>
+    </div>
     <div class="column is-3">
       <div class="field">
         <label for="role" class="label">Role</label>
@@ -62,6 +72,7 @@ if (!isset($users, $teamsByUser)):
       <thead>
         <tr>
           <th>Email</th>
+          <th>Displayname</th>
           <th>Role</th>
           <th>Teams</th>
           <th>Created</th>
@@ -74,6 +85,7 @@ if (!isset($users, $teamsByUser)):
           <?php $assignedTeams = $teamsByUser[$userId] ?? []; ?>
           <tr>
             <td><?php echo htmlspecialchars($user['username']); ?></td>
+            <td><?php echo htmlspecialchars((string) ($user['display_name'] ?? '')); ?></td>
             <td><?php echo htmlspecialchars(ucfirst($user['role'])); ?></td>
             <td>
               <?php if (empty($assignedTeams)): ?>

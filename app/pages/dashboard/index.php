@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../src-php/core/layout.php';
           <div class="level mb-5">
             <div class="level-left">
               <h1 class="title is-3">Dashboard</h1>
+              <p class="subtitle is-6">Signed in as <?php echo htmlspecialchars((string) (($currentUser['display_name'] ?? '') !== '' ? $currentUser['display_name'] : ($currentUser['username'] ?? ''))); ?></p>
             </div>
           </div>
           <div class="box">
