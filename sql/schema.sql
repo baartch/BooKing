@@ -40,6 +40,7 @@ CREATE FULLTEXT INDEX idx_venues_fulltext ON venues(
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
+    display_name VARCHAR(120) DEFAULT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('admin', 'agent') DEFAULT 'agent',
     ui_theme VARCHAR(20) NOT NULL DEFAULT 'forest',

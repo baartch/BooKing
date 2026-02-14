@@ -53,10 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $randomPassword = bin2hex(random_bytes(16));
                     $stmt = $pdo->prepare(
-                        'INSERT INTO users (username, password_hash, role) VALUES (:username, :password_hash, :role)'
+                        'INSERT INTO users (username, display_name, password_hash, role)
+                         VALUES (:username, :display_name, :password_hash, :role)'
                     );
                     $stmt->execute([
                         ':username' => $username,
+                        ':display_name' => null,
                         ':password_hash' => password_hash($randomPassword, PASSWORD_DEFAULT),
                         ':role' => $role
                     ]);
@@ -102,12 +104,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $errors[] = 'Username already exists.';
                 } else {
                     $pdo->beginTransaction();
-                    $stmt = $pdo->prepare('UPDATE users SET username = :username, role = :role WHERE id = :id');
-                    $stmt->execute([
-                        ':username' => $username,
-                        ':role' => $role !== '' ? $role : 'agent',
-                        ':id' => $userId
-                    ]);
+                    $displayName = trim((string) ($_POST['display_name'] ?? ''));
+                    if ($displayName !== '' && mb_strlen($displayName) > 120) {
+                        $errors[] = 'Displayname must be at most 120 characters.';
+                    }
+
+                    if ($errors) {
+                        // fall through to show errors
+                    } else {
+                        $stmt = $pdo->prepare('UPDATE users SET username = :username, display_name = :display_name, role = :role WHERE id = :id');
+                        $stmt->execute([
+                            ':username' => $username,
+                            ':display_name' => $displayName !== '' ? $displayName : null,
+                            ':role' => $role !== '' ? $role : 'agent',
+                            ':id' => $userId
+                        ]);
+                    }
                     $pdo->commit();
                     logAction($currentUser['user_id'] ?? null, 'user_updated', sprintf('Updated user %d', $userId));
                     $notice = 'User updated successfully.';
@@ -345,7 +357,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 try {
     $pdo = getDatabaseConnection();
-    $stmt = $pdo->query('SELECT id, username, role, created_at FROM users ORDER BY username');
+    $stmt = $pdo->query('SELECT id, username, display_name, role, created_at FROM users ORDER BY username');
     $users = $stmt->fetchAll();
     $teamsStmt = $pdo->query('SELECT id, name, description, created_at FROM teams ORDER BY name');
     $teams = $teamsStmt->fetchAll();
