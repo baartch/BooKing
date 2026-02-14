@@ -7,9 +7,16 @@
  * - ?array $editContact
  * - string $cancelUrl
  * - string $searchQuery
+ * - array $contactLinks
  */
 $cancelUrl = $cancelUrl ?? (BASE_PATH . '/app/pages/communication/index.php?tab=contacts');
 $searchQuery = $searchQuery ?? '';
+$contactLinks = $contactLinks ?? [];
+$linkIcons = [
+  'contact' => 'fa-user',
+  'venue' => 'fa-location-dot',
+  'email' => 'fa-envelope'
+];
 ?>
 <div class="box">
   <div class="level mb-3">
@@ -25,6 +32,41 @@ $searchQuery = $searchQuery ?? '';
     <input type="hidden" name="team_id" value="<?php echo isset($activeTeamId) ? (int) $activeTeamId : 0; ?>">
     <?php if ($isEdit && $editContact): ?>
       <input type="hidden" name="contact_id" value="<?php echo (int) $editContact['id']; ?>">
+    <?php endif; ?>
+
+    <?php if ($isEdit && $editContact): ?>
+      <div class="detail-meta mb-4">
+        <div class="detail-meta-info">
+          <div class="detail-meta-row">
+            <span class="detail-meta-label">Links:</span>
+            <span class="detail-meta-value detail-link-list">
+              <?php if (!$contactLinks): ?>
+                <span class="has-text-grey is-size-7">No links yet</span>
+              <?php else: ?>
+                <?php foreach ($contactLinks as $link): ?>
+                  <?php
+                    $linkUrl = '#';
+                    if ($link['type'] === 'contact') {
+                        $linkUrl = BASE_PATH . '/app/pages/communication/index.php?tab=contacts&contact_id=' . (int) $link['id'];
+                    } elseif ($link['type'] === 'venue') {
+                        $linkUrl = BASE_PATH . '/app/pages/venues/index.php?q=' . urlencode($link['label']);
+                    } elseif ($link['type'] === 'email') {
+                        $linkUrl = BASE_PATH . '/app/pages/communication/index.php?tab=email&message_id=' . (int) $link['id'];
+                    }
+                  ?>
+                  <a href="<?php echo htmlspecialchars($linkUrl); ?>" class="detail-link-pill">
+                    <span class="icon is-small"><i class="fa-solid <?php echo htmlspecialchars($linkIcons[$link['type']] ?? 'fa-link'); ?>"></i></span>
+                    <span><?php echo htmlspecialchars($link['label']); ?></span>
+                  </a>
+                <?php endforeach; ?>
+              <?php endif; ?>
+              <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars('link-editor-contact-' . (int) ($editContact['id'] ?? 0)); ?>" title="Edit links">
+                <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
+              </a>
+            </span>
+          </div>
+        </div>
+      </div>
     <?php endif; ?>
 
     <div class="table-container">
@@ -127,4 +169,24 @@ $searchQuery = $searchQuery ?? '';
       <a href="<?php echo htmlspecialchars($cancelUrl); ?>" class="button">Cancel</a>
     </div>
   </form>
+
+  <?php if ($isEdit && $editContact): ?>
+    <?php
+      $linkEditorSourceType = 'contact';
+      $linkEditorSourceId = (int) $editContact['id'];
+      $linkEditorMailboxId = 0;
+      $linkEditorSearchTypes = 'contact,venue,email';
+      $linkEditorLinks = [];
+      if (!empty($contactLinks)) {
+          foreach ($contactLinks as $link) {
+              $linkEditorLinks[] = [
+                  'type' => $link['type'],
+                  'id' => (int) $link['id'],
+                  'label' => $link['label']
+              ];
+          }
+      }
+      require __DIR__ . '/../../partials/link_editor_modal.php';
+    ?>
+  <?php endif; ?>
 </div>
