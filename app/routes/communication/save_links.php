@@ -3,6 +3,7 @@ require_once __DIR__ . '/../auth/check.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
 require_once __DIR__ . '/../../src-php/core/object_links.php';
 require_once __DIR__ . '/../../src-php/communication/email_helpers.php';
+require_once __DIR__ . '/../../src-php/communication/contacts_helpers.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -77,8 +78,25 @@ try {
             ? (int) $mailbox['user_id']
             : (!empty($messageScope['user_id']) ? (int) $messageScope['user_id'] : null);
     } else {
-        // For contacts/venues, scope to user
-        $scopeUserId = $userId;
+        // For contacts/venues, scope to the contact's team (team-scoped contacts)
+        if ($sourceType !== 'contact') {
+            http_response_code(400);
+            echo json_encode(['error' => 'Unsupported link scope']);
+            exit;
+        }
+
+        $contactStmt = $pdo->prepare('SELECT team_id FROM contacts WHERE id = :id LIMIT 1');
+        $contactStmt->execute([':id' => $sourceId]);
+        $contactRow = $contactStmt->fetch();
+        $teamId = !empty($contactRow['team_id']) ? (int) $contactRow['team_id'] : null;
+
+        if ($teamId === null || !userHasTeamAccess($pdo, $userId, $teamId)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Contact access denied']);
+            exit;
+        }
+
+        $scopeUserId = null;
     }
 
     if ($teamId === null && $scopeUserId === null) {

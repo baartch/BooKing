@@ -368,7 +368,7 @@ foreach ($mailboxes as $mailbox) {
                 $linkTeamId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
                 $linkUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
                 if ($linkTeamId !== null || $linkUserId !== null) {
-                    $contactIds = findContactIdsByEmail($pdo, $fromCandidate);
+                    $contactIds = findContactIdsByEmail($pdo, $fromCandidate, $linkTeamId);
                     foreach ($contactIds as $contactId) {
                         createObjectLink($pdo, 'email', $emailId, 'contact', $contactId, $linkTeamId, $linkUserId);
                     }

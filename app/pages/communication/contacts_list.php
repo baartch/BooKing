@@ -3,6 +3,7 @@
  * Variables expected:
  * - array $contacts
  * - int $activeContactId
+ * - int $activeTeamId
  * - string $baseUrl
  * - array $baseQuery
  * - string $searchQuery
@@ -16,6 +17,7 @@
     <div class="level-right">
       <form method="GET" action="<?php echo htmlspecialchars($baseUrl); ?>" data-contacts-search-form>
         <input type="hidden" name="tab" value="contacts">
+        <input type="hidden" name="team_id" value="<?php echo (int) $activeTeamId; ?>">
         <div class="field has-addons">
           <div class="control has-icons-left is-expanded">
             <input
@@ -37,7 +39,7 @@
   <div class="level mb-3">
     <div class="level-left"></div>
     <div class="level-right">
-      <a href="<?php echo htmlspecialchars($baseUrl . '?' . http_build_query(array_merge($baseQuery, ['contact_id' => 0]))); ?>" class="button is-primary">Add Contact</a>
+      <a href="<?php echo htmlspecialchars($baseUrl . '?' . http_build_query(array_merge($baseQuery, ['contact_id' => 0, 'team_id' => $activeTeamId]))); ?>" class="button is-primary">Add Contact</a>
     </div>
   </div>
 
@@ -68,7 +70,7 @@
                   $nameParts[] = $contact['surname'];
               }
               $name = trim(implode(' ', $nameParts));
-              $editLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, ['contact_id' => (int) $contact['id']]));
+              $editLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, ['contact_id' => (int) $contact['id'], 'team_id' => $activeTeamId]));
               $isActive = (int) $contact['id'] === $activeContactId;
               $updatedLabel = '';
               if (!empty($contact['updated_at'])) {
@@ -94,6 +96,7 @@
                     <?php renderCsrfField(); ?>
                     <input type="hidden" name="contact_id" value="<?php echo (int) $contact['id']; ?>">
                     <input type="hidden" name="q" value="<?php echo htmlspecialchars($searchQuery); ?>">
+                    <input type="hidden" name="team_id" value="<?php echo (int) $activeTeamId; ?>">
                     <button type="submit" class="button" aria-label="Delete contact" title="Delete contact">
                       <span class="icon"><i class="fa-solid fa-trash"></i></span>
                     </button>

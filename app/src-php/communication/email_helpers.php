@@ -1,21 +1,9 @@
 <?php
 require_once __DIR__ . '/../core/database.php';
+require_once __DIR__ . '/team_helpers.php';
 
 const EMAIL_PAGE_SIZE_DEFAULT = 25;
 const EMAIL_ATTACHMENT_QUOTA_DEFAULT = 104857600;
-
-function fetchUserTeams(PDO $pdo, int $userId): array
-{
-    $stmt = $pdo->prepare(
-        'SELECT t.id, t.name
-         FROM teams t
-         JOIN team_members tm ON tm.team_id = t.id
-         WHERE tm.user_id = :user_id
-         ORDER BY t.name'
-    );
-    $stmt->execute([':user_id' => $userId]);
-    return $stmt->fetchAll();
-}
 
 function fetchTeamMailboxes(PDO $pdo, int $userId): array
 {
@@ -227,19 +215,26 @@ function splitEmailList(string $value): array
     return array_values(array_filter($parts, static fn($part) => $part !== ''));
 }
 
-function findContactIdsByEmail(PDO $pdo, string $email): array
+function findContactIdsByEmail(PDO $pdo, string $email, ?int $teamId = null): array
 {
     $normalized = strtolower(trim($email));
     if ($normalized === '') {
         return [];
     }
 
+    $params = [':email' => $normalized];
+    $teamFilter = '';
+    if ($teamId !== null) {
+        $teamFilter = ' AND team_id = :team_id';
+        $params[':team_id'] = $teamId;
+    }
+
     $stmt = $pdo->prepare(
         'SELECT id
          FROM contacts
-         WHERE email IS NOT NULL AND LOWER(email) = :email'
+         WHERE email IS NOT NULL AND LOWER(email) = :email' . $teamFilter
     );
-    $stmt->execute([':email' => $normalized]);
+    $stmt->execute($params);
 
     return array_map('intval', array_column($stmt->fetchAll(), 'id'));
 }
@@ -323,12 +318,19 @@ function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int 
     if ($idsByType['contact']) {
         $contactIds = array_values(array_unique($idsByType['contact']));
         $placeholders = implode(',', array_fill(0, count($contactIds), '?'));
-        $stmt = $pdo->prepare(
+        $sql =
             'SELECT id, firstname, surname, email
              FROM contacts
-             WHERE id IN (' . $placeholders . ')'
-        );
-        $stmt->execute($contactIds);
+             WHERE id IN (' . $placeholders . ')';
+
+        $params = $contactIds;
+        if ($teamId !== null && $userId === null) {
+            $sql .= ' AND team_id = ?';
+            $params[] = $teamId;
+        }
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
         foreach ($stmt->fetchAll() as $row) {
             $name = trim((string) ($row['firstname'] ?? '') . ' ' . (string) ($row['surname'] ?? ''));
             $email = (string) ($row['email'] ?? '');

@@ -10,10 +10,14 @@ $countryOptions = ['DE', 'CH', 'AT', 'IT', 'FR'];
 $userId = (int) ($currentUser['user_id'] ?? 0);
 $baseUrl = BASE_PATH . '/app/pages/communication/index.php';
 $searchQuery = trim((string) ($_GET['q'] ?? ''));
+$requestedTeamId = (int) ($_GET['team_id'] ?? 0);
 
 $baseQuery = ['tab' => 'contacts'];
 if ($searchQuery !== '') {
     $baseQuery['q'] = $searchQuery;
+}
+if ($requestedTeamId > 0) {
+    $baseQuery['team_id'] = $requestedTeamId;
 }
 
 $hasContactSelection = array_key_exists('contact_id', $_GET);
@@ -43,10 +47,30 @@ try {
 
 // Saving contacts is handled via POST route (avoid header() after HTML output in index.php)
 
-$contacts = [];
+$activeTeamId = 0;
+$userTeamIds = [];
 if ($pdo) {
     try {
-        $contacts = fetchContacts($pdo, $searchQuery);
+        $activeTeamId = resolveActiveTeamId($pdo, $userId, $requestedTeamId);
+        $userTeams = fetchUserTeams($pdo, $userId);
+        $userTeamIds = array_map('intval', array_column($userTeams, 'id'));
+        if ($activeTeamId <= 0) {
+            $errors[] = 'No team access available.';
+        }
+    } catch (Throwable $error) {
+        $errors[] = 'Failed to resolve team scope.';
+        logAction($userId, 'contacts_team_scope_error', $error->getMessage());
+    }
+}
+
+if ($activeTeamId > 0) {
+    $baseQuery['team_id'] = $activeTeamId;
+}
+
+$contacts = [];
+if ($pdo && $activeTeamId > 0) {
+    try {
+        $contacts = fetchContacts($pdo, $activeTeamId, $searchQuery);
     } catch (Throwable $error) {
         $errors[] = 'Failed to load contacts.';
         logAction($userId, 'contacts_list_error', $error->getMessage());
@@ -72,9 +96,9 @@ $editContact = null;
 $isEdit = $contactId > 0;
 $showForm = $hasContactSelection;
 
-if ($pdo && $isEdit) {
+if ($pdo && $isEdit && $activeTeamId > 0) {
     try {
-        $editContact = fetchContact($pdo, $contactId);
+        $editContact = fetchContact($pdo, $activeTeamId, $contactId);
         if (!$editContact) {
             $errors[] = 'Contact not found.';
             $isEdit = false;
@@ -101,7 +125,8 @@ if ($pdo && $isEdit) {
 
 $cancelQuery = array_filter([
     'tab' => 'contacts',
-    'q' => $searchQuery !== '' ? $searchQuery : null
+    'q' => $searchQuery !== '' ? $searchQuery : null,
+    'team_id' => $activeTeamId > 0 ? $activeTeamId : null
 ], static fn($value) => $value !== null && $value !== '');
 $cancelUrl = $baseUrl . '?' . http_build_query($cancelQuery);
 ?>
@@ -113,6 +138,34 @@ $cancelUrl = $baseUrl . '?' . http_build_query($cancelQuery);
 <?php foreach ($errors as $error): ?>
   <div class="notification"><?php echo htmlspecialchars($error); ?></div>
 <?php endforeach; ?>
+
+<?php if ($activeTeamId > 0 && isset($userTeams) && count($userTeams) > 1): ?>
+  <div class="box">
+    <div class="field">
+      <label class="label">Team</label>
+      <div class="control">
+        <div class="select">
+          <select onchange="window.location.href=this.value;">
+            <?php foreach ($userTeams as $team): ?>
+              <?php
+                $teamId = (int) ($team['id'] ?? 0);
+                $teamUrl = $baseUrl . '?' . http_build_query(array_filter([
+                  'tab' => 'contacts',
+                  'team_id' => $teamId,
+                  'q' => $searchQuery !== '' ? $searchQuery : null
+                ], static fn($value) => $value !== null && $value !== ''));
+              ?>
+              <option value="<?php echo htmlspecialchars($teamUrl); ?>" <?php echo $teamId === (int) $activeTeamId ? 'selected' : ''; ?>>
+                <?php echo htmlspecialchars((string) ($team['name'] ?? ('Team #' . $teamId))); ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+      </div>
+      <p class="help">Contacts are scoped to the selected team.</p>
+    </div>
+  </div>
+<?php endif; ?>
 
 <?php if ($showForm): ?>
   <?php require __DIR__ . '/contacts_form.php'; ?>

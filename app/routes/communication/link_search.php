@@ -22,13 +22,20 @@ try {
 
     if (in_array('contact', $types, true)) {
         $stmt = $pdo->prepare(
-            'SELECT id, firstname, surname, email
-             FROM contacts
-             WHERE firstname LIKE ? OR surname LIKE ? OR email LIKE ?
-             ORDER BY firstname, surname
+            'SELECT c.id, c.firstname, c.surname, c.email
+             FROM contacts c
+             JOIN team_members tm ON tm.team_id = c.team_id
+             WHERE tm.user_id = :user_id
+               AND (c.firstname LIKE :term_firstname OR c.surname LIKE :term_surname OR c.email LIKE :term_email)
+             ORDER BY c.firstname, c.surname
              LIMIT 8'
         );
-        $stmt->execute([$term, $term, $term]);
+        $stmt->execute([
+            ':user_id' => $userId,
+            ':term_firstname' => $term,
+            ':term_surname' => $term,
+            ':term_email' => $term
+        ]);
         foreach ($stmt->fetchAll() as $row) {
             $name = trim(($row['firstname'] ?? '') . ' ' . ($row['surname'] ?? ''));
             $email = trim((string) ($row['email'] ?? ''));
