@@ -57,19 +57,22 @@ PHP + TypeScript app for venue mapping with MariaDB-backed authentication, sessi
 
 The database schema is in `sql/schema.sql` and includes the following tables:
 
-- `venues`: Main table storing venue details (name, address, coordinates, capacity, etc.)
-- `users`: User accounts (username, password hash, role)
+- `venues`: Venue details (name, address, coordinates, capacity, etc.)
+- `users`: User accounts (username/email, password hash, role, UI preferences)
 - `sessions`: Active user sessions for authentication
 - `logs`: Application logs (user actions, errors, timestamps)
-- `settings`: Application configuration settings
-- `teams`: User teams for grouping
-- `team_members`: Many-to-many mapping of users to teams
-- `mailboxes`: Team/user mailboxes with IMAP/SMTP credentials
-- `email_conversations`: Conversation threads grouped by mailbox and participants
-- `email_messages`: Email records for inbox, drafts, sent, and trash
-- `email_attachments`: Stored email attachment metadata and file paths
+- `settings`: Key/value application settings
+- `teams`: Teams for grouping users/mailboxes
+- `team_members`: Many-to-many mapping of users to teams (with per-team role)
+- `mailboxes`: Team/user mailboxes with IMAP/SMTP credentials + fetch settings
+- `email_conversations`: Conversation threads per mailbox (team/user scoped)
+- `email_messages`: Email records (inbox/drafts/sent/trash) with optional conversation
+- `email_attachments`: Attachment metadata + file path, linked to `email_messages`
+- `object_links`: Generic link table for relating objects (e.g. email ↔ contact/venue)
 - `email_templates`: Saved email templates per team
 - `rate_limits`: Rate limiting tracking for brute force protection
+- `email_otps`: One-time passcodes for email-based login/verification
+- `contacts`: Address book entries used by the communication/email UI
 
 ## Security
 
