@@ -8,6 +8,11 @@ require_once __DIR__ . '/../../src-php/communication/mailbox_helpers.php';
 $errors = [];
 $notice = '';
 $activeTab = $_GET['tab'] ?? 'users';
+
+$logsPage = isset($_GET['logs_page']) ? max(1, (int) $_GET['logs_page']) : 1;
+$logsPerPage = isset($_GET['logs_per_page']) ? max(10, min(500, (int) $_GET['logs_per_page'])) : 100;
+$logsQuery = isset($_GET['logs_q']) ? trim((string) $_GET['logs_q']) : '';
+
 $editUserId = isset($_GET['edit_user_id']) ? (int) $_GET['edit_user_id'] : 0;
 $editUser = null;
 
@@ -28,6 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $action = $_POST['action'] ?? '';
     $activeTab = $_POST['tab'] ?? $activeTab;
+
+    // Logs can be navigated via GET params; keep them stable when posting.
+    $logsPage = isset($_GET['logs_page']) ? max(1, (int) $_GET['logs_page']) : $logsPage;
+    $logsPerPage = isset($_GET['logs_per_page']) ? max(10, min(500, (int) $_GET['logs_per_page'])) : $logsPerPage;
+    $logsQuery = isset($_GET['logs_q']) ? trim((string) $_GET['logs_q']) : $logsQuery;
 
     if ($action === 'create') {
         $username = strtolower(trim((string) ($_POST['username'] ?? '')));
@@ -403,6 +413,54 @@ try {
         'mapbox_api_key' => $settings['mapbox_api_key'] !== ''
     ];
 
+    // Logs (admin viewer)
+    $logsTotalPages = 1;
+    if ($logsPage < 1) {
+        $logsPage = 1;
+    }
+    $logsOffset = ($logsPage - 1) * $logsPerPage;
+    $logsParams = [];
+    $logsWhere = '';
+    if ($logsQuery !== '') {
+        $logsWhere = 'WHERE (u.username LIKE :q OR l.action LIKE :q OR l.details LIKE :q)';
+        $logsParams[':q'] = '%' . $logsQuery . '%';
+    }
+
+    $countStmt = $pdo->prepare(
+        'SELECT COUNT(*)
+         FROM logs l
+         LEFT JOIN users u ON u.id = l.user_id
+         ' . $logsWhere
+    );
+    $countStmt->execute($logsParams);
+    $logsTotal = (int) $countStmt->fetchColumn();
+
+    $listStmt = $pdo->prepare(
+        'SELECT l.created_at AS timestamp, u.username, l.action, l.details
+         FROM logs l
+         LEFT JOIN users u ON u.id = l.user_id
+         ' . $logsWhere . '
+         ORDER BY l.created_at DESC, l.id DESC
+         LIMIT :limit OFFSET :offset'
+    );
+    foreach ($logsParams as $key => $value) {
+        $listStmt->bindValue($key, $value, PDO::PARAM_STR);
+    }
+    $listStmt->bindValue(':limit', $logsPerPage, PDO::PARAM_INT);
+    $listStmt->bindValue(':offset', $logsOffset, PDO::PARAM_INT);
+    $listStmt->execute();
+    $logsRows = $listStmt->fetchAll();
+
+    $logsTotalPages = max(1, (int) ceil($logsTotal / $logsPerPage));
+
+    $logsPagination = [
+        'page' => $logsPage,
+        'perPage' => $logsPerPage,
+        'total' => $logsTotal,
+        'totalPages' => $logsTotalPages,
+        'query' => $logsQuery
+    ];
+
     if ($editUserId > 0) {
         foreach ($users as $user) {
             if ((int) $user['id'] === $editUserId) {
@@ -476,6 +534,9 @@ try {
               <li class="<?php echo $activeTab === 'smtp' ? 'is-active' : ''; ?>">
                 <a href="#" data-tab="smtp" role="tab" aria-selected="<?php echo $activeTab === 'smtp' ? 'true' : 'false'; ?>">SMTP</a>
               </li>
+              <li class="<?php echo $activeTab === 'logs' ? 'is-active' : ''; ?>">
+                <a href="#" data-tab="logs" role="tab" aria-selected="<?php echo $activeTab === 'logs' ? 'true' : 'false'; ?>">Logs</a>
+              </li>
             </ul>
           </div>
 
@@ -493,6 +554,10 @@ try {
 
           <div class="tab-panel <?php echo $activeTab === 'smtp' ? '' : 'is-hidden'; ?>" data-tab-panel="smtp" role="tabpanel">
             <?php require __DIR__ . '/admin_smtp.php'; ?>
+          </div>
+
+          <div class="tab-panel <?php echo $activeTab === 'logs' ? '' : 'is-hidden'; ?>" data-tab-panel="logs" role="tabpanel">
+            <?php require __DIR__ . '/admin_logs.php'; ?>
           </div>
         </div>
       </section>
