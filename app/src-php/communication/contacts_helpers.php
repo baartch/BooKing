@@ -16,8 +16,13 @@ function fetchContacts(PDO $pdo, int $teamId, ?string $search = null): array
     }
 
     if ($search !== null && $search !== '') {
-        $where .= ' AND (firstname LIKE :like OR surname LIKE :like OR email LIKE :like OR phone LIKE :like OR city LIKE :like)';
-        $params[':like'] = '%' . $search . '%';
+        $where .= ' AND (firstname LIKE :like_firstname OR surname LIKE :like_surname OR email LIKE :like_email OR phone LIKE :like_phone OR city LIKE :like_city)';
+        $like = '%' . $search . '%';
+        $params[':like_firstname'] = $like;
+        $params[':like_surname'] = $like;
+        $params[':like_email'] = $like;
+        $params[':like_phone'] = $like;
+        $params[':like_city'] = $like;
     }
 
     $stmt = $pdo->prepare(
