@@ -14,8 +14,12 @@ verifyCsrfToken();
 $userId = (int) ($currentUser['user_id'] ?? 0);
 $baseUrl = BASE_PATH . '/app/pages/communication/index.php';
 $searchQuery = trim((string) ($_POST['q'] ?? ''));
+$teamId = (int) ($_POST['team_id'] ?? 0);
 
 $redirectParams = ['tab' => 'contacts'];
+if ($teamId > 0) {
+    $redirectParams['team_id'] = $teamId;
+}
 if ($searchQuery !== '') {
     $redirectParams['q'] = $searchQuery;
 }
@@ -71,14 +75,21 @@ if ($errors) {
 try {
     $pdo = getDatabaseConnection();
 
+    if ($teamId <= 0 || !userHasTeamAccess($pdo, $userId, $teamId)) {
+        logAction($userId, 'contact_team_access_denied', sprintf('Denied team access for contact save. team_id=%d', $teamId));
+        header('Location: ' . $baseUrl . '?' . http_build_query(array_merge($redirectParams, ['notice' => 'contact_error'])));
+        exit;
+    }
+
     if ($action === 'create_contact') {
         $stmt = $pdo->prepare(
             'INSERT INTO contacts
-                (firstname, surname, email, phone, address, postal_code, city, country, website, notes)
+                (team_id, firstname, surname, email, phone, address, postal_code, city, country, website, notes)
              VALUES
-                (:firstname, :surname, :email, :phone, :address, :postal_code, :city, :country, :website, :notes)'
+                (:team_id, :firstname, :surname, :email, :phone, :address, :postal_code, :city, :country, :website, :notes)'
         );
         $stmt->execute([
+            ':team_id' => $teamId,
             ':firstname' => normalizeOptionalString($payload['firstname']),
             ':surname' => $payload['surname'],
             ':email' => normalizeOptionalString($payload['email']),
@@ -106,7 +117,7 @@ try {
             exit;
         }
 
-        $existing = fetchContact($pdo, $contactId);
+        $existing = fetchContact($pdo, $teamId, $contactId);
         if (!$existing) {
             header('Location: ' . $baseUrl . '?' . http_build_query(array_merge($redirectParams, ['notice' => 'contact_error'])));
             exit;
@@ -124,7 +135,7 @@ try {
                  country = :country,
                  website = :website,
                  notes = :notes
-             WHERE id = :id'
+             WHERE id = :id AND team_id = :team_id'
         );
         $stmt->execute([
             ':firstname' => normalizeOptionalString($payload['firstname']),
@@ -137,7 +148,8 @@ try {
             ':country' => normalizeOptionalString($payload['country']),
             ':website' => normalizeOptionalString($payload['website']),
             ':notes' => normalizeOptionalString($payload['notes']),
-            ':id' => (int) $existing['id']
+            ':id' => (int) $existing['id'],
+            ':team_id' => $teamId
         ]);
 
         logAction($userId, 'contact_updated', sprintf('Updated contact %d', (int) $existing['id']));

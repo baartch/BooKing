@@ -13,22 +13,30 @@ verifyCsrfToken();
 $userId = (int) ($currentUser['user_id'] ?? 0);
 $contactId = (int) ($_POST['contact_id'] ?? 0);
 $searchQuery = trim((string) ($_POST['q'] ?? ''));
+$teamId = (int) ($_POST['team_id'] ?? 0);
 
 $redirectParams = ['tab' => 'contacts'];
+if ($teamId > 0) {
+    $redirectParams['team_id'] = $teamId;
+}
 if ($searchQuery !== '') {
     $redirectParams['q'] = $searchQuery;
 }
 
 try {
     $pdo = getDatabaseConnection();
-    $existing = fetchContact($pdo, $contactId);
-    if ($existing) {
-        $stmt = $pdo->prepare('DELETE FROM contacts WHERE id = :id');
-        $stmt->execute([':id' => $contactId]);
-        logAction($userId, 'contact_deleted', sprintf('Deleted contact %d', $contactId));
-        $redirectParams['notice'] = 'contact_deleted';
-    } else {
+    if ($teamId <= 0 || !userHasTeamAccess($pdo, $userId, $teamId)) {
         $redirectParams['notice'] = 'contact_error';
+    } else {
+        $existing = fetchContact($pdo, $teamId, $contactId);
+        if ($existing) {
+            $stmt = $pdo->prepare('DELETE FROM contacts WHERE id = :id AND team_id = :team_id');
+            $stmt->execute([':id' => $contactId, ':team_id' => $teamId]);
+            logAction($userId, 'contact_deleted', sprintf('Deleted contact %d', $contactId));
+            $redirectParams['notice'] = 'contact_deleted';
+        } else {
+            $redirectParams['notice'] = 'contact_error';
+        }
     }
 } catch (Throwable $error) {
     logAction($userId, 'contact_delete_error', $error->getMessage());

@@ -22,6 +22,7 @@ $searchQuery = $searchQuery ?? '';
     <?php renderCsrfField(); ?>
     <input type="hidden" name="action" value="<?php echo $isEdit ? 'update_contact' : 'create_contact'; ?>">
     <input type="hidden" name="q" value="<?php echo htmlspecialchars($searchQuery); ?>">
+    <input type="hidden" name="team_id" value="<?php echo isset($activeTeamId) ? (int) $activeTeamId : 0; ?>">
     <?php if ($isEdit && $editContact): ?>
       <input type="hidden" name="contact_id" value="<?php echo (int) $editContact['id']; ?>">
     <?php endif; ?>

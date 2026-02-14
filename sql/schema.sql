@@ -251,6 +251,7 @@ CREATE TABLE email_otps (
 
 CREATE TABLE contacts (
   id INT PRIMARY KEY AUTO_INCREMENT,
+  team_id INT NOT NULL,
   firstname VARCHAR(120) NOT NULL,
   surname VARCHAR(120) DEFAULT NULL,
   email VARCHAR(255) DEFAULT NULL,
@@ -263,7 +264,9 @@ CREATE TABLE contacts (
   notes TEXT DEFAULT NULL,
   created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_contacts_name (firstname(100), surname(100)),
-  INDEX idx_contacts_email (email(100)),
-  INDEX idx_contacts_city (city(100))
+  FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+  INDEX idx_contacts_team (team_id),
+  INDEX idx_contacts_name (team_id, firstname(100), surname(100)),
+  INDEX idx_contacts_email (team_id, email(100)),
+  INDEX idx_contacts_city (team_id, city(100))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
