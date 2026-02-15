@@ -33,7 +33,11 @@ $listActionsLabel = $listActionsLabel ?? 'Actions';
       <tbody>
         <?php foreach ($listRows as $row): ?>
           <?php $rowClass = $listRowClass ? (string) $listRowClass($row) : ''; ?>
-          <tr class="<?php echo htmlspecialchars($rowClass); ?>">
+          <?php if ($rowClass !== ''): ?>
+            <tr class="<?php echo htmlspecialchars($rowClass); ?>">
+          <?php else: ?>
+            <tr>
+          <?php endif; ?>
             <?php foreach ($listColumns as $column): ?>
               <?php
                 $value = '';

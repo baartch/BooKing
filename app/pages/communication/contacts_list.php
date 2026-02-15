@@ -22,7 +22,7 @@ $listColumns = [
         $name = trim(implode(' ', $nameParts));
         $contactId = (int) ($contact['id'] ?? 0);
         $detailLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, ['contact_id' => $contactId]));
-        return '<a href="' . htmlspecialchars($detailLink) . '" hx-get="' . htmlspecialchars($detailLink) . '" hx-target="#contact-detail-panel" hx-swap="innerHTML">' . htmlspecialchars($name !== '' ? $name : '(Unnamed)') . '</a>';
+        return '<a href="' . htmlspecialchars($detailLink) . '" hx-get="' . htmlspecialchars($detailLink) . '" hx-target="#contact-detail-panel" hx-swap="innerHTML" hx-push-url="' . htmlspecialchars($detailLink) . '">' . htmlspecialchars($name !== '' ? $name : '(Unnamed)') . '</a>';
     }, true),
     buildListColumn('Email', 'email'),
     buildListColumn('Country', 'country')
@@ -30,9 +30,6 @@ $listColumns = [
 
 $listRows = $contacts;
 $listEmptyMessage = 'No contacts found.';
-$listRowClass = static function (array $contact) use ($activeContactId): string {
-    return ((int) ($contact['id'] ?? 0) === $activeContactId) ? 'is-selected' : '';
-};
 
 $listRowActions = static function (array $contact) use ($baseUrl, $baseQuery, $searchQuery, $activeTeamId): string {
     $contactId = (int) ($contact['id'] ?? 0);
