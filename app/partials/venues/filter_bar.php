@@ -3,7 +3,7 @@
     <h2 class="title is-5">All Venues</h2>
   </div>
   <div class="level-right">
-    <form method="GET" action="<?php echo BASE_PATH; ?>/app/pages/venues/index.php" data-filter-form>
+    <form method="GET" action="<?php echo BASE_PATH; ?>/app/controllers/venues/index.php" data-filter-form>
       <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
       <div class="field has-addons">
         <div class="control has-icons-left is-expanded">

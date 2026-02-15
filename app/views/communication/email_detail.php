@@ -82,7 +82,7 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
                   $url = BASE_PATH . '/app/controllers/communication/index.php?tab=contacts&q=' . urlencode($link['label']);
                   $linkItems[] = ['type' => 'contact', 'label' => $link['label'], 'url' => $url];
               } elseif ($link['type'] === 'venue') {
-                  $url = BASE_PATH . '/app/pages/venues/index.php?q=' . urlencode($link['label']);
+                  $url = BASE_PATH . '/app/controllers/venues/index.php?q=' . urlencode($link['label']);
                   $linkItems[] = ['type' => 'venue', 'label' => $link['label'], 'url' => $url];
               } elseif ($link['type'] === 'email') {
                   $url = $baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, [

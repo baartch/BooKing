@@ -10,7 +10,7 @@ if ($basePath !== '' && strpos($relativePath, $basePath) === 0) {
 $relativePath = '/' . ltrim($relativePath, '/');
 $isDashboard = $relativePath === '/' || $relativePath === '/index.php' || strpos($relativePath, '/app/pages/dashboard') === 0;
 $isMap = strpos($relativePath, '/app/pages/map') === 0;
-$isVenues = strpos($relativePath, '/app/pages/venues') === 0;
+$isVenues = strpos($relativePath, '/app/controllers/venues') === 0;
 $isTeam = strpos($relativePath, '/app/controllers/team') === 0;
 $isAdmin = strpos($relativePath, '/app/controllers/admin') === 0;
 $isProfile = strpos($relativePath, '/app/controllers/profile') === 0;
@@ -32,7 +32,7 @@ $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
           </a>
         </li>
         <li>
-          <a href="<?php echo BASE_PATH; ?>/app/pages/venues/index.php" class="<?php echo $isVenues ? 'is-active' : ''; ?>" aria-label="Venues">
+          <a href="<?php echo BASE_PATH; ?>/app/controllers/venues/index.php" class="<?php echo $isVenues ? 'is-active' : ''; ?>" aria-label="Venues">
             <span class="icon"><i class="fa-solid fa-location-dot"></i></span>
           </a>
         </li>

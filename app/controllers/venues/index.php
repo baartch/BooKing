@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../auth/check.php';
+require_once __DIR__ . '/../../routes/auth/check.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
 require_once __DIR__ . '/../../src-php/core/form_helpers.php';
 require_once __DIR__ . '/../../src-php/core/layout.php';
@@ -56,7 +56,7 @@ try {
 }
 
 $query = $_GET;
-$baseUrl = BASE_PATH . '/app/pages/venues/index.php';
+$baseUrl = BASE_PATH . '/app/controllers/venues/index.php';
 
 $range = 2;
 $startPage = max(1, $page - $range);
@@ -65,28 +65,4 @@ if ($endPage - $startPage < $range * 2) {
     $startPage = max(1, min($startPage, $endPage - $range * 2));
 }
 
-renderPageStart('Venues', ['bodyClass' => 'is-flex is-flex-direction-column is-fullheight']);
-?>
-      <section class="section">
-        <div class="container is-fluid">
-          <?php require __DIR__ . '/../../partials/venues/header.php'; ?>
-
-          <?php if ($notice): ?>
-            <div class="notification"><?php echo htmlspecialchars($notice); ?></div>
-          <?php endif; ?>
-
-          <?php foreach ($errors as $error): ?>
-            <div class="notification"><?php echo htmlspecialchars($error); ?></div>
-          <?php endforeach; ?>
-
-          <?php require __DIR__ . '/../../partials/venues/import_modal.php'; ?>
-
-          <div class="box">
-            <?php require __DIR__ . '/../../partials/venues/filter_bar.php'; ?>
-            <?php require __DIR__ . '/../../partials/venues/venues_table.php'; ?>
-            <?php require __DIR__ . '/../../partials/venues/pagination.php'; ?>
-          </div>
-        </div>
-      </section>
-      <script type="module" src="<?php echo BASE_PATH; ?>/app/public/js/venues.js" defer></script>
-<?php renderPageEnd(); ?>
+require __DIR__ . '/../../views/venues/index.php';

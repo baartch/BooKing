@@ -49,7 +49,7 @@ $linkIcons = [
                     if ($link['type'] === 'contact') {
                         $linkUrl = BASE_PATH . '/app/controllers/communication/index.php?tab=contacts&contact_id=' . (int) $link['id'];
                     } elseif ($link['type'] === 'venue') {
-                        $linkUrl = BASE_PATH . '/app/pages/venues/index.php?q=' . urlencode($link['label']);
+                        $linkUrl = BASE_PATH . '/app/controllers/venues/index.php?q=' . urlencode($link['label']);
                     } elseif ($link['type'] === 'email') {
                         $linkUrl = BASE_PATH . '/app/controllers/communication/index.php?tab=email&message_id=' . (int) $link['id'];
                     }

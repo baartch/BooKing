@@ -78,7 +78,7 @@
                 <span class="icon"><i class="fa-solid fa-circle-info"></i></span>
               </button>
               <?php if (($currentUser['role'] ?? '') === 'admin'): ?>
-                <a href="<?php echo BASE_PATH; ?>/app/pages/venues/add.php?edit=<?php echo (int) $venue['id']; ?>" class="button" aria-label="Edit venue" title="Edit venue">
+                <a href="<?php echo BASE_PATH; ?>/app/controllers/venues/add.php?edit=<?php echo (int) $venue['id']; ?>" class="button" aria-label="Edit venue" title="Edit venue">
                   <span class="icon"><i class="fa-solid fa-pen"></i></span>
                 </a>
                 <form method="POST" action="" onsubmit="return confirm('Delete this venue?');">

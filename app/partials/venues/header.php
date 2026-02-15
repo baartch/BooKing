@@ -8,7 +8,7 @@
   <div class="level-right">
     <?php if (($currentUser['role'] ?? '') === 'admin'): ?>
       <div class="buttons">
-        <a href="<?php echo BASE_PATH; ?>/app/pages/venues/add.php" class="button is-primary">Add Venue</a>
+        <a href="<?php echo BASE_PATH; ?>/app/controllers/venues/add.php" class="button is-primary">Add Venue</a>
         <button type="button" class="button" data-import-toggle>Import</button>
       </div>
     <?php endif; ?>
