@@ -21,7 +21,7 @@ require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/logs.php';
 
 if (HTMX::isRequest() && $activeTab === 'users') {
-    require __DIR__ . '/../../pages/admin/users.php';
+    require __DIR__ . '/../../views/admin/users.php';
     return;
 }
 
@@ -72,23 +72,23 @@ renderPageStart('Admin', [
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'users' ? '' : 'is-hidden'; ?>" data-tab-panel="users" role="tabpanel">
-      <?php require __DIR__ . '/../../pages/admin/users.php'; ?>
+      <?php require __DIR__ . '/../../views/admin/users.php'; ?>
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'teams' ? '' : 'is-hidden'; ?>" data-tab-panel="teams" role="tabpanel">
-      <?php require __DIR__ . '/../../pages/admin/admin_teams.php'; ?>
+      <?php require __DIR__ . '/../../views/admin/admin_teams.php'; ?>
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'api-keys' ? '' : 'is-hidden'; ?>" data-tab-panel="api-keys" role="tabpanel">
-      <?php require __DIR__ . '/../../pages/admin/admin_api_keys.php'; ?>
+      <?php require __DIR__ . '/../../views/admin/admin_api_keys.php'; ?>
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'smtp' ? '' : 'is-hidden'; ?>" data-tab-panel="smtp" role="tabpanel">
-      <?php require __DIR__ . '/../../pages/admin/admin_smtp.php'; ?>
+      <?php require __DIR__ . '/../../views/admin/admin_smtp.php'; ?>
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'logs' ? '' : 'is-hidden'; ?>" data-tab-panel="logs" role="tabpanel">
-      <?php require __DIR__ . '/../../pages/admin/admin_logs.php'; ?>
+      <?php require __DIR__ . '/../../views/admin/admin_logs.php'; ?>
     </div>
   </div>
 </section>
