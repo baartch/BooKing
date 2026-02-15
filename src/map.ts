@@ -48,6 +48,10 @@ interface SearchResult {
 }
 
 const MAP_CONTAINER_ID = 'mapid';
+const MAPBOX_ACCESS_TOKEN = (() => {
+  const container = document.getElementById(MAP_CONTAINER_ID) as HTMLElement | null;
+  return container?.dataset.mapboxToken ?? '';
+})();
 const SEARCH_INPUT_ID = 'waypoint-search';
 const SEARCH_RESULTS_ID = 'search-results';
 const WAYPOINTS_URL = 'app/routes/waypoints/index.php';
@@ -547,7 +551,7 @@ async function initializeMap(): Promise<void> {
     id: 'mapbox/streets-v11',
     tileSize: 512,
     zoomOffset: -1,
-    accessToken: 'REDACTED'
+    accessToken: MAPBOX_ACCESS_TOKEN
   }).addTo(map);
 
   applyUrlView();

@@ -37,7 +37,7 @@
             <div id="map-zoom-hint" class="notification is-hidden" role="status" aria-live="polite" aria-hidden="true">
               Zoom in to load venues.
             </div>
-            <div id="mapid" class="box is-flex-grow-1"></div>
+            <div id="mapid" class="box is-flex-grow-1" data-mapbox-token="<?php echo htmlspecialchars($mapboxToken); ?>"></div>
           </div>
         </div>
       </section>
