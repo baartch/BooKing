@@ -74,6 +74,19 @@ The database schema is in `sql/schema.sql` and includes the following tables:
 - `email_otps`: One-time passcodes for email-based login/verification
 - `contacts`: Address book entries used by the communication/email UI
 
+## Typescript/Javascript
+
+Typescript path (input): `app/src/`  
+Javascript path (output): `app/public/js/`
+
+**NEVER** edit JS files! Edit TypeScript sources (not compiled JS) when JS logic changes; rebuild the JS output as needed. TypeScript sources live in `app/src/`.
+
+Build TS with bun.
+
+```bash
+bun run build
+```
+
 ## Security
 
 - **Cookie Security**: Session cookies use `__Host-` prefix (HTTPS) with Secure, HttpOnly, and SameSite=Strict flags (see `docs/COOKIE_SECURITY.md`)
@@ -93,13 +106,16 @@ The database schema is in `sql/schema.sql` and includes the following tables:
 ## Notes
 
 - `config/` directory is for configuration files ONLY (config.php)
-- Don't write any inline CSS or JS in PHP files. CSS is provided via Bulma CDN, and JS gets compiled from TypeScript in `app/src/` to `app/public/js/`.
+- Don't write any inline CSS or JS in PHP files. CSS is provided via Bulma CDN, and JS gets compiled from TypeScript.
 - All PHP helper functions belong in `app/src-php/` directory
 - **Security headers** automatically loaded via `app/src-php/core/layout.php` on every page
 - **Cookies** must be set via `app/src-php/auth/cookie_helpers.php` functions (setSessionCookie, clearSessionCookie)
 - Sidebar consists only of icons, no labels
 - Logs written via `logAction()` in `app/src-php/core/database.php` (do NOT log sensitive data like cookies)
-- **NEVER** edit JS files! Edit TypeScript sources (not compiled JS) when JS logic changes; rebuild the JS output as needed. TypeScript sources live in `app/src/`.
 - List item highlighting (client-side): add `data-list-selectable` on the list container, `data-list-item` on clickable entries, and optional `data-list-active-class` to override the default `is-active` class (handled in `app/src/list-panel.ts`).
 - Do NOT create a new markdown file to document each change or summarize your work unless specifically requested by the user.
 - **DO NOT COMMIT** unless the user tells you to. Commit only changes you made.
+
+```
+
+```

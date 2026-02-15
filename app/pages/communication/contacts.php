@@ -216,4 +216,4 @@ if (HTMX::isRequest()) {
   </div>
 <?php endif; ?>
 
-<?php require __DIR__ . '/../../partials/table_two_column.php'; ?>
+<?php require __DIR__ . '/../../partials/tables/two_column.php'; ?>

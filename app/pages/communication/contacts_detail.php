@@ -90,7 +90,7 @@ if ($activeContact) {
 ?>
 
 <?php if (!$activeContact): ?>
-  <?php require __DIR__ . '/../../partials/table_detail.php'; ?>
+  <?php require __DIR__ . '/../../partials/tables/detail.php'; ?>
 <?php else: ?>
   <div class="box">
     <div class="level">
