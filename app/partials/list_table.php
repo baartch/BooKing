@@ -19,7 +19,7 @@ $listActionsLabel = $listActionsLabel ?? 'Actions';
   <p><?php echo htmlspecialchars($listEmptyMessage); ?></p>
 <?php else: ?>
   <div class="table-container">
-    <table class="table is-fullwidth is-hoverable">
+    <table class="table is-fullwidth is-hoverable" data-list-selectable data-list-active-class="is-selected">
       <thead>
         <tr>
           <?php foreach ($listColumns as $column): ?>
@@ -34,9 +34,9 @@ $listActionsLabel = $listActionsLabel ?? 'Actions';
         <?php foreach ($listRows as $row): ?>
           <?php $rowClass = $listRowClass ? (string) $listRowClass($row) : ''; ?>
           <?php if ($rowClass !== ''): ?>
-            <tr class="<?php echo htmlspecialchars($rowClass); ?>">
+            <tr data-list-item class="<?php echo htmlspecialchars($rowClass); ?>">
           <?php else: ?>
-            <tr>
+            <tr data-list-item>
           <?php endif; ?>
             <?php foreach ($listColumns as $column): ?>
               <?php
