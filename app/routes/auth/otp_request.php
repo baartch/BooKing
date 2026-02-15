@@ -19,7 +19,7 @@ $email = strtolower(trim((string) ($_POST['email'] ?? '')));
 $clientIp = getClientIdentifier();
 
 if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=invalid');
+    header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=invalid');
     exit;
 }
 
@@ -29,7 +29,7 @@ if (!$rateLimit['allowed']) {
         'Too many OTP requests from your IP address. Please try again in %s.',
         formatRateLimitReset($rateLimit['reset_at'])
     );
-    header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=' . urlencode($error));
+    header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=' . urlencode($error));
     exit;
 }
 
@@ -38,7 +38,7 @@ try {
     $user = findUserByEmail($pdo, $email);
     if (!$user) {
         recordRateLimitAttempt($clientIp, 'otp_request', false);
-        header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=unknown');
+        header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=unknown');
         exit;
     }
 
@@ -53,14 +53,14 @@ try {
         if ($lastSentAt && ($now - $lastSentAt) < 60) {
             $waitSeconds = 60 - ($now - $lastSentAt);
             $error = sprintf('Please wait %d seconds before requesting another code.', $waitSeconds);
-            header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=' . urlencode($error));
+            header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=' . urlencode($error));
             exit;
         }
 
         if ($existingExpiresAt && $existingExpiresAt < $now) {
             $attempts = 0;
         } elseif ($attempts >= 3) {
-            header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=locked');
+            header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=locked');
             exit;
         }
     }
@@ -83,7 +83,7 @@ try {
     if (!$mailbox) {
         recordRateLimitAttempt($clientIp, 'otp_request', false);
         logAction((int) $user['id'], 'otp_send_error', 'Global SMTP mailbox not configured');
-        header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=send');
+        header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=send');
         exit;
     }
 
@@ -109,7 +109,7 @@ try {
             'otp_send_error',
             'Global SMTP config missing: ' . implode(', ', $missingFields)
         );
-        header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=send');
+        header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=send');
         exit;
     }
 
@@ -126,7 +126,7 @@ try {
     if (!$sent) {
         recordRateLimitAttempt($clientIp, 'otp_request', false);
         logAction((int) $user['id'], 'otp_send_error', 'SMTP send failed');
-        header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=send');
+        header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=send');
         exit;
     }
 
@@ -134,10 +134,10 @@ try {
     logAction((int) $user['id'], 'otp_sent', sprintf('OTP sent to %s', $email));
 
     $notice = $existing ? '&notice=resent' : '';
-    header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=otp&email=' . urlencode($email) . $notice);
+    header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=otp&email=' . urlencode($email) . $notice);
     exit;
 } catch (Throwable $error) {
     logAction(null, 'otp_request_error', $error->getMessage());
-    header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=send');
+    header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=send');
     exit;
 }

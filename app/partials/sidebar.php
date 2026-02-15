@@ -65,7 +65,7 @@ $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
           </a>
         </li>
         <li>
-          <a href="<?php echo BASE_PATH; ?>/app/pages/auth/logout.php" aria-label="Logout">
+          <a href="<?php echo BASE_PATH; ?>/app/controllers/auth/logout.php" aria-label="Logout">
             <span class="icon"><i class="fa-solid fa-right-from-bracket"></i></span>
           </a>
         </li>

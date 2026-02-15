@@ -19,7 +19,7 @@ $code = trim((string) ($_POST['otp_code'] ?? ''));
 $clientIp = getClientIdentifier();
 
 if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=invalid');
+    header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=invalid');
     exit;
 }
 
@@ -30,7 +30,7 @@ if (!$rateLimit['allowed']) {
         'Too many verification attempts. Please try again in %s.',
         formatRateLimitReset($rateLimit['reset_at'])
     );
-    header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=otp&email=' . urlencode($email) . '&error=' . urlencode($error));
+    header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=otp&email=' . urlencode($email) . '&error=' . urlencode($error));
     exit;
 }
 
@@ -39,7 +39,7 @@ try {
     $record = fetchOtpRecord($pdo, $email);
     if (!$record) {
         recordRateLimitAttempt($rateKey, 'otp_verify', false);
-        header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=unknown');
+        header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=unknown');
         exit;
     }
 
@@ -47,7 +47,7 @@ try {
     if (!$user) {
         deleteOtpRecord($pdo, $email);
         recordRateLimitAttempt($rateKey, 'otp_verify', false);
-        header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=unknown');
+        header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=unknown');
         exit;
     }
 
@@ -55,14 +55,14 @@ try {
     if (!$expiresAt || $expiresAt < time()) {
         deleteOtpRecord($pdo, $email);
         recordRateLimitAttempt($rateKey, 'otp_verify', false);
-        header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=expired');
+        header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=expired');
         exit;
     }
 
     $attempts = (int) ($record['attempts'] ?? 0);
     if ($attempts >= 3) {
         recordRateLimitAttempt($rateKey, 'otp_verify', false);
-        header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=locked');
+        header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=locked');
         exit;
     }
 
@@ -70,12 +70,12 @@ try {
         $attempts = incrementOtpAttempts($pdo, $email);
         recordRateLimitAttempt($rateKey, 'otp_verify', false);
         if ($attempts >= 3) {
-            header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=locked');
+            header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=locked');
             exit;
         }
         $remaining = max(0, 3 - $attempts);
         $error = sprintf('Invalid code. %d attempt(s) remaining.', $remaining);
-        header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=otp&email=' . urlencode($email) . '&error=' . urlencode($error));
+        header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=otp&email=' . urlencode($email) . '&error=' . urlencode($error));
         exit;
     }
 
@@ -90,6 +90,6 @@ try {
     exit;
 } catch (Throwable $error) {
     logAction(null, 'otp_verify_error', $error->getMessage());
-    header('Location: ' . BASE_PATH . '/app/pages/auth/login.php?step=email&error=send');
+    header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php?step=email&error=send');
     exit;
 }

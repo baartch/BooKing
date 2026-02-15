@@ -15,5 +15,5 @@ if ($token !== '') {
 clearSessionCookie();
 logAction($userId, 'logout', 'User logged out');
 
-header('Location: ' . BASE_PATH . '/app/pages/auth/login.php');
+header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php');
 exit;

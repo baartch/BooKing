@@ -37,7 +37,7 @@ if (!$session) {
     );
     logAction(null, 'auth_check_failed', $details);
     clearSessionCookie();
-    header('Location: ' . BASE_PATH . '/app/pages/auth/login.php');
+    header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php');
     exit;
 }
 
@@ -52,7 +52,7 @@ if (!$expiresAt) {
     );
     logAction($session ? (int) $session['user_id'] : null, 'auth_check_refresh_failed', $details);
     clearSessionCookie();
-    header('Location: ' . BASE_PATH . '/app/pages/auth/login.php');
+    header('Location: ' . BASE_PATH . '/app/controllers/auth/login.php');
     exit;
 }
 
