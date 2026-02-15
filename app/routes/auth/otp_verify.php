@@ -2,10 +2,10 @@
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../src-php/core/defaults.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/auth/csrf.php';
-require_once __DIR__ . '/../../src-php/auth/rate_limit.php';
-require_once __DIR__ . '/../../src-php/auth/cookie_helpers.php';
-require_once __DIR__ . '/../../src-php/auth/otp_helpers.php';
+require_once __DIR__ . '/../../models/auth/csrf.php';
+require_once __DIR__ . '/../../models/auth/rate_limit.php';
+require_once __DIR__ . '/../../models/auth/cookie_helpers.php';
+require_once __DIR__ . '/../../models/auth/otp_helpers.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

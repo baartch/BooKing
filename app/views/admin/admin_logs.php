@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../src-php/auth/admin_check.php';
+require_once __DIR__ . '/../../models/auth/admin_check.php';
 
 if (!isset($logsRows, $logsPagination)):
 ?>

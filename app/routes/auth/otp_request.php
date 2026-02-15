@@ -2,9 +2,9 @@
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../src-php/core/defaults.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/auth/csrf.php';
-require_once __DIR__ . '/../../src-php/auth/rate_limit.php';
-require_once __DIR__ . '/../../src-php/auth/otp_helpers.php';
+require_once __DIR__ . '/../../models/auth/csrf.php';
+require_once __DIR__ . '/../../models/auth/rate_limit.php';
+require_once __DIR__ . '/../../models/auth/otp_helpers.php';
 require_once __DIR__ . '/../../src-php/communication/mailbox_helpers.php';
 require_once __DIR__ . '/../../src-php/communication/mail_delivery.php';
 

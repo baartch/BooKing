@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../../config/config.php';
 require_once __DIR__ . '/../../src-php/core/defaults.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/auth/cookie_helpers.php';
+require_once __DIR__ . '/../../models/auth/cookie_helpers.php';
 
 $token = getSessionToken();
 $session = $token !== '' ? fetchSessionUser($token) : null;
