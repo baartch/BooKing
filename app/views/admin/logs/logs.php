@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../../models/auth/admin_check.php';
-require_once __DIR__ . '/../../models/core/list_helpers.php';
-require_once __DIR__ . '/../../models/core/htmx_class.php';
+require_once __DIR__ . '/../../../models/auth/admin_check.php';
+require_once __DIR__ . '/../../../models/core/list_helpers.php';
+require_once __DIR__ . '/../../../models/core/htmx_class.php';
 
 if (!isset($logsRows, $logsPagination)):
 ?>
@@ -109,8 +109,8 @@ $buildUrl = static function (int $page) use ($baseUrl, $logsPerPage, $logsQuery)
   $detailSubtitle = $selectedLog ? 'Entry #' . (int) ($selectedLog['id'] ?? 0) : null;
   $detailEmptyMessage = 'Select a log entry to see details.';
 
-  $listContentPath = __DIR__ . '/logs/list.php';
-  $detailContentPath = __DIR__ . '/logs/detail.php';
+  $listContentPath = __DIR__ . '/list.php';
+  $detailContentPath = __DIR__ . '/detail.php';
   $detailWrapperId = 'admin-logs-detail';
 ?>
 
@@ -119,7 +119,7 @@ $buildUrl = static function (int $page) use ($baseUrl, $logsPerPage, $logsQuery)
   <?php return; ?>
 <?php endif; ?>
 
-<?php require __DIR__ . '/../../partials/tables/two_column.php'; ?>
+<?php require __DIR__ . '/../../../partials/tables/two_column.php'; ?>
 
 <nav class="level" aria-label="Pagination">
   <div class="level-left">
