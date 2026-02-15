@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../core/database.php';
 require_once __DIR__ . '/../core/form_helpers.php';
+require_once __DIR__ . '/../core/object_links.php';
 
 function handleVenueImport(array $currentUser, array $countryOptions, string $importPayload): array
 {
@@ -146,8 +147,16 @@ function handleVenueDelete(array $currentUser, int $venueId): array
 
     try {
         $pdo = getDatabaseConnection();
-        $stmt = $pdo->prepare('DELETE FROM venues WHERE id = :id');
-        $stmt->execute([':id' => $venueId]);
+        $pdo->beginTransaction();
+        try {
+            clearAllObjectLinks($pdo, 'venue', $venueId);
+            $stmt = $pdo->prepare('DELETE FROM venues WHERE id = :id');
+            $stmt->execute([':id' => $venueId]);
+            $pdo->commit();
+        } catch (Throwable $error) {
+            $pdo->rollBack();
+            throw $error;
+        }
         logAction($currentUser['user_id'] ?? null, 'venue_deleted', sprintf('Deleted venue %d', $venueId));
         $notice = 'Venue deleted successfully.';
     } catch (Throwable $error) {
