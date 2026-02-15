@@ -10,6 +10,10 @@ if ($noticeKey === 'mailbox_created') {
 try {
     $pdo = getDatabaseConnection();
     $personalMailboxes = fetchUserMailboxes($pdo, (int) ($currentUser['user_id'] ?? 0));
+    foreach ($personalMailboxes as &$mailbox) {
+        $mailbox['team_name'] = $mailbox['team_name'] ?? '';
+    }
+    unset($mailbox);
 } catch (Throwable $error) {
     $errors[] = 'Failed to load mailboxes.';
     logAction($currentUser['user_id'] ?? null, 'profile_mailbox_list_error', $error->getMessage());
@@ -44,6 +48,10 @@ try {
     $notice = 'Mailbox deleted successfully.';
     logAction($currentUser['user_id'] ?? null, 'profile_mailbox_deleted', sprintf('Deleted mailbox %d', $existingMailbox['id']));
     $personalMailboxes = fetchUserMailboxes($pdo, (int) ($currentUser['user_id'] ?? 0));
+    foreach ($personalMailboxes as &$mailbox) {
+        $mailbox['team_name'] = $mailbox['team_name'] ?? '';
+    }
+    unset($mailbox);
 } catch (Throwable $error) {
     $errors[] = 'Failed to delete mailbox.';
     logAction($currentUser['user_id'] ?? null, 'profile_mailbox_delete_error', $error->getMessage());

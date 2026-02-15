@@ -4,7 +4,8 @@
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',
     'extraScripts' => [
         '<script type="module" src="' . BASE_PATH . '/app/public/js/tabs.js" defer></script>',
-        '<script type="module" src="' . BASE_PATH . '/app/public/js/appearance.js" defer></script>'
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/appearance.js" defer></script>',
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/list-panel.js" defer></script>'
     ]
 ]); ?>
       <section class="section">
@@ -38,7 +39,7 @@
           </div>
 
           <?php require __DIR__ . '/venues.php'; ?>
-          <?php require __DIR__ . '/mailboxes.php'; ?>
+          <?php require __DIR__ . '/mailboxes/mailboxes.php'; ?>
           <?php require __DIR__ . '/appearance.php'; ?>
         </div>
       </section>
