@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../models/auth/check.php';
 require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../models/core/form_helpers.php';
+require_once __DIR__ . '/../../models/core/htmx_class.php';
 require_once __DIR__ . '/../../models/core/layout.php';
 require_once __DIR__ . '/../../models/venues/venues_actions.php';
 require_once __DIR__ . '/../../models/venues/venues_repository.php';
@@ -15,6 +16,10 @@ $action = '';
 $filter = trim((string) ($_GET['filter'] ?? ''));
 $pageSize = (int) ($currentUser['venues_page_size'] ?? 25);
 $pageSize = max(25, min(500, $pageSize));
+$pageSizeOverride = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 0;
+if ($pageSizeOverride >= 25 && $pageSizeOverride <= 500) {
+    $pageSize = $pageSizeOverride;
+}
 $page = max(1, (int) ($_GET['page'] ?? 1));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -37,6 +42,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors = array_merge($errors, $result['errors'] ?? []);
         if (!empty($result['notice'])) {
             $notice = $result['notice'];
+        }
+    }
+
+    if ($action === 'update_page_size') {
+        $requestedPageSize = (int) ($_POST['venues_page_size'] ?? $pageSize);
+        $requestedPageSize = max(25, min(500, $requestedPageSize));
+        try {
+            $pdo = getDatabaseConnection();
+            $stmt = $pdo->prepare('UPDATE users SET venues_page_size = :page_size WHERE id = :user_id');
+            $stmt->execute([
+                ':page_size' => $requestedPageSize,
+                ':user_id' => $currentUser['user_id']
+            ]);
+            $pageSize = $requestedPageSize;
+            $currentUser['venues_page_size'] = $requestedPageSize;
+            $notice = 'Page size updated successfully.';
+        } catch (Throwable $error) {
+            $errors[] = 'Failed to update page size.';
+            logAction($currentUser['user_id'] ?? null, 'venues_page_size_error', $error->getMessage());
         }
     }
 }
@@ -63,6 +87,12 @@ $startPage = max(1, $page - $range);
 $endPage = min($totalPages, $page + $range);
 if ($endPage - $startPage < $range * 2) {
     $startPage = max(1, min($startPage, $endPage - $range * 2));
+}
+
+if (HTMX::isRequest()) {
+    HTMX::pushUrl($_SERVER['REQUEST_URI']);
+    require __DIR__ . '/../../views/venues/venues.php';
+    return;
 }
 
 require __DIR__ . '/../../views/venues/index.php';
