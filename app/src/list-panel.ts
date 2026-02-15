@@ -69,6 +69,34 @@ const initListSearch = (): void => {
   });
 };
 
+const focusRowLink = (row: HTMLElement): void => {
+  const link = row.getAttribute('data-row-link');
+  if (!link) {
+    return;
+  }
+
+  const detailTarget = row.getAttribute('data-row-target');
+  const swap = row.getAttribute('data-row-swap') || 'innerHTML';
+  const pushUrl = row.getAttribute('data-row-push-url');
+  const htmx = (window as Window & {
+    htmx?: { ajax: (method: string, url: string, config?: Record<string, unknown>) => void }
+  }).htmx;
+
+  if (detailTarget && htmx) {
+    const config: Record<string, unknown> = {
+      target: detailTarget,
+      swap,
+    };
+
+    config.pushUrl = pushUrl !== null ? (pushUrl !== '' ? pushUrl : link) : link;
+
+    htmx.ajax('GET', link, config);
+    return;
+  }
+
+  window.location.href = link;
+};
+
 const initListSelection = (): void => {
   document.addEventListener('click', (event) => {
     const target = event.target as HTMLElement | null;
@@ -76,14 +104,20 @@ const initListSelection = (): void => {
       return;
     }
 
-    const item = target.closest<HTMLElement>('[data-list-item]');
-    if (!item) {
+    const row = target.closest<HTMLElement>('[data-list-item]');
+    if (!row) {
       return;
     }
 
-    const list = item.closest<HTMLElement>('[data-list-selectable]');
+    const list = row.closest<HTMLElement>('[data-list-selectable]');
     if (!list) {
       return;
+    }
+
+    const interactiveElement = target.closest('a, button, input, select, textarea, label');
+    if (!interactiveElement && row.hasAttribute('data-row-link')) {
+      event.preventDefault();
+      focusRowLink(row);
     }
 
     const activeClass = list.dataset.listActiveClass || 'is-active';
@@ -92,7 +126,29 @@ const initListSelection = (): void => {
       element.classList.remove(activeClass);
     });
 
-    item.classList.add(activeClass);
+    row.classList.add(activeClass);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    if (!target) {
+      return;
+    }
+
+    if (!target.matches('[data-list-item]')) {
+      return;
+    }
+
+    if (!target.hasAttribute('data-row-link')) {
+      return;
+    }
+
+    event.preventDefault();
+    focusRowLink(target);
   });
 };
 

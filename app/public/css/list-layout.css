@@ -9,6 +9,10 @@
   flex-direction: column;
 }
 
+[data-list-item][data-row-link] {
+  cursor: pointer;
+}
+
 .contact-list {
   display: flex;
   flex-direction: column;

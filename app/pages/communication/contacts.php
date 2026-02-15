@@ -174,6 +174,7 @@ $detailContentPath = $showForm ? __DIR__ . '/contacts_form.php' : __DIR__ . '/co
 $detailWrapperId = 'contact-detail-panel';
 
 if (HTMX::isRequest()) {
+    HTMX::pushUrl($_SERVER['REQUEST_URI']);
     require $detailContentPath;
     return;
 }
@@ -215,4 +216,4 @@ if (HTMX::isRequest()) {
   </div>
 <?php endif; ?>
 
-<?php require __DIR__ . '/../../partials/list_two_column.php'; ?>
+<?php require __DIR__ . '/../../partials/table_two_column.php'; ?>

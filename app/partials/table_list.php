@@ -7,6 +7,7 @@
  * - callable|null $listRowClass
  * - callable|null $listRowActions (returns HTML)
  * - string $listActionsLabel
+ * - callable|null $listRowLink (returns array or string)
  */
 $listRows = $listRows ?? [];
 $listColumns = $listColumns ?? [];
@@ -14,6 +15,7 @@ $listEmptyMessage = $listEmptyMessage ?? 'No entries found.';
 $listRowClass = $listRowClass ?? null;
 $listRowActions = $listRowActions ?? null;
 $listActionsLabel = $listActionsLabel ?? 'Actions';
+$listRowLink = $listRowLink ?? null;
 ?>
 <?php if (!$listRows): ?>
   <p><?php echo htmlspecialchars($listEmptyMessage); ?></p>
@@ -32,11 +34,51 @@ $listActionsLabel = $listActionsLabel ?? 'Actions';
       </thead>
       <tbody>
         <?php foreach ($listRows as $row): ?>
-          <?php $rowClass = $listRowClass ? (string) $listRowClass($row) : ''; ?>
+          <?php
+            $rowClass = $listRowClass ? (string) $listRowClass($row) : '';
+            $linkAttributes = '';
+            if ($listRowLink && is_callable($listRowLink)) {
+                $linkResult = $listRowLink($row);
+                $linkData = is_array($linkResult) ? $linkResult : ['href' => (string) $linkResult];
+
+                if (!empty($linkData['href'])) {
+                    $linkAttributes .= ' data-row-link="' . htmlspecialchars((string) $linkData['href']) . '"';
+                    $linkAttributes .= ' tabindex="0"';
+                }
+
+                $rowTarget = $linkData['hx-target'] ?? null;
+                $rowSwap = $linkData['hx-swap'] ?? null;
+
+                if ($rowTarget) {
+                    $linkAttributes .= ' data-row-target="' . htmlspecialchars((string) $rowTarget) . '"';
+                }
+
+                if ($rowSwap) {
+                    $linkAttributes .= ' data-row-swap="' . htmlspecialchars((string) $rowSwap) . '"';
+                }
+
+                foreach ($linkData as $attrName => $attrValue) {
+                    if (in_array($attrName, ['href'], true)) {
+                        continue;
+                    }
+                    if ($attrValue === null || $attrValue === '') {
+                        continue;
+                    }
+                    if ($attrName === 'hx-push-url') {
+                        $linkAttributes .= ' data-row-push-url="' . htmlspecialchars((string) $attrValue) . '"';
+                        continue;
+                    }
+                    if (in_array($attrName, ['hx-target', 'hx-swap', 'hx-get'], true)) {
+                        continue;
+                    }
+                    $linkAttributes .= ' ' . htmlspecialchars((string) $attrName) . '="' . htmlspecialchars((string) $attrValue) . '"';
+                }
+            }
+          ?>
           <?php if ($rowClass !== ''): ?>
-            <tr data-list-item class="<?php echo htmlspecialchars($rowClass); ?>">
+            <tr data-list-item class="<?php echo htmlspecialchars($rowClass); ?>"<?php echo $linkAttributes; ?>>
           <?php else: ?>
-            <tr data-list-item>
+            <tr data-list-item<?php echo $linkAttributes; ?>>
           <?php endif; ?>
             <?php foreach ($listColumns as $column): ?>
               <?php

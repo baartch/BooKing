@@ -2,14 +2,14 @@
 
 ## Overview
 
-PHP + TypeScript app for venue mapping with MariaDB-backed authentication, sessions, logs, and admin user management. All POST forms are protected with CSRF tokens.
+PHP + TypeScript app for venue mapping with MariaDB-backed authentication, sessions, logs, and admin user management.
 
 ## Stack
 
-- PHP 7.4+
+- PHP 8.0+
 - MariaDB/MySQL
 - Leaflet + Mapbox
-- TypeScript for the map UI
+- TypeScript
 
 ## Key Paths
 

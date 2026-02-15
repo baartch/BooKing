@@ -11,7 +11,7 @@
 require_once __DIR__ . '/../../src-php/core/list_helpers.php';
 
 $listColumns = [
-    buildListColumn('Name', null, static function (array $contact) use ($baseUrl, $baseQuery): string {
+    buildListColumn('Name', null, static function (array $contact): string {
         $nameParts = [];
         if (!empty($contact['firstname'])) {
             $nameParts[] = $contact['firstname'];
@@ -20,16 +20,27 @@ $listColumns = [
             $nameParts[] = $contact['surname'];
         }
         $name = trim(implode(' ', $nameParts));
-        $contactId = (int) ($contact['id'] ?? 0);
-        $detailLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, ['contact_id' => $contactId]));
-        return '<a href="' . htmlspecialchars($detailLink) . '" hx-get="' . htmlspecialchars($detailLink) . '" hx-target="#contact-detail-panel" hx-swap="innerHTML" hx-push-url="' . htmlspecialchars($detailLink) . '">' . htmlspecialchars($name !== '' ? $name : '(Unnamed)') . '</a>';
-    }, true),
+        return $name !== '' ? $name : '(Unnamed)';
+    }, false),
     buildListColumn('Email', 'email'),
     buildListColumn('Country', 'country')
 ];
 
 $listRows = $contacts;
 $listEmptyMessage = 'No contacts found.';
+
+$listRowLink = static function (array $contact) use ($baseUrl, $baseQuery): array {
+    $contactId = (int) ($contact['id'] ?? 0);
+    $detailLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, ['contact_id' => $contactId]));
+
+    return [
+        'href' => $detailLink,
+        'hx-get' => $detailLink,
+        'hx-target' => '#contact-detail-panel',
+        'hx-swap' => 'innerHTML',
+        'hx-push-url' => $detailLink
+    ];
+};
 
 $listRowActions = static function (array $contact) use ($baseUrl, $baseQuery, $searchQuery, $activeTeamId): string {
     $contactId = (int) ($contact['id'] ?? 0);
@@ -56,4 +67,4 @@ $listRowActions = static function (array $contact) use ($baseUrl, $baseQuery, $s
 
 $listActionsLabel = 'Actions';
 
-require __DIR__ . '/../../partials/list_table.php';
+require __DIR__ . '/../../partials/table_list.php';

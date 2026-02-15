@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../src-php/communication/email_view.php';
 $emailDetailWrapperId = 'email-detail-panel';
 
 if (HTMX::isRequest()) {
+    HTMX::pushUrl($_SERVER['REQUEST_URI']);
     require __DIR__ . '/email_detail.php';
     return;
 }
