@@ -172,7 +172,7 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
               </a>
             </div>
 
-            <form class="control" method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/mark_unread.php">
+            <form class="control" method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/email/mark_unread.php">
               <?php renderCsrfField(); ?>
               <input type="hidden" name="email_id" value="<?php echo (int) $message['id']; ?>">
               <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
@@ -186,7 +186,7 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
               </button>
             </form>
 
-            <form class="control" method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/delete.php">
+            <form class="control" method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/email/delete.php">
               <?php renderCsrfField(); ?>
               <input type="hidden" name="email_id" value="<?php echo (int) $message['id']; ?>">
               <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
@@ -269,7 +269,7 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
         </span>
         <div class="email-detail-attachments-list">
           <?php foreach ($attachments as $attachment): ?>
-            <a href="<?php echo BASE_PATH; ?>/app/routes/email/attachment.php?id=<?php echo (int) $attachment['id']; ?>" class="email-detail-attachment-chip">
+            <a href="<?php echo BASE_PATH; ?>/app/controllers/email/attachment.php?id=<?php echo (int) $attachment['id']; ?>" class="email-detail-attachment-chip">
               <span class="icon is-small"><i class="fa-solid fa-file"></i></span>
               <span><?php echo htmlspecialchars($attachment['filename'] ?? 'Attachment'); ?></span>
               <span class="email-detail-attachment-size"><?php echo htmlspecialchars(formatBytes((int) $attachment['file_size'])); ?></span>

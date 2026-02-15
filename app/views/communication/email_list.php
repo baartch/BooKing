@@ -29,7 +29,7 @@
       <div class="level-left">
         <span class="tag"><?php echo (int) $totalMessages; ?> emails</span>
         <?php if ($folder === 'trash'): ?>
-          <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/empty_trash.php" class="ml-2" onsubmit="return confirm('Empty the trash for this mailbox?');">
+          <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/email/empty_trash.php" class="ml-2" onsubmit="return confirm('Empty the trash for this mailbox?');">
             <?php renderCsrfField(); ?>
             <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
             <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
@@ -83,7 +83,7 @@
                     <div class="is-size-7 email-meta-right">
                       <div><?php echo htmlspecialchars($dateLabel); ?></div>
                       <div class="email-delete-action">
-                        <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/delete.php">
+                        <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/email/delete.php">
                           <?php renderCsrfField(); ?>
                           <input type="hidden" name="email_id" value="<?php echo (int) $row['id']; ?>">
                           <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">

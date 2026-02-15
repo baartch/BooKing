@@ -1,6 +1,6 @@
 <?php
 ?>
-<form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/email/send.php">
+<form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/email/send.php">
   <?php renderCsrfField(); ?>
   <?php if (!empty($composeConversationId)): ?>
     <input type="hidden" name="conversation_id" value="<?php echo (int) $composeConversationId; ?>">
