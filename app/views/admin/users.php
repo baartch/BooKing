@@ -6,7 +6,7 @@ if (!isset($users, $teamsByUser)) {
     return;
 }
 
-$baseUrl = BASE_PATH . '/app/pages/admin/index.php';
+$baseUrl = BASE_PATH . '/app/controllers/admin/index.php';
 $baseQuery = ['tab' => 'users'];
 $mode = (string) ($_GET['mode'] ?? '');
 $selectedUserId = (int) ($_GET['user_id'] ?? 0);

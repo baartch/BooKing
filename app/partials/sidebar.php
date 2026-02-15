@@ -12,7 +12,7 @@ $isDashboard = $relativePath === '/' || $relativePath === '/index.php' || strpos
 $isMap = strpos($relativePath, '/app/pages/map') === 0;
 $isVenues = strpos($relativePath, '/app/pages/venues') === 0;
 $isTeam = strpos($relativePath, '/app/pages/team') === 0;
-$isAdmin = strpos($relativePath, '/app/pages/admin') === 0;
+$isAdmin = strpos($relativePath, '/app/controllers/admin') === 0;
 $isProfile = strpos($relativePath, '/app/controllers/profile') === 0;
 $isCommunication = strpos($relativePath, '/app/controllers/communication') === 0;
 $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
@@ -50,7 +50,7 @@ $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
         <?php endif; ?>
         <?php if (($currentUser['role'] ?? '') === 'admin'): ?>
           <li>
-            <a href="<?php echo BASE_PATH; ?>/app/pages/admin/index.php" class="<?php echo $isAdmin ? 'is-active' : ''; ?>" aria-label="Admin">
+            <a href="<?php echo BASE_PATH; ?>/app/controllers/admin/index.php" class="<?php echo $isAdmin ? 'is-active' : ''; ?>" aria-label="Admin">
               <span class="icon"><i class="fa-solid fa-gear"></i></span>
             </a>
           </li>

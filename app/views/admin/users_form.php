@@ -7,7 +7,7 @@
 $editUser = $editUser ?? null;
 $isEditing = (bool) $isEditing;
 $editUserId = $isEditing && $editUser ? (int) $editUser['id'] : 0;
-$cancelUrl = BASE_PATH . '/app/pages/admin/index.php?tab=users';
+$cancelUrl = BASE_PATH . '/app/controllers/admin/index.php?tab=users';
 ?>
 <div class="box">
   <div class="level mb-3">
