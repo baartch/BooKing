@@ -54,7 +54,7 @@ const MAPBOX_ACCESS_TOKEN = (() => {
 })();
 const SEARCH_INPUT_ID = 'waypoint-search';
 const SEARCH_RESULTS_ID = 'search-results';
-const WAYPOINTS_URL = 'app/routes/waypoints/index.php';
+const WAYPOINTS_URL = 'app/controllers/waypoints/index.php';
 const SEARCH_RESULT_CLASS = 'dropdown-item';
 const SELECTED_CLASS = 'is-active';
 const DROPDOWN_ACTIVE_CLASS = 'is-active';
