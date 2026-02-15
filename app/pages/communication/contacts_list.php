@@ -22,7 +22,7 @@ $listColumns = [
         $name = trim(implode(' ', $nameParts));
         $contactId = (int) ($contact['id'] ?? 0);
         $detailLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, ['contact_id' => $contactId]));
-        return '<a href="' . htmlspecialchars($detailLink) . '">' . htmlspecialchars($name !== '' ? $name : '(Unnamed)') . '</a>';
+        return '<a href="' . htmlspecialchars($detailLink) . '" hx-get="' . htmlspecialchars($detailLink) . '" hx-target="#contact-detail-panel" hx-swap="innerHTML">' . htmlspecialchars($name !== '' ? $name : '(Unnamed)') . '</a>';
     }, true),
     buildListColumn('Email', 'email'),
     buildListColumn('Country', 'country')

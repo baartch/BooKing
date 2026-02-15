@@ -7,10 +7,12 @@
  * - string|null $listPrimaryActionHtml
  * - string $listContentPath
  * - string $detailContentPath
+ * - string|null $detailWrapperId
  */
 $listSummaryTags = $listSummaryTags ?? [];
 $listPrimaryActionHtml = $listPrimaryActionHtml ?? null;
 $listSearch = $listSearch ?? null;
+$detailWrapperId = $detailWrapperId ?? null;
 ?>
 <div class="box">
   <div class="columns is-variable is-4 list-layout">
@@ -67,7 +69,9 @@ $listSearch = $listSearch ?? null;
       <?php require $listContentPath; ?>
     </section>
     <section class="column is-4">
-      <?php require $detailContentPath; ?>
+      <div<?php echo $detailWrapperId ? ' id="' . htmlspecialchars($detailWrapperId) . '"' : ''; ?>>
+        <?php require $detailContentPath; ?>
+      </div>
     </section>
   </div>
 </div>

@@ -1,9 +1,15 @@
 <?php
 require_once __DIR__ . '/../../routes/auth/check.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
+require_once __DIR__ . '/../../src-php/core/htmx_class.php';
 require_once __DIR__ . '/../../src-php/core/layout.php';
 
 $activeTab = $_GET['tab'] ?? 'conversations';
+
+if (HTMX::isRequest() && $activeTab === 'contacts') {
+    require __DIR__ . '/contacts.php';
+    return;
+}
 
 ?>
 <?php renderPageStart('Communication', [

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../src-php/core/database.php';
+require_once __DIR__ . '/../../src-php/core/htmx_class.php';
 require_once __DIR__ . '/../../src-php/communication/contacts_helpers.php';
 require_once __DIR__ . '/../../src-php/communication/email_helpers.php';
 
@@ -170,6 +171,12 @@ $listSearch = [
 
 $listContentPath = __DIR__ . '/contacts_list.php';
 $detailContentPath = $showForm ? __DIR__ . '/contacts_form.php' : __DIR__ . '/contacts_detail.php';
+$detailWrapperId = 'contact-detail-panel';
+
+if (HTMX::isRequest()) {
+    require $detailContentPath;
+    return;
+}
 ?>
 
 <?php if ($notice): ?>
