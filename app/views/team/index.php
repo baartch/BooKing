@@ -1,14 +1,4 @@
 <?php
-require_once __DIR__ . '/../../src-php/auth/team_admin_check.php';
-require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/core/layout.php';
-
-$activeTab = $_GET['tab'] ?? 'members';
-$validTabs = ['members', 'mailboxes', 'templates'];
-if (!in_array($activeTab, $validTabs, true)) {
-    $activeTab = 'members';
-}
-
 ?>
 <?php renderPageStart('Team', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',

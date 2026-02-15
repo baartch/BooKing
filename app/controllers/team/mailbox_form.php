@@ -17,15 +17,16 @@ $defaultSmtpPort = 587;
 
 $formValues = mailboxFormDefaults($defaultImapPort, $defaultSmtpPort);
 
+$teams = [];
+$teamIds = [];
+$pdo = null;
+
 try {
     $pdo = getDatabaseConnection();
     [$teams, $teamIds] = loadTeamAdminTeams($pdo, (int) ($currentUser['user_id'] ?? 0));
 } catch (Throwable $error) {
-    $teams = [];
-    $teamIds = [];
     $errors[] = 'Failed to load teams.';
     logAction($currentUser['user_id'] ?? null, 'team_mailbox_team_load_error', $error->getMessage());
-    $pdo = null;
 }
 
 if ($editMailboxId > 0 && $pdo) {
@@ -73,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($isCreate) {
                     $mailboxId = persistMailbox($pdo, $formValues, $imapPassword, $smtpPassword);
                     logAction($currentUser['user_id'] ?? null, 'team_mailbox_created', sprintf('Created mailbox %s', $formValues['name']));
-                    header('Location: ' . BASE_PATH . '/app/pages/team/index.php?tab=mailboxes&notice=mailbox_created');
+                    header('Location: ' . BASE_PATH . '/app/controllers/team/index.php?tab=mailboxes&notice=mailbox_created');
                     exit;
                 }
 
@@ -84,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $formValues['team_id'] = (int) ($existingMailbox['team_id'] ?? 0);
                     persistMailbox($pdo, $formValues, $imapPassword, $smtpPassword, $existingMailbox);
                     logAction($currentUser['user_id'] ?? null, 'team_mailbox_updated', sprintf('Updated mailbox %d', $existingMailbox['id']));
-                    header('Location: ' . BASE_PATH . '/app/pages/team/index.php?tab=mailboxes&notice=mailbox_updated');
+                    header('Location: ' . BASE_PATH . '/app/controllers/team/index.php?tab=mailboxes&notice=mailbox_updated');
                     exit;
                 }
             } catch (Throwable $error) {
@@ -103,54 +104,4 @@ if (!in_array($formValues['smtp_encryption'], $allowedEncryptions, true)) {
     $formValues['smtp_encryption'] = 'tls';
 }
 
-?>
-<?php renderPageStart('Mailbox', [
-    'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',
-    'extraScripts' => [
-        '<script type="module" src="' . BASE_PATH . '/app/public/js/mailboxes.js" defer></script>'
-    ]
-]); ?>
-      <section class="section">
-        <div class="container is-fluid">
-          <div class="level mb-4">
-            <div class="level-left">
-              <h1 class="title is-3"><?php echo $editMailbox ? 'Edit Mailbox' : 'Add Mailbox'; ?></h1>
-            </div>
-            <div class="level-right">
-              <a href="<?php echo BASE_PATH; ?>/app/pages/team/index.php?tab=mailboxes" class="button">Back to Mailboxes</a>
-            </div>
-          </div>
-
-          <?php if ($notice): ?>
-            <div class="notification"><?php echo htmlspecialchars($notice); ?></div>
-          <?php endif; ?>
-
-          <?php foreach ($errors as $error): ?>
-            <div class="notification"><?php echo htmlspecialchars($error); ?></div>
-          <?php endforeach; ?>
-
-          <div class="box">
-            <form method="POST" action="" class="columns is-multiline">
-              <?php renderCsrfField(); ?>
-              <input type="hidden" name="action" value="<?php echo $editMailbox ? 'update_mailbox' : 'create_mailbox'; ?>">
-              <?php if ($editMailbox): ?>
-                <input type="hidden" name="mailbox_id" value="<?php echo (int) $editMailbox['id']; ?>">
-                <input type="hidden" name="team_id" value="<?php echo (int) $editMailbox['team_id']; ?>">
-              <?php elseif (count($teams) === 1): ?>
-                <input type="hidden" name="team_id" value="<?php echo (int) $teams[0]['id']; ?>">
-              <?php endif; ?>
-
-              <?php $showTeamSelect = count($teams) > 1 && !$editMailbox; ?>
-              <?php require __DIR__ . '/../../partials/mailbox_form_fields.php'; ?>
-
-              <div class="column is-12">
-                <div class="buttons">
-                  <button type="submit" class="button is-primary"><?php echo $editMailbox ? 'Update Mailbox' : 'Create Mailbox'; ?></button>
-                  <a href="<?php echo BASE_PATH; ?>/app/pages/team/index.php?tab=mailboxes" class="button">Cancel</a>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      </section>
-<?php renderPageEnd(); ?>
+require __DIR__ . '/../../views/team/mailbox_form.php';

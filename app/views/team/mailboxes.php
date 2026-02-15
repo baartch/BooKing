@@ -1,85 +1,12 @@
 <?php
 /** @var string $activeTab */
-require_once __DIR__ . '/../../src-php/communication/mailbox_helpers.php';
-
-$errors = [];
-$notice = '';
-$mailboxes = [];
-$pdo = null;
-
-$noticeKey = (string) ($_GET['notice'] ?? '');
-if ($noticeKey === 'mailbox_created') {
-    $notice = 'Mailbox created successfully.';
-} elseif ($noticeKey === 'mailbox_updated') {
-    $notice = 'Mailbox updated successfully.';
-}
-
-try {
-    $pdo = getDatabaseConnection();
-    [$teams, $teamIds] = loadTeamAdminTeams($pdo, (int) ($currentUser['user_id'] ?? 0));
-} catch (Throwable $error) {
-    $teams = [];
-    $teamIds = [];
-    $errors[] = 'Failed to load teams.';
-    logAction($currentUser['user_id'] ?? null, 'team_mailbox_team_load_error', $error->getMessage());
-    $pdo = null;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    verifyCsrfToken();
-
-    $action = $_POST['action'] ?? '';
-    $activeTab = 'mailboxes';
-
-    if (!$pdo) {
-        $errors[] = 'Database connection unavailable.';
-    } elseif ($action === 'delete_mailbox') {
-        $mailboxId = (int) ($_POST['mailbox_id'] ?? 0);
-        if ($mailboxId <= 0) {
-            $errors[] = 'Select a mailbox to delete.';
-        } else {
-            try {
-                $existingMailbox = fetchTeamMailbox($pdo, $mailboxId, (int) ($currentUser['user_id'] ?? 0));
-                if (!$existingMailbox) {
-                    $errors[] = 'Mailbox not found.';
-                } else {
-                    $stmt = $pdo->prepare('DELETE FROM mailboxes WHERE id = :id');
-                    $stmt->execute([':id' => $existingMailbox['id']]);
-                    $notice = 'Mailbox deleted successfully.';
-                    logAction($currentUser['user_id'] ?? null, 'team_mailbox_deleted', sprintf('Deleted mailbox %d', $existingMailbox['id']));
-                }
-            } catch (Throwable $error) {
-                $errors[] = 'Failed to delete mailbox.';
-                logAction($currentUser['user_id'] ?? null, 'team_mailbox_delete_error', $error->getMessage());
-            }
-        }
-    }
-}
-
-if ($pdo && $teamIds) {
-    try {
-        $placeholders = implode(',', array_fill(0, count($teamIds), '?'));
-        $stmt = $pdo->prepare(
-            'SELECT m.*, t.name AS team_name
-             FROM mailboxes m
-             JOIN teams t ON t.id = m.team_id
-             WHERE m.team_id IN (' . $placeholders . ')
-             ORDER BY t.name, m.name'
-        );
-        $stmt->execute($teamIds);
-        $mailboxes = $stmt->fetchAll();
-    } catch (Throwable $error) {
-        $errors[] = 'Failed to load mailboxes.';
-        logAction($currentUser['user_id'] ?? null, 'team_mailbox_list_error', $error->getMessage());
-    }
-}
 ?>
 <div class="tab-panel <?php echo $activeTab === 'mailboxes' ? '' : 'is-hidden'; ?>" data-tab-panel="mailboxes" role="tabpanel">
-  <?php if ($notice): ?>
-    <div class="notification"><?php echo htmlspecialchars($notice); ?></div>
+  <?php if (!empty($notice['mailboxes'])): ?>
+    <div class="notification"><?php echo htmlspecialchars($notice['mailboxes']); ?></div>
   <?php endif; ?>
 
-  <?php foreach ($errors as $error): ?>
+  <?php foreach ($errors['mailboxes'] as $error): ?>
     <div class="notification"><?php echo htmlspecialchars($error); ?></div>
   <?php endforeach; ?>
 
@@ -88,7 +15,7 @@ if ($pdo && $teamIds) {
       <h2 class="title is-4">Mailboxes</h2>
     </div>
     <div class="level-right">
-      <a href="<?php echo BASE_PATH; ?>/app/pages/team/mailbox_form.php" class="button is-primary">Add Mailbox</a>
+      <a href="<?php echo BASE_PATH; ?>/app/controllers/team/mailbox_form.php" class="button is-primary">Add Mailbox</a>
     </div>
   </div>
 
@@ -135,10 +62,10 @@ if ($pdo && $teamIds) {
                 <td><?php echo !empty($mailbox['store_sent_on_server']) ? 'Yes' : 'No'; ?></td>
                 <td>
                   <div class="buttons are-small">
-                    <a href="<?php echo BASE_PATH; ?>/app/pages/team/mailbox_form.php?edit_mailbox_id=<?php echo (int) $mailbox['id']; ?>" class="button" aria-label="Edit mailbox" title="Edit mailbox">
+                    <a href="<?php echo BASE_PATH; ?>/app/controllers/team/mailbox_form.php?edit_mailbox_id=<?php echo (int) $mailbox['id']; ?>" class="button" aria-label="Edit mailbox" title="Edit mailbox">
                       <span class="icon"><i class="fa-solid fa-pen"></i></span>
                     </a>
-                    <form method="POST" action="<?php echo BASE_PATH; ?>/app/pages/team/index.php?tab=mailboxes" onsubmit="return confirm('Delete this mailbox?');">
+                    <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/team/index.php?tab=mailboxes" onsubmit="return confirm('Delete this mailbox?');">
                       <?php renderCsrfField(); ?>
                       <input type="hidden" name="action" value="delete_mailbox">
                       <input type="hidden" name="mailbox_id" value="<?php echo (int) $mailbox['id']; ?>">

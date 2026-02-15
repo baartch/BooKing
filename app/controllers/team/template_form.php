@@ -20,16 +20,17 @@ $formValues = [
     'body' => ''
 ];
 
+$teams = [];
+$teamIds = [];
+$pdo = null;
+
 try {
     $pdo = getDatabaseConnection();
     $teams = fetchTeamAdminTeams($pdo, (int) ($currentUser['user_id'] ?? 0));
     $teamIds = array_map('intval', array_column($teams, 'id'));
 } catch (Throwable $error) {
-    $teams = [];
-    $teamIds = [];
     $errors[] = 'Failed to load teams.';
     logAction($currentUser['user_id'] ?? null, 'team_template_team_load_error', $error->getMessage());
-    $pdo = null;
 }
 
 if ($editTemplateId > 0 && $pdo) {
@@ -99,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ':created_by' => $currentUser['user_id'] ?? null
                     ]);
                     logAction($currentUser['user_id'] ?? null, 'team_template_created', sprintf('Created template %s', $templateName));
-                    header('Location: ' . BASE_PATH . '/app/pages/team/index.php?tab=templates&notice=template_created');
+                    header('Location: ' . BASE_PATH . '/app/controllers/team/index.php?tab=templates&notice=template_created');
                     exit;
                 }
 
@@ -119,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ':id' => $existingTemplate['id']
                     ]);
                     logAction($currentUser['user_id'] ?? null, 'team_template_updated', sprintf('Updated template %d', $existingTemplate['id']));
-                    header('Location: ' . BASE_PATH . '/app/pages/team/index.php?tab=templates&notice=template_updated');
+                    header('Location: ' . BASE_PATH . '/app/controllers/team/index.php?tab=templates&notice=template_updated');
                     exit;
                 }
             } catch (Throwable $error) {
@@ -130,93 +131,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-?>
-<?php renderPageStart('Template', ['bodyClass' => 'is-flex is-flex-direction-column is-fullheight']); ?>
-      <section class="section">
-        <div class="container is-fluid">
-          <div class="level mb-4">
-            <div class="level-left">
-              <h1 class="title is-3"><?php echo $editTemplate ? 'Edit Template' : 'Add Template'; ?></h1>
-            </div>
-            <div class="level-right">
-              <a href="<?php echo BASE_PATH; ?>/app/pages/team/index.php?tab=templates" class="button">Back to Templates</a>
-            </div>
-          </div>
-
-          <?php if ($notice): ?>
-            <div class="notification"><?php echo htmlspecialchars($notice); ?></div>
-          <?php endif; ?>
-
-          <?php foreach ($errors as $error): ?>
-            <div class="notification"><?php echo htmlspecialchars($error); ?></div>
-          <?php endforeach; ?>
-
-          <div class="box">
-            <form method="POST" action="" class="columns is-multiline">
-              <?php renderCsrfField(); ?>
-              <input type="hidden" name="action" value="<?php echo $editTemplate ? 'update_template' : 'create_template'; ?>">
-              <?php if ($editTemplate): ?>
-                <input type="hidden" name="template_id" value="<?php echo (int) $editTemplate['id']; ?>">
-                <input type="hidden" name="team_id" value="<?php echo (int) $editTemplate['team_id']; ?>">
-              <?php elseif (count($teams) === 1): ?>
-                <input type="hidden" name="team_id" value="<?php echo (int) $teams[0]['id']; ?>">
-              <?php endif; ?>
-
-              <?php if (count($teams) > 1 && !$editTemplate): ?>
-                <div class="column is-4">
-                  <div class="field">
-                    <label for="team_id" class="label">Team</label>
-                    <div class="control">
-                      <div class="select is-fullwidth">
-                        <select id="team_id" name="team_id" required>
-                          <option value="">Select a team</option>
-                          <?php foreach ($teams as $team): ?>
-                            <option value="<?php echo (int) $team['id']; ?>" <?php echo (int) $formValues['team_id'] === (int) $team['id'] ? 'selected' : ''; ?>>
-                              <?php echo htmlspecialchars($team['name']); ?>
-                            </option>
-                          <?php endforeach; ?>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              <?php endif; ?>
-
-              <div class="column is-6">
-                <div class="field">
-                  <label for="template_name" class="label">Template Name</label>
-                  <div class="control">
-                    <input type="text" id="template_name" name="name" class="input" value="<?php echo htmlspecialchars($formValues['name']); ?>" required>
-                  </div>
-                </div>
-              </div>
-
-              <div class="column is-6">
-                <div class="field">
-                  <label for="template_subject" class="label">Subject</label>
-                  <div class="control">
-                    <input type="text" id="template_subject" name="subject" class="input" value="<?php echo htmlspecialchars($formValues['subject']); ?>">
-                  </div>
-                </div>
-              </div>
-
-              <div class="column is-12">
-                <div class="field">
-                  <label for="template_body" class="label">Body</label>
-                  <div class="control">
-                    <textarea id="template_body" name="body" class="textarea" rows="8"><?php echo htmlspecialchars($formValues['body']); ?></textarea>
-                  </div>
-                </div>
-              </div>
-
-              <div class="column is-12">
-                <div class="buttons">
-                  <button type="submit" class="button is-primary"><?php echo $editTemplate ? 'Update Template' : 'Create Template'; ?></button>
-                  <a href="<?php echo BASE_PATH; ?>/app/pages/team/index.php?tab=templates" class="button">Cancel</a>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      </section>
-<?php renderPageEnd(); ?>
+require __DIR__ . '/../../views/team/template_form.php';
