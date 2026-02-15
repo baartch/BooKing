@@ -3,8 +3,8 @@ require_once __DIR__ . '/../../routes/auth/check.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
 require_once __DIR__ . '/../../src-php/core/form_helpers.php';
 require_once __DIR__ . '/../../src-php/core/layout.php';
-require_once __DIR__ . '/../../src-php/venues/venues_actions.php';
-require_once __DIR__ . '/../../src-php/venues/venues_repository.php';
+require_once __DIR__ . '/../../models/venues/venues_actions.php';
+require_once __DIR__ . '/../../models/venues/venues_repository.php';
 
 $errors = [];
 $notice = '';

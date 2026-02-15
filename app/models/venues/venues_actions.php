@@ -1,8 +1,8 @@
 <?php
 
-require_once __DIR__ . '/../core/database.php';
-require_once __DIR__ . '/../core/form_helpers.php';
-require_once __DIR__ . '/../core/object_links.php';
+require_once __DIR__ . '/../../src-php/core/database.php';
+require_once __DIR__ . '/../../src-php/core/form_helpers.php';
+require_once __DIR__ . '/../../src-php/core/object_links.php';
 
 function handleVenueImport(array $currentUser, array $countryOptions, string $importPayload): array
 {
