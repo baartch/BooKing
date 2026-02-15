@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../routes/auth/check.php';
+require_once __DIR__ . '/check.php';
 require_once __DIR__ . '/../core/database.php';
 
 if (!($currentUser['is_team_admin'] ?? false)) {

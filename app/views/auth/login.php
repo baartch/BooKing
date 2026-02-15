@@ -19,7 +19,7 @@
             <?php endif; ?>
 
             <?php if ($step === 'otp' && $email !== ''): ?>
-              <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/auth/otp_verify.php">
+              <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/auth/otp_verify.php">
                 <?php renderCsrfField(); ?>
                 <input type="hidden" name="email" value="<?php echo htmlspecialchars($email); ?>">
                 <div class="field">
@@ -37,13 +37,13 @@
                 </div>
               </form>
 
-              <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/auth/otp_request.php" class="mt-2">
+              <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/auth/otp_request.php" class="mt-2">
                 <?php renderCsrfField(); ?>
                 <input type="hidden" name="email" value="<?php echo htmlspecialchars($email); ?>">
                 <button type="submit" class="button is-text is-small">Send a new code</button>
               </form>
             <?php else: ?>
-              <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/auth/otp_request.php">
+              <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/auth/otp_request.php">
                 <?php renderCsrfField(); ?>
                 <div class="field">
                   <label for="email" class="label">Email address</label>

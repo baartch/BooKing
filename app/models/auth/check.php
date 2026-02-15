@@ -13,10 +13,10 @@ if (!file_exists($configPath)) {
 } else {
     require_once $configPath;
 }
-require_once __DIR__ . '/../../models/core/defaults.php';
-require_once __DIR__ . '/../../models/core/database.php';
-require_once __DIR__ . '/../../models/auth/csrf.php';
-require_once __DIR__ . '/../../models/auth/cookie_helpers.php';
+require_once __DIR__ . '/../core/defaults.php';
+require_once __DIR__ . '/../core/database.php';
+require_once __DIR__ . '/csrf.php';
+require_once __DIR__ . '/cookie_helpers.php';
 unset($configPath, $examplePath);
 
 // Start session for CSRF token storage
