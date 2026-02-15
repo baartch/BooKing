@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../../routes/auth/check.php';
 require_once __DIR__ . '/../../../src-php/core/database.php';
-require_once __DIR__ . '/../../../src-php/communication/email_helpers.php';
+require_once __DIR__ . '/../../../models/communication/email_helpers.php';
 
 header('Content-Type: application/json; charset=utf-8');
 

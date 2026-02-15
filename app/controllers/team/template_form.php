@@ -2,8 +2,8 @@
 require_once __DIR__ . '/../../models/auth/team_admin_check.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
 require_once __DIR__ . '/../../src-php/core/layout.php';
-require_once __DIR__ . '/../../src-php/communication/email_templates_helpers.php';
-require_once __DIR__ . '/../../src-php/communication/email_helpers.php';
+require_once __DIR__ . '/../../models/communication/email_templates_helpers.php';
+require_once __DIR__ . '/../../models/communication/email_helpers.php';
 
 $errors = [];
 $notice = '';

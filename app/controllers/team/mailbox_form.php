@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../models/auth/team_admin_check.php';
 require_once __DIR__ . '/../../src-php/core/database.php';
 require_once __DIR__ . '/../../src-php/core/layout.php';
-require_once __DIR__ . '/../../src-php/communication/mailbox_helpers.php';
+require_once __DIR__ . '/../../models/communication/mailbox_helpers.php';
 
 $errors = [];
 $notice = '';

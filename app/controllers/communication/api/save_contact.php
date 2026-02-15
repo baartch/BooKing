@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../../routes/auth/check.php';
 require_once __DIR__ . '/../../../src-php/core/database.php';
 require_once __DIR__ . '/../../../src-php/core/form_helpers.php';
-require_once __DIR__ . '/../../../src-php/communication/contacts_helpers.php';
+require_once __DIR__ . '/../../../models/communication/contacts_helpers.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
