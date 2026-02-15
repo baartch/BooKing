@@ -27,7 +27,7 @@ $redirectParams = [
 
 if ($mailboxId <= 0 || $emailId <= 0) {
     $redirectParams['notice'] = 'deleted';
-    header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+    header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
     exit;
 }
 
@@ -36,7 +36,7 @@ try {
     $mailbox = ensureMailboxAccess($pdo, $mailboxId, $userId);
     if (!$mailbox) {
         $redirectParams['notice'] = 'deleted';
-        header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+        header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
         exit;
     }
 
@@ -88,11 +88,11 @@ try {
     }
 
     $redirectParams['notice'] = 'deleted';
-    header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+    header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
     exit;
 } catch (Throwable $error) {
     logAction($userId, 'email_delete_error', $error->getMessage());
     $redirectParams['notice'] = 'deleted';
-    header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+    header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
     exit;
 }

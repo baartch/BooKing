@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/../auth/check.php';
-require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/core/form_helpers.php';
-require_once __DIR__ . '/../../src-php/communication/contacts_helpers.php';
+require_once __DIR__ . '/../../../routes/auth/check.php';
+require_once __DIR__ . '/../../../src-php/core/database.php';
+require_once __DIR__ . '/../../../src-php/core/form_helpers.php';
+require_once __DIR__ . '/../../../src-php/communication/contacts_helpers.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 verifyCsrfToken();
 
 $userId = (int) ($currentUser['user_id'] ?? 0);
-$baseUrl = BASE_PATH . '/app/pages/communication/index.php';
+$baseUrl = BASE_PATH . '/app/controllers/communication/index.php';
 $searchQuery = trim((string) ($_POST['q'] ?? ''));
 $teamId = (int) ($_POST['team_id'] ?? 0);
 

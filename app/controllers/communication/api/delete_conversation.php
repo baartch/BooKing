@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/../auth/check.php';
-require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/communication/email_helpers.php';
-require_once __DIR__ . '/../../src-php/core/form_helpers.php';
+require_once __DIR__ . '/../../../routes/auth/check.php';
+require_once __DIR__ . '/../../../src-php/core/database.php';
+require_once __DIR__ . '/../../../src-php/communication/email_helpers.php';
+require_once __DIR__ . '/../../../src-php/core/form_helpers.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -19,7 +19,7 @@ $redirectParams = [
 ];
 
 if ($conversationId <= 0) {
-    header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+    header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
     exit;
 }
 
@@ -48,5 +48,5 @@ try {
     logAction($userId, 'conversation_delete_error', $error->getMessage());
 }
 
-header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
 exit;

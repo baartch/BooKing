@@ -46,13 +46,13 @@ if ($activeContact) {
     if (!empty($contactLinks)) {
         foreach ($contactLinks as $link) {
             if ($link['type'] === 'contact') {
-                $url = BASE_PATH . '/app/pages/communication/index.php?tab=contacts&contact_id=' . (int) $link['id'];
+                $url = BASE_PATH . '/app/controllers/communication/index.php?tab=contacts&contact_id=' . (int) $link['id'];
                 $linkItems[] = ['type' => 'contact', 'label' => $link['label'], 'url' => $url];
             } elseif ($link['type'] === 'venue') {
                 $url = BASE_PATH . '/app/pages/venues/index.php?q=' . urlencode($link['label']);
                 $linkItems[] = ['type' => 'venue', 'label' => $link['label'], 'url' => $url];
             } elseif ($link['type'] === 'email') {
-                $url = BASE_PATH . '/app/pages/communication/index.php?tab=email&message_id=' . (int) $link['id'];
+                $url = BASE_PATH . '/app/controllers/communication/index.php?tab=email&message_id=' . (int) $link['id'];
                 $linkItems[] = ['type' => 'email', 'label' => $link['label'], 'url' => $url];
             }
             $linkEditorLinks[] = [

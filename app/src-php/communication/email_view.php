@@ -335,7 +335,7 @@ if ($pdo && $selectedMailbox) {
 }
 
 $quotaPercent = calculateQuotaPercent($quotaUsed, $quotaTotal);
-$baseEmailUrl = BASE_PATH . '/app/pages/communication/index.php';
+$baseEmailUrl = BASE_PATH . '/app/controllers/communication/index.php';
 
 $baseQuery = [
     'tab' => 'email',

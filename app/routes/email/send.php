@@ -38,7 +38,7 @@ $redirectParams = [
 
 if ($mailboxId <= 0) {
     $redirectParams['notice'] = 'send_failed';
-    header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+    header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
     exit;
 }
 
@@ -47,7 +47,7 @@ try {
     $mailbox = ensureMailboxAccess($pdo, $mailboxId, $userId);
     if (!$mailbox) {
         $redirectParams['notice'] = 'send_failed';
-        header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+        header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
         exit;
     }
 
@@ -60,7 +60,7 @@ try {
         $conversation = ensureConversationAccess($pdo, $conversationId, $userId);
         if (!$conversation) {
             $redirectParams['notice'] = 'send_failed';
-            header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+            header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
             exit;
         }
         $redirectParams['tab'] = 'conversations';
@@ -159,13 +159,13 @@ try {
         }
         $redirectParams['notice'] = 'draft_saved';
         $redirectParams['folder'] = 'drafts';
-        header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+        header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
         exit;
     }
 
     if ($toEmails === '') {
         $redirectParams['notice'] = 'send_failed';
-        header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+        header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
         exit;
     }
 
@@ -181,7 +181,7 @@ try {
 
     if (!$sent) {
         $redirectParams['notice'] = 'send_failed';
-        header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+        header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
         exit;
     }
 
@@ -269,11 +269,11 @@ try {
     $redirectParams['folder'] = 'sent';
     logAction($userId, 'email_sent', sprintf('Sent email via mailbox %d', $mailboxId));
     $redirectParams['notice'] = 'sent';
-    header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+    header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
     exit;
 } catch (Throwable $error) {
     logAction($userId, 'email_send_error', $error->getMessage());
     $redirectParams['notice'] = 'send_failed';
-    header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+    header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
     exit;
 }

@@ -8,11 +8,11 @@ $activeTab = $_GET['tab'] ?? 'conversations';
 
 if (HTMX::isRequest()) {
     if ($activeTab === 'contacts') {
-        require __DIR__ . '/contacts.php';
+        require __DIR__ . '/../../views/communication/contacts.php';
         return;
     }
     if ($activeTab === 'email') {
-        require __DIR__ . '/email.php';
+        require __DIR__ . '/../../views/communication/email.php';
         return;
     }
 }
@@ -56,15 +56,15 @@ if (HTMX::isRequest()) {
           </div>
 
           <div class="tab-panel <?php echo $activeTab === 'conversations' ? '' : 'is-hidden'; ?>" data-tab-panel="conversations" role="tabpanel">
-            <?php require __DIR__ . '/conversations.php'; ?>
+            <?php require __DIR__ . '/../../views/communication/conversations.php'; ?>
           </div>
 
           <div class="tab-panel <?php echo $activeTab === 'email' ? '' : 'is-hidden'; ?>" data-tab-panel="email" role="tabpanel">
-            <?php require __DIR__ . '/email.php'; ?>
+            <?php require __DIR__ . '/../../views/communication/email.php'; ?>
           </div>
 
           <div class="tab-panel <?php echo $activeTab === 'contacts' ? '' : 'is-hidden'; ?>" data-tab-panel="contacts" role="tabpanel">
-            <?php require __DIR__ . '/contacts.php'; ?>
+            <?php require __DIR__ . '/../../views/communication/contacts.php'; ?>
           </div>
         </div>
       </section>

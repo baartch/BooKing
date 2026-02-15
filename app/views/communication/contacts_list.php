@@ -51,7 +51,7 @@ $listRowActions = static function (array $contact) use ($baseUrl, $baseQuery, $s
         <a class="button" href="<?php echo htmlspecialchars($editLink); ?>" aria-label="Edit contact" title="Edit contact">
           <span class="icon"><i class="fa-solid fa-pen"></i></span>
         </a>
-        <form method="POST" action="<?php echo BASE_PATH; ?>/app/routes/communication/delete_contact.php" onsubmit="return confirm('Delete this contact?');">
+        <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/api/delete_contact.php" onsubmit="return confirm('Delete this contact?');">
           <?php renderCsrfField(); ?>
           <input type="hidden" name="contact_id" value="<?php echo (int) $contactId; ?>">
           <input type="hidden" name="q" value="<?php echo htmlspecialchars($searchQuery); ?>">

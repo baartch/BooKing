@@ -10,7 +10,7 @@ $pdo = null;
 $countryOptions = ['DE', 'CH', 'AT', 'IT', 'FR'];
 
 $userId = (int) ($currentUser['user_id'] ?? 0);
-$baseUrl = BASE_PATH . '/app/pages/communication/index.php';
+$baseUrl = BASE_PATH . '/app/controllers/communication/index.php';
 $searchQuery = trim((string) ($_GET['q'] ?? ''));
 $requestedTeamId = (int) ($_GET['team_id'] ?? 0);
 $contactId = (int) ($_GET['contact_id'] ?? 0);

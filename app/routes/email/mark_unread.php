@@ -25,7 +25,7 @@ $redirectParams = [
 ];
 
 if ($mailboxId <= 0 || $emailId <= 0) {
-    header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+    header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
     exit;
 }
 
@@ -33,7 +33,7 @@ try {
     $pdo = getDatabaseConnection();
     $mailbox = ensureMailboxAccess($pdo, $mailboxId, $userId);
     if (!$mailbox) {
-        header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+        header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
         exit;
     }
 
@@ -48,10 +48,10 @@ try {
     ]);
 
     logAction($userId, 'email_mark_unread', sprintf('Marked email %d unread', $emailId));
-    header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+    header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
     exit;
 } catch (Throwable $error) {
     logAction($userId, 'email_mark_unread_error', $error->getMessage());
-    header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+    header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
     exit;
 }

@@ -19,8 +19,8 @@ $linkEditorConversationId = $linkEditorConversationId ?? null;
 $linkEditorConversationLabel = $linkEditorConversationLabel ?? '';
 $linkEditorSearchTypes = $linkEditorSearchTypes ?? 'contact,venue';
 
-$linkEditorSearchUrl = BASE_PATH . '/app/routes/communication/link_search.php';
-$linkEditorSaveUrl = BASE_PATH . '/app/routes/communication/save_links.php';
+$linkEditorSearchUrl = BASE_PATH . '/app/controllers/communication/api/link_search.php';
+$linkEditorSaveUrl = BASE_PATH . '/app/controllers/communication/api/save_links.php';
 ?>
 <?php
 $linkEditorModalId = htmlspecialchars('link-editor-' . $linkEditorSourceType . '-' . $linkEditorSourceId);

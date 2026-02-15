@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/../auth/check.php';
-require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/communication/contacts_helpers.php';
-require_once __DIR__ . '/../../src-php/core/object_links.php';
+require_once __DIR__ . '/../../../routes/auth/check.php';
+require_once __DIR__ . '/../../../src-php/core/database.php';
+require_once __DIR__ . '/../../../src-php/communication/contacts_helpers.php';
+require_once __DIR__ . '/../../../src-php/core/object_links.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -52,5 +52,5 @@ try {
     $redirectParams['notice'] = 'contact_error';
 }
 
-header('Location: ' . BASE_PATH . '/app/pages/communication/index.php?' . http_build_query($redirectParams));
+header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
 exit;

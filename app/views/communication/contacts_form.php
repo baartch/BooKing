@@ -9,7 +9,7 @@
  * - string $searchQuery
  * - array $contactLinks
  */
-$cancelUrl = $cancelUrl ?? (BASE_PATH . '/app/pages/communication/index.php?tab=contacts');
+$cancelUrl = $cancelUrl ?? (BASE_PATH . '/app/controllers/communication/index.php?tab=contacts');
 $searchQuery = $searchQuery ?? '';
 $contactLinks = $contactLinks ?? [];
 $linkIcons = [
@@ -25,7 +25,7 @@ $linkIcons = [
     </div>
   </div>
 
-  <form method="POST" action="<?php echo htmlspecialchars(BASE_PATH . '/app/routes/communication/save_contact.php'); ?>">
+  <form method="POST" action="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/communication/api/save_contact.php'); ?>">
     <?php renderCsrfField(); ?>
     <input type="hidden" name="action" value="<?php echo $isEdit ? 'update_contact' : 'create_contact'; ?>">
     <input type="hidden" name="q" value="<?php echo htmlspecialchars($searchQuery); ?>">
@@ -47,11 +47,11 @@ $linkIcons = [
                   <?php
                     $linkUrl = '#';
                     if ($link['type'] === 'contact') {
-                        $linkUrl = BASE_PATH . '/app/pages/communication/index.php?tab=contacts&contact_id=' . (int) $link['id'];
+                        $linkUrl = BASE_PATH . '/app/controllers/communication/index.php?tab=contacts&contact_id=' . (int) $link['id'];
                     } elseif ($link['type'] === 'venue') {
                         $linkUrl = BASE_PATH . '/app/pages/venues/index.php?q=' . urlencode($link['label']);
                     } elseif ($link['type'] === 'email') {
-                        $linkUrl = BASE_PATH . '/app/pages/communication/index.php?tab=email&message_id=' . (int) $link['id'];
+                        $linkUrl = BASE_PATH . '/app/controllers/communication/index.php?tab=email&message_id=' . (int) $link['id'];
                     }
                   ?>
                   <a href="<?php echo htmlspecialchars($linkUrl); ?>" class="detail-link-pill">

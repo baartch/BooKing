@@ -14,7 +14,7 @@ $isVenues = strpos($relativePath, '/app/pages/venues') === 0;
 $isTeam = strpos($relativePath, '/app/pages/team') === 0;
 $isAdmin = strpos($relativePath, '/app/pages/admin') === 0;
 $isProfile = strpos($relativePath, '/app/pages/profile') === 0;
-$isCommunication = strpos($relativePath, '/app/pages/communication') === 0;
+$isCommunication = strpos($relativePath, '/app/controllers/communication') === 0;
 $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
 ?>
 <aside class="column is-narrow">
@@ -37,7 +37,7 @@ $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
           </a>
         </li>
         <li>
-          <a href="<?php echo BASE_PATH; ?>/app/pages/communication/index.php" class="<?php echo $isCommunication ? 'is-active' : ''; ?>" aria-label="Communication">
+          <a href="<?php echo BASE_PATH; ?>/app/controllers/communication/index.php" class="<?php echo $isCommunication ? 'is-active' : ''; ?>" aria-label="Communication">
             <span class="icon"><i class="fa-solid fa-comments"></i></span>
           </a>
         </li>
