@@ -32,6 +32,12 @@ if (HTMX::isRequest() && $activeTab === 'logs') {
     return;
 }
 
+if (HTMX::isRequest() && $activeTab === 'teams') {
+    HTMX::pushUrl($_SERVER['REQUEST_URI']);
+    require __DIR__ . '/../../views/admin/teams/teams.php';
+    return;
+}
+
 renderPageStart('Admin', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',
     'extraScripts' => [
@@ -83,7 +89,7 @@ renderPageStart('Admin', [
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'teams' ? '' : 'is-hidden'; ?>" data-tab-panel="teams" role="tabpanel">
-      <?php require __DIR__ . '/../../views/admin/admin_teams.php'; ?>
+      <?php require __DIR__ . '/../../views/admin/teams/teams.php'; ?>
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'api-keys' ? '' : 'is-hidden'; ?>" data-tab-panel="api-keys" role="tabpanel">
