@@ -13,7 +13,7 @@ $isMap = strpos($relativePath, '/app/pages/map') === 0;
 $isVenues = strpos($relativePath, '/app/pages/venues') === 0;
 $isTeam = strpos($relativePath, '/app/pages/team') === 0;
 $isAdmin = strpos($relativePath, '/app/pages/admin') === 0;
-$isProfile = strpos($relativePath, '/app/pages/profile') === 0;
+$isProfile = strpos($relativePath, '/app/controllers/profile') === 0;
 $isCommunication = strpos($relativePath, '/app/controllers/communication') === 0;
 $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
 ?>
@@ -60,7 +60,7 @@ $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
     <nav class="menu">
       <ul class="menu-list">
         <li>
-          <a href="<?php echo BASE_PATH; ?>/app/pages/profile/index.php" class="<?php echo $isProfile ? 'is-active' : ''; ?>" aria-label="Profile">
+          <a href="<?php echo BASE_PATH; ?>/app/controllers/profile/index.php" class="<?php echo $isProfile ? 'is-active' : ''; ?>" aria-label="Profile">
             <span class="icon"><i class="fa-solid fa-user"></i></span>
           </a>
         </li>
