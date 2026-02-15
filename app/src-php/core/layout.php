@@ -40,6 +40,7 @@ function renderPageStart(string $title, array $options = []): void
     }
 
     echo "  <script type=\"module\" src=\"" . BASE_PATH . "/app/public/js/appearance.js\"></script>\n";
+    echo "  <script src=\"https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js\"></script>\n";
 
     foreach ($extraScripts as $scriptTag) {
         echo $scriptTag . "\n";

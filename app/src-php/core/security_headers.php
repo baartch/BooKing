@@ -26,7 +26,7 @@ function setSecurityHeaders(): void
         // Allows: self, Leaflet CDN, Bulma CDN, OpenStreetMap tiles (wildcard covers all subdomains), Mapbox API, Font Awesome
         $csp = implode('; ', [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://unpkg.com",
+            "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net",
             "style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
             "img-src 'self' data: https://*.openstreetmap.org https://api.mapbox.com",
             "font-src 'self' data: https://cdnjs.cloudflare.com",

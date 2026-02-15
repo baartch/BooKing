@@ -83,6 +83,13 @@ The database schema is in `sql/schema.sql` and includes the following tables:
 - **Sessions**: Database-backed with 1-hour expiration, secure cookie handling via `app/src-php/auth/cookie_helpers.php`
 - **Passwords**: Bcrypt hashing, admin-enforced resets available
 
+## HTMX PHP helper
+
+- class: `app/src-php/core/htmx_class.php`
+- Include `htmx_class.php` and use `HTMX::isRequest()` to branch HTMX vs full-page responses.
+- Use request helpers like `HTMX::getTrigger()`, `getTarget()`, `getCurrentUrl()`, and request method helpers (`isGet()`, `isPost()`, etc.) to read HTMX metadata.
+- Use response helpers like `HTMX::trigger()`/`triggerMultiple()`, `pushUrl()`/`replaceUrl()`, `redirect()`, `refresh()`, `reswap()`, `retarget()`, `location()`, `reselect()`, `stopPolling()`, or `noContent()` to set the appropriate `HX-*` headers.
+
 ## Notes
 
 - `config/` directory is for configuration files ONLY (config.php)
