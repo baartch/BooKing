@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../models/auth/team_admin_check.php';
 require_once __DIR__ . '/../../models/core/database.php';
+require_once __DIR__ . '/../../models/core/htmx_class.php';
 require_once __DIR__ . '/../../models/core/layout.php';
 require_once __DIR__ . '/../../models/communication/mailbox_helpers.php';
 require_once __DIR__ . '/../../models/communication/email_templates_helpers.php';
@@ -127,6 +128,12 @@ if ($pdo) {
         $errors['templates'][] = 'Failed to load templates.';
         logAction($currentUser['user_id'] ?? null, 'team_template_list_error', $error->getMessage());
     }
+}
+
+if (HTMX::isRequest() && $activeTab === 'mailboxes') {
+    HTMX::pushUrl($_SERVER['REQUEST_URI']);
+    require __DIR__ . '/../../views/team/mailboxes/mailboxes.php';
+    return;
 }
 
 require __DIR__ . '/../../views/team/index.php';
