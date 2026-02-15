@@ -41,16 +41,30 @@ if (!isset($settingsStatus)):
       </div>
     </div>
     <div class="field">
-      <label for="mapbox_api_key" class="label">Mapbox</label>
+      <label for="mapbox_api_key_public" class="label">Mapbox Public Token</label>
       <div class="control">
         <input
           type="password"
-          id="mapbox_api_key"
-          name="mapbox_api_key"
+          id="mapbox_api_key_public"
+          name="mapbox_api_key_public"
           class="input"
-          placeholder="<?php echo $settingsStatus['mapbox_api_key'] ? 'Saved' : 'Not set'; ?>"
+          placeholder="<?php echo $settingsStatus['mapbox_api_key_public'] ? 'Saved' : 'Not set'; ?>"
         >
       </div>
+      <p class="help">Used by the map UI. Create a public token with URL restrictions and map/tiles scopes.</p>
+    </div>
+    <div class="field">
+      <label for="mapbox_api_key_server" class="label">Mapbox Server Token</label>
+      <div class="control">
+        <input
+          type="password"
+          id="mapbox_api_key_server"
+          name="mapbox_api_key_server"
+          class="input"
+          placeholder="<?php echo $settingsStatus['mapbox_api_key_server'] ? 'Saved' : 'Not set'; ?>"
+        >
+      </div>
+      <p class="help">Used for server-side geocoding/search. Use a secret token without URL restriction.</p>
     </div>
     <button type="submit" class="button is-primary">Save API Keys</button>
   </form>

@@ -9,12 +9,14 @@ $smtpMailbox = null;
 $settings = [
     'brave_search_api_key' => '',
     'brave_spellcheck_api_key' => '',
-    'mapbox_api_key' => ''
+    'mapbox_api_key_public' => '',
+    'mapbox_api_key_server' => ''
 ];
 $settingsStatus = [
     'brave_search_api_key' => false,
     'brave_spellcheck_api_key' => false,
-    'mapbox_api_key' => false
+    'mapbox_api_key_public' => false,
+    'mapbox_api_key_server' => false
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -24,7 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $settings = [
             'brave_search_api_key' => trim((string) ($_POST['brave_search_api_key'] ?? '')),
             'brave_spellcheck_api_key' => trim((string) ($_POST['brave_spellcheck_api_key'] ?? '')),
-            'mapbox_api_key' => trim((string) ($_POST['mapbox_api_key'] ?? ''))
+            'mapbox_api_key_public' => trim((string) ($_POST['mapbox_api_key_public'] ?? '')),
+            'mapbox_api_key_server' => trim((string) ($_POST['mapbox_api_key_server'] ?? ''))
         ];
 
         try {
@@ -95,13 +98,15 @@ try {
     $settings = loadSettingValues([
         'brave_search_api_key',
         'brave_spellcheck_api_key',
-        'mapbox_api_key'
+        'mapbox_api_key_public',
+        'mapbox_api_key_server'
     ]);
 
     $settingsStatus = [
         'brave_search_api_key' => $settings['brave_search_api_key'] !== '',
         'brave_spellcheck_api_key' => $settings['brave_spellcheck_api_key'] !== '',
-        'mapbox_api_key' => $settings['mapbox_api_key'] !== ''
+        'mapbox_api_key_public' => $settings['mapbox_api_key_public'] !== '',
+        'mapbox_api_key_server' => $settings['mapbox_api_key_server'] !== ''
     ];
 
     $pdo = getDatabaseConnection();
@@ -111,13 +116,15 @@ try {
     $settings = $settings ?? [
         'brave_search_api_key' => '',
         'brave_spellcheck_api_key' => '',
-        'mapbox_api_key' => ''
+        'mapbox_api_key_public' => '',
+        'mapbox_api_key_server' => ''
     ];
     $smtpMailbox = $smtpMailbox ?? null;
     $settingsStatus = $settingsStatus ?? [
         'brave_search_api_key' => false,
         'brave_spellcheck_api_key' => false,
-        'mapbox_api_key' => false
+        'mapbox_api_key_public' => false,
+        'mapbox_api_key_server' => false
     ];
     $errors[] = 'Failed to load settings.';
     logAction($currentUser['user_id'] ?? null, 'admin_settings_load_error', $error->getMessage());

@@ -83,13 +83,13 @@ if ($webSearchQuery !== '' && $editId === 0 && $_SERVER['REQUEST_METHOD'] === 'G
     $settings = loadSettingValues([
         'brave_search_api_key',
         'brave_spellcheck_api_key',
-        'mapbox_api_key'
+        'mapbox_api_key_server'
     ]);
 
     if ($settings['brave_search_api_key'] === '' || $settings['brave_spellcheck_api_key'] === '') {
         $errors[] = 'Missing Brave API keys in settings.';
-    } elseif ($settings['mapbox_api_key'] === '') {
-        $errors[] = 'Missing Mapbox API key in settings.';
+    } elseif ($settings['mapbox_api_key_server'] === '') {
+        $errors[] = 'Missing Mapbox server API key in settings.';
     } else {
         $spellcheckUrl = 'https://api.search.brave.com/res/v1/spellcheck/search?' . http_build_query([
             'q' => $webSearchQuery,
@@ -133,7 +133,7 @@ if ($webSearchQuery !== '' && $editId === 0 && $_SERVER['REQUEST_METHOD'] === 'G
 
             $mapboxUrl = 'https://api.mapbox.com/search/geocode/v6/forward?' . http_build_query([
                 'q' => $displayAddress,
-                'access_token' => $settings['mapbox_api_key'],
+                'access_token' => $settings['mapbox_api_key_server'],
                 'language' => 'de',
                 'country' => $webSearchCountry,
                 'limit' => 1,
@@ -181,14 +181,14 @@ if ($mapboxSearchRequested && $_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($mapboxSearchAddress === '' || $mapboxSearchCity === '') {
         $errors[] = 'Enter both address and city before running a Mapbox search.';
     } else {
-        $settings = loadSettingValues(['mapbox_api_key']);
-        if ($settings['mapbox_api_key'] === '') {
-            $errors[] = 'Missing Mapbox API key in settings.';
+        $settings = loadSettingValues(['mapbox_api_key_server']);
+        if ($settings['mapbox_api_key_server'] === '') {
+            $errors[] = 'Missing Mapbox server API key in settings.';
         } else {
             $mapboxQuery = trim(sprintf('%s, %s', $mapboxSearchAddress, $mapboxSearchCity));
             $mapboxUrl = 'https://api.mapbox.com/search/geocode/v6/forward?' . http_build_query([
                 'q' => $mapboxQuery,
-                'access_token' => $settings['mapbox_api_key'],
+                'access_token' => $settings['mapbox_api_key_server'],
                 'language' => 'de',
                 'country' => $mapboxSearchCountry,
                 'limit' => 1,

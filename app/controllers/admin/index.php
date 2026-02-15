@@ -93,7 +93,7 @@ renderPageStart('Admin', [
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'api-keys' ? '' : 'is-hidden'; ?>" data-tab-panel="api-keys" role="tabpanel">
-      <?php require __DIR__ . '/../../views/admin/admin_api_keys.php'; ?>
+      <?php require __DIR__ . '/../../views/admin/api_keys.php'; ?>
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'smtp' ? '' : 'is-hidden'; ?>" data-tab-panel="smtp" role="tabpanel">
