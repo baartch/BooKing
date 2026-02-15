@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../src-php/core/database.php';
+require_once __DIR__ . '/../core/database.php';
 require_once __DIR__ . '/team_helpers.php';
 
 function fetchContacts(PDO $pdo, int $teamId, ?string $search = null): array

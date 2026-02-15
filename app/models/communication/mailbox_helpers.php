@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/core/form_helpers.php';
+require_once __DIR__ . '/../core/database.php';
+require_once __DIR__ . '/../core/form_helpers.php';
 
 function mailboxFormDefaults(int $defaultImapPort = 993, int $defaultSmtpPort = 587): array
 {

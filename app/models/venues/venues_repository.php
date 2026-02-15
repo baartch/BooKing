@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../../src-php/core/database.php';
+require_once __DIR__ . '/../core/database.php';
 
 function fetchVenuesWithPagination(string $filter, int $page, int $pageSize): array
 {

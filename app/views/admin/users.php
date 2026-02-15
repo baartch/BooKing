@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../../models/auth/admin_check.php';
-require_once __DIR__ . '/../../src-php/core/htmx_class.php';
+require_once __DIR__ . '/../../models/core/htmx_class.php';
 
 if (!isset($users, $teamsByUser)) {
     return;

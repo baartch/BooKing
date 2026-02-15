@@ -1,10 +1,10 @@
 <?php
 require_once __DIR__ . '/../auth/check.php';
-require_once __DIR__ . '/../../src-php/core/database.php';
+require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../models/communication/email_helpers.php';
-require_once __DIR__ . '/../../src-php/core/form_helpers.php';
+require_once __DIR__ . '/../../models/core/form_helpers.php';
 require_once __DIR__ . '/../../models/communication/mail_delivery.php';
-require_once __DIR__ . '/../../src-php/core/object_links.php';
+require_once __DIR__ . '/../../models/core/object_links.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

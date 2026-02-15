@@ -2,10 +2,10 @@
 // Shared bootstrap for admin routes
 require_once __DIR__ . '/../../routes/auth/check.php';
 require_once __DIR__ . '/../../models/auth/admin_check.php';
-require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/core/settings.php';
+require_once __DIR__ . '/../../models/core/database.php';
+require_once __DIR__ . '/../../models/core/settings.php';
 require_once __DIR__ . '/../../models/communication/mailbox_helpers.php';
-require_once __DIR__ . '/../../src-php/core/layout.php';
+require_once __DIR__ . '/../../models/core/layout.php';
 
 $errors = [];
 $notice = '';

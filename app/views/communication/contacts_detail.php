@@ -9,7 +9,7 @@
  */
 ?>
 <?php
-require_once __DIR__ . '/../../src-php/core/list_helpers.php';
+require_once __DIR__ . '/../../models/core/list_helpers.php';
 
 $detailTitle = null;
 $detailSubtitle = null;

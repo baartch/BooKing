@@ -200,30 +200,16 @@ function refreshSession(string $token, ?array $session = null): ?int
     }
 
     $pdo = getDatabaseConnection();
-    if ($session === null) {
-        $stmt = $pdo->prepare(
-            'SELECT created_at FROM sessions WHERE session_token = :token LIMIT 1'
-        );
-        $stmt->execute([':token' => $token]);
-        $session = $stmt->fetch();
+    if (!$session) {
+        $session = fetchSessionUser($token);
     }
 
-    if (!$session || empty($session['created_at'])) {
+    if (!$session) {
         return null;
     }
 
-    $createdAt = strtotime((string) $session['created_at']);
-    if ($createdAt === false) {
-        return null;
-    }
-
-    $idleExpiresAt = time() + SESSION_IDLE_LIFETIME;
-    $maxExpiresAt = $createdAt + SESSION_MAX_LIFETIME;
-    $expiresAt = min($idleExpiresAt, $maxExpiresAt);
-
-    $stmt = $pdo->prepare(
-        'UPDATE sessions SET expires_at = :expires_at WHERE session_token = :token'
-    );
+    $expiresAt = time() + SESSION_IDLE_LIFETIME;
+    $stmt = $pdo->prepare('UPDATE sessions SET expires_at = :expires_at WHERE session_token = :token');
     $stmt->execute([
         ':expires_at' => date('Y-m-d H:i:s', $expiresAt),
         ':token' => $token
@@ -241,4 +227,25 @@ function deleteSession(string $token): void
     $pdo = getDatabaseConnection();
     $stmt = $pdo->prepare('DELETE FROM sessions WHERE session_token = :token');
     $stmt->execute([':token' => $token]);
+}
+
+function updateUserTheme(int $userId, string $theme): void
+{
+    $pdo = getDatabaseConnection();
+    $stmt = $pdo->prepare('UPDATE users SET ui_theme = :theme WHERE id = :user_id');
+    $stmt->execute([
+        ':theme' => $theme,
+        ':user_id' => $userId
+    ]);
+}
+
+function updateUserVenuePageSize(int $userId, int $pageSize): void
+{
+    $pageSize = max(25, min(500, $pageSize));
+    $pdo = getDatabaseConnection();
+    $stmt = $pdo->prepare('UPDATE users SET venues_page_size = :page_size WHERE id = :user_id');
+    $stmt->execute([
+        ':page_size' => $pageSize,
+        ':user_id' => $userId
+    ]);
 }

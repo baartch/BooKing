@@ -1,11 +1,11 @@
 <?php
 require_once __DIR__ . '/../../routes/auth/check.php';
 require_once __DIR__ . '/../../models/auth/admin_check.php';
-require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/core/form_helpers.php';
-require_once __DIR__ . '/../../src-php/core/search_helpers.php';
-require_once __DIR__ . '/../../src-php/core/settings.php';
-require_once __DIR__ . '/../../src-php/core/layout.php';
+require_once __DIR__ . '/../../models/core/database.php';
+require_once __DIR__ . '/../../models/core/form_helpers.php';
+require_once __DIR__ . '/../../models/core/search_helpers.php';
+require_once __DIR__ . '/../../models/core/settings.php';
+require_once __DIR__ . '/../../models/core/layout.php';
 
 $errors = [];
 $notice = '';

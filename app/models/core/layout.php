@@ -5,10 +5,10 @@ function renderPageStart(string $title, array $options = []): void
 {
     // Set security headers for all pages
     setSecurityHeaders();
-    
+
     // Don't cache sensitive pages
     setNoCacheHeaders();
-    
+
     global $currentUser;
     $includeSidebar = $options['includeSidebar'] ?? true;
     $bodyClass = $options['bodyClass'] ?? 'has-background-grey-dark has-text-light is-flex is-flex-direction-column is-fullheight';

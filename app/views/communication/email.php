@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../src-php/core/htmx_class.php';
+require_once __DIR__ . '/../../models/core/htmx_class.php';
 require_once __DIR__ . '/../../models/communication/email_view.php';
 
 $emailDetailWrapperId = 'email-detail-panel';

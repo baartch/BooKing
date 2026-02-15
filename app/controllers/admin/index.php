@@ -1,7 +1,7 @@
 <?php
 // Admin panel controller (server-rendered)
 require_once __DIR__ . '/bootstrap.php';
-require_once __DIR__ . '/../../src-php/core/htmx_class.php';
+require_once __DIR__ . '/../../models/core/htmx_class.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken();

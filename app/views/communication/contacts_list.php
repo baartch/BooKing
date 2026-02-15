@@ -8,7 +8,7 @@
  * - array $baseQuery
  * - string $searchQuery
  */
-require_once __DIR__ . '/../../src-php/core/list_helpers.php';
+require_once __DIR__ . '/../../models/core/list_helpers.php';
 
 $listColumns = [
     buildListColumn('Name', null, static function (array $contact): string {

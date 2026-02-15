@@ -9,19 +9,19 @@ function setSecurityHeaders(): void
     // Prevent clickjacking attacks
     if (!headers_sent()) {
         header('X-Frame-Options: SAMEORIGIN');
-        
+
         // Prevent MIME type sniffing
         header('X-Content-Type-Options: nosniff');
-        
+
         // Enable XSS filtering in older browsers
         header('X-XSS-Protection: 1; mode=block');
-        
+
         // Referrer Policy - only send referrer to same origin
         header('Referrer-Policy: strict-origin-when-cross-origin');
-        
+
         // Permissions Policy - restrict browser features
         header('Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()');
-        
+
         // Content Security Policy
         // Allows: self, Leaflet CDN, Bulma CDN, OpenStreetMap tiles (wildcard covers all subdomains), Mapbox API, Font Awesome
         $csp = implode('; ', [
@@ -36,7 +36,7 @@ function setSecurityHeaders(): void
             "form-action 'self'"
         ]);
         header('Content-Security-Policy: ' . $csp);
-        
+
         // HSTS - Force HTTPS
         // Note: HSTS is set in .htaccess
         // Removed from PHP to avoid duplicate header
@@ -54,10 +54,10 @@ function setApiSecurityHeaders(): void
         header('X-Content-Type-Options: nosniff');
         header('X-XSS-Protection: 1; mode=block');
         header('Referrer-Policy: no-referrer');
-        
+
         // Strict CSP for API responses
         header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'");
-        
+
         // Note: HSTS is set in .htaccess to avoid duplicate headers
     }
 }

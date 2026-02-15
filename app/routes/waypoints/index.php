@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../auth/check.php';
-require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/core/security_headers.php';
+require_once __DIR__ . '/../../models/core/database.php';
+require_once __DIR__ . '/../../models/core/security_headers.php';
 
 // Set API-specific security headers
 setApiSecurityHeaders();

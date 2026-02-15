@@ -6,7 +6,7 @@
  * - string $baseUrl
  * - array $baseQuery
  */
-require_once __DIR__ . '/../../src-php/core/list_helpers.php';
+require_once __DIR__ . '/../../models/core/list_helpers.php';
 
 $listColumns = [
     buildListColumn('Email', 'username'),
