@@ -1,6 +1,7 @@
 <?php
 $emailDetailWrapperTag = $emailDetailWrapperTag ?? 'section';
 $emailDetailWrapperClass = $emailDetailWrapperClass ?? 'column email-column email-detail-column';
+$emailDetailWrapperId = $emailDetailWrapperId ?? null;
 $emailDetailIncludeLinkEditor = $emailDetailIncludeLinkEditor ?? true;
 $emailDetailShowActions = $emailDetailShowActions ?? true;
 $emailDetailShowLinks = $emailDetailShowLinks ?? true;
@@ -11,7 +12,12 @@ $composeMode = $composeMode ?? false;
 $templates = $templates ?? [];
 $selectedMailbox = $selectedMailbox ?? null;
 
-echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' class="' . htmlspecialchars($emailDetailWrapperClass) . '">';
+$wrapperAttributes = 'class="' . htmlspecialchars($emailDetailWrapperClass) . '"';
+if ($emailDetailWrapperId) {
+    $wrapperAttributes .= ' id="' . htmlspecialchars($emailDetailWrapperId) . '"';
+}
+
+echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes . '>';
 ?>
   <?php if (!$selectedMailbox): ?>
     <div class="email-detail-empty">

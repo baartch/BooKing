@@ -1,5 +1,13 @@
 <?php
+require_once __DIR__ . '/../../src-php/core/htmx_class.php';
 require_once __DIR__ . '/../../src-php/communication/email_view.php';
+
+$emailDetailWrapperId = 'email-detail-panel';
+
+if (HTMX::isRequest()) {
+    require __DIR__ . '/email_detail.php';
+    return;
+}
 ?>
 <div class="box">
   <div class="columns is-variable is-3 email-columns">

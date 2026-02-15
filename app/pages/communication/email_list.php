@@ -54,7 +54,7 @@
       </div>
     </div>
 
-    <div class="menu">
+    <div class="menu" data-list-selectable data-list-active-class="is-active">
       <ul class="menu-list">
         <?php if (!$messages): ?>
           <li><span>No emails found.</span></li>
@@ -74,7 +74,7 @@
             ?>
             <li>
               <div class="<?php echo $itemClass; ?>">
-                <a href="<?php echo htmlspecialchars($messageLink); ?>" class="<?php echo (int) $row['id'] === $selectedMessageId ? 'is-active' : ''; ?>">
+                <a href="<?php echo htmlspecialchars($messageLink); ?>" class="<?php echo (int) $row['id'] === $selectedMessageId ? 'is-active' : ''; ?>" data-list-item hx-get="<?php echo htmlspecialchars($messageLink); ?>" hx-target="#email-detail-panel" hx-swap="outerHTML" hx-push-url="<?php echo htmlspecialchars($messageLink); ?>">
                   <div class="is-flex is-justify-content-space-between">
                     <div>
                       <div class="<?php echo $isUnread ? 'has-text-weight-bold' : 'has-text-weight-semibold'; ?>"><?php echo htmlspecialchars($row['subject'] ?? '(No subject)'); ?></div>

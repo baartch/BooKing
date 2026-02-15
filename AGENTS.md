@@ -100,5 +100,6 @@ The database schema is in `sql/schema.sql` and includes the following tables:
 - Sidebar consists only of icons, no labels
 - Logs written via `logAction()` in `app/src-php/core/database.php` (do NOT log sensitive data like cookies)
 - **NEVER** edit JS files! Edit TypeScript sources (not compiled JS) when JS logic changes; rebuild the JS output as needed. TypeScript sources live in `app/src/`.
+- List item highlighting (client-side): add `data-list-selectable` on the list container, `data-list-item` on clickable entries, and optional `data-list-active-class` to override the default `is-active` class (handled in `app/src/list-panel.ts`).
 - Do NOT create a new markdown file to document each change or summarize your work unless specifically requested by the user.
 - **DO NOT COMMIT** unless the user tells you to. Commit only changes you made.

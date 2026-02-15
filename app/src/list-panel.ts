@@ -69,4 +69,32 @@ const initListSearch = (): void => {
   });
 };
 
+const initListSelection = (): void => {
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement | null;
+    if (!target) {
+      return;
+    }
+
+    const item = target.closest<HTMLElement>('[data-list-item]');
+    if (!item) {
+      return;
+    }
+
+    const list = item.closest<HTMLElement>('[data-list-selectable]');
+    if (!list) {
+      return;
+    }
+
+    const activeClass = list.dataset.listActiveClass || 'is-active';
+    const items = list.querySelectorAll<HTMLElement>('[data-list-item]');
+    items.forEach((element) => {
+      element.classList.remove(activeClass);
+    });
+
+    item.classList.add(activeClass);
+  });
+};
+
 initListSearch();
+initListSelection();

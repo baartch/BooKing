@@ -6,9 +6,15 @@ require_once __DIR__ . '/../../src-php/core/layout.php';
 
 $activeTab = $_GET['tab'] ?? 'conversations';
 
-if (HTMX::isRequest() && $activeTab === 'contacts') {
-    require __DIR__ . '/contacts.php';
-    return;
+if (HTMX::isRequest()) {
+    if ($activeTab === 'contacts') {
+        require __DIR__ . '/contacts.php';
+        return;
+    }
+    if ($activeTab === 'email') {
+        require __DIR__ . '/email.php';
+        return;
+    }
 }
 
 ?>
