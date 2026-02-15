@@ -1,7 +1,4 @@
 <?php
-require_once __DIR__ . '/../../routes/auth/check.php';
-require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/core/layout.php';
 ?>
 <?php renderPageStart('Dashboard', ['bodyClass' => 'is-flex is-flex-direction-column is-fullheight']); ?>
       <section class="section">

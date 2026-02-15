@@ -8,7 +8,7 @@ if ($basePath !== '' && strpos($relativePath, $basePath) === 0) {
 }
 
 $relativePath = '/' . ltrim($relativePath, '/');
-$isDashboard = $relativePath === '/' || $relativePath === '/index.php' || strpos($relativePath, '/app/pages/dashboard') === 0;
+$isDashboard = $relativePath === '/' || $relativePath === '/index.php' || strpos($relativePath, '/app/controllers/dashboard') === 0;
 $isMap = strpos($relativePath, '/app/pages/map') === 0;
 $isVenues = strpos($relativePath, '/app/controllers/venues') === 0;
 $isTeam = strpos($relativePath, '/app/controllers/team') === 0;
