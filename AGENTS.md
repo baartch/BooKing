@@ -14,34 +14,18 @@ PHP + TypeScript app for venue mapping with MariaDB-backed authentication, sessi
 ## Key Paths
 
 ```
-├── app/                     # Application codebase (PHP pages/routes, assets, scripts, TS)
-│   ├── pages/               # Server-rendered pages
-│   │   ├── admin/           # Admin area (users, teams, SMTP, API keys)
-│   │   ├── auth/            # Authentication pages (login/logout)
-│   │   ├── communication/   # Communication UI (email, contacts, conversations)
-│   │   ├── dashboard/       # Dashboard/overview landing page
-│   │   ├── map/             # Map UI (Leaflet-based venue map)
-│   │   ├── profile/         # User profile + mailbox settings
-│   │   ├── team/            # Team settings (mailboxes, templates)
-│   │   └── venues/          # Venue pages (list/add)
+├── app/                     # Application codebase (MVC, assets, scripts)
+│   ├── controllers/         # HTTP controllers (admin, auth, communication, email, map, etc.)
+│   ├── models/              # PHP domain/model helpers (auth, communication, core, venues)
+│   ├── views/               # Server-rendered views (admin, auth, communication, map, etc.)
 │   ├── partials/            # Shared PHP view fragments
+│   │   └── tables/          # Table partials
 │   ├── public/              # Public static assets
 │   │   ├── assets/          # Icons and imagery
 │   │   ├── css/             # Compiled and vendor CSS
-│   │   └── js/              # Compiled JavaScript output
-│   ├── routes/              # HTTP endpoints and API handlers
-│   │   ├── auth/            # Authentication/session validation routes
-│   │   ├── communication/   # Email conversation routes
-│   │   ├── email/           # Email send/delete/attachment routes
-│   │   ├── venues/          # Venue-related API endpoints
-│   │   └── waypoints/       # GPX waypoint output endpoint
-│   ├── scripts/             # CLI/cron scripts (cleanup, mailbox fetch)
-│   ├── src/                 # TypeScript source files
-│   └── src-php/             # Shared PHP helper libraries
-│       ├── auth/            # Auth/session helpers
-│       ├── communication/   # Email and mailbox helpers
-│       ├── core/            # Core utilities (DB, layout, security headers, settings)
-│       └── venues/          # Venue repository and actions
+│   │   ├── js/              # Compiled JavaScript output
+│   │   └── vendor/          # Third-party vendor assets
+│   └── scripts/             # CLI/cron scripts (cleanup, mailbox fetch)
 ├── config/                  # Runtime configuration (config.php)
 ├── dev_helpers/             # Development helper scripts and notes
 ├── scripts/                 # Project-level scripts (deployment, diagnostics)
@@ -76,10 +60,10 @@ The database schema is in `sql/schema.sql` and includes the following tables:
 
 ## Typescript/Javascript
 
-Typescript path (input): `app/src/`  
+Typescript path (input): `src/`  
 Javascript path (output): `app/public/js/`
 
-**NEVER** edit JS files! Edit TypeScript sources (not compiled JS) when JS logic changes; rebuild the JS output as needed. TypeScript sources live in `app/src/`.
+**NEVER** edit JS files! Edit TypeScript sources (not compiled JS) when JS logic changes; rebuild the JS output as needed. TypeScript sources live in `src/`.
 
 Build TS with bun.
 
@@ -90,15 +74,15 @@ bun run build
 ## Security
 
 - **Cookie Security**: Session cookies use `__Host-` prefix (HTTPS) with Secure, HttpOnly, and SameSite=Strict flags (see `docs/COOKIE_SECURITY.md`)
-- **Security Headers**: Automatic HTTP security headers (CSP, X-Frame-Options, etc.) via `.htaccess` and `app/src-php/core/security_headers.php` (see `docs/SECURITY_HEADERS.md`)
-- **CSRF Protection**: All POST forms protected with CSRF tokens (see `app/src-php/auth/csrf.php`)
-- **Rate Limiting**: Login attempts limited to prevent brute force (see `app/src-php/auth/rate_limit.php`)
-- **Sessions**: Database-backed with 1-hour expiration, secure cookie handling via `app/src-php/auth/cookie_helpers.php`
+- **Security Headers**: Automatic HTTP security headers (CSP, X-Frame-Options, etc.) via `.htaccess` and `app/models/core/security_headers.php` (see `docs/SECURITY_HEADERS.md`)
+- **CSRF Protection**: All POST forms protected with CSRF tokens (see `app/models/auth/csrf.php`)
+- **Rate Limiting**: Login attempts limited to prevent brute force (see `app/models/auth/rate_limit.php`)
+- **Sessions**: Database-backed with 1-hour expiration, secure cookie handling via `app/models/auth/cookie_helpers.php`
 - **Passwords**: Bcrypt hashing, admin-enforced resets available
 
 ## HTMX PHP helper
 
-- class: `app/src-php/core/htmx_class.php`
+- class: `app/models/core/htmx_class.php`
 - Include `htmx_class.php` and use `HTMX::isRequest()` to branch HTMX vs full-page responses.
 - Use request helpers like `HTMX::getTrigger()`, `getTarget()`, `getCurrentUrl()`, and request method helpers (`isGet()`, `isPost()`, etc.) to read HTMX metadata.
 - Use response helpers like `HTMX::trigger()`/`triggerMultiple()`, `pushUrl()`/`replaceUrl()`, `redirect()`, `refresh()`, `reswap()`, `retarget()`, `location()`, `reselect()`, `stopPolling()`, or `noContent()` to set the appropriate `HX-*` headers.
@@ -107,12 +91,12 @@ bun run build
 
 - `config/` directory is for configuration files ONLY (config.php)
 - Don't write any inline CSS or JS in PHP files. CSS is provided via Bulma CDN, and JS gets compiled from TypeScript.
-- All PHP helper functions belong in `app/src-php/` directory
-- **Security headers** automatically loaded via `app/src-php/core/layout.php` on every page
-- **Cookies** must be set via `app/src-php/auth/cookie_helpers.php` functions (setSessionCookie, clearSessionCookie)
+- All PHP helper functions belong in `app/models/` directory
+- **Security headers** automatically loaded via `app/models/core/layout.php` on every page
+- **Cookies** must be set via `app/models/auth/cookie_helpers.php` functions (setSessionCookie, clearSessionCookie)
 - Sidebar consists only of icons, no labels
-- Logs written via `logAction()` in `app/src-php/core/database.php` (do NOT log sensitive data like cookies)
-- List item highlighting (client-side): add `data-list-selectable` on the list container, `data-list-item` on clickable entries, and optional `data-list-active-class` to override the default `is-active` class (handled in `app/src/list-panel.ts`).
+- Logs written via `logAction()` in `app/models/core/database.php` (do NOT log sensitive data like cookies)
+- List item highlighting (client-side): add `data-list-selectable` on the list container, `data-list-item` on clickable entries, and optional `data-list-active-class` to override the default `is-active` class (handled in `src/list-panel.ts`).
 - Do NOT create a new markdown file to document each change or summarize your work unless specifically requested by the user.
 - **DO NOT COMMIT** unless the user tells you to. Commit only changes you made.
 
