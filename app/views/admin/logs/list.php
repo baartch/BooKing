@@ -10,4 +10,4 @@ $listRowClass = static function (array $row) use ($selectedLogId): string {
 };
 ?>
 
-<?php require __DIR__ . '/../../../partials/tables/list.php'; ?>
+<?php require __DIR__ . '/../../../partials/tables/table.php'; ?>

@@ -56,4 +56,4 @@ $listRowActions = static function (array $team) use ($baseUrl, $baseQuery): stri
 
 $listActionsLabel = 'Actions';
 
-require __DIR__ . '/../../../partials/tables/list.php';
+require __DIR__ . '/../../../partials/tables/table.php';

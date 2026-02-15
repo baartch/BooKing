@@ -110,4 +110,4 @@ $listRowActions = static function (array $venue) use ($venuesPage, $venuesPerPag
 
 $listActionsLabel = 'Actions';
 
-require __DIR__ . '/../../../partials/tables/list.php';
+require __DIR__ . '/../../../partials/tables/table.php';

@@ -52,4 +52,4 @@ $listRowActions = static function (array $mailbox) use ($baseUrl, $baseQuery): s
 
 $listActionsLabel = 'Actions';
 
-require __DIR__ . '/../../../partials/tables/list.php';
+require __DIR__ . '/../../../partials/tables/table.php';

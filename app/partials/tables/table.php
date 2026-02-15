@@ -44,6 +44,7 @@ $listRowLink = $listRowLink ?? null;
                 if (!empty($linkData['href'])) {
                     $linkAttributes .= ' data-row-link="' . htmlspecialchars((string) $linkData['href']) . '"';
                     $linkAttributes .= ' tabindex="0"';
+                    $linkAttributes .= ' style="cursor: pointer;"';
                 }
 
                 $rowTarget = $linkData['hx-target'] ?? null;
