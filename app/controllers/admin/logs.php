@@ -30,7 +30,7 @@ try {
     $logsTotal = (int) $countStmt->fetchColumn();
 
     $listStmt = $pdo->prepare(
-        'SELECT l.created_at AS timestamp, u.username, l.action, l.details
+        'SELECT l.id, l.created_at AS timestamp, u.username, l.action, l.details
          FROM logs l
          LEFT JOIN users u ON u.id = l.user_id
          ' . $logsWhere . '

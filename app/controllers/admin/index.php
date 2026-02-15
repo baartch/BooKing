@@ -25,6 +25,13 @@ if (HTMX::isRequest() && $activeTab === 'users') {
     return;
 }
 
+if (HTMX::isRequest() && $activeTab === 'logs') {
+    HTMX::pushUrl($_SERVER['REQUEST_URI']);
+    $renderLogsDetailOnly = true;
+    require __DIR__ . '/../../views/admin/logs/logs.php';
+    return;
+}
+
 renderPageStart('Admin', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',
     'extraScripts' => [
@@ -88,7 +95,7 @@ renderPageStart('Admin', [
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'logs' ? '' : 'is-hidden'; ?>" data-tab-panel="logs" role="tabpanel">
-      <?php require __DIR__ . '/../../views/admin/admin_logs.php'; ?>
+      <?php require __DIR__ . '/../../views/admin/logs/logs.php'; ?>
     </div>
   </div>
 </section>
