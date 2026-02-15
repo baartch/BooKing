@@ -1,12 +1,12 @@
 <?php
-require_once __DIR__ . '/../../routes/auth/check.php';
-require_once __DIR__ . '/../../src-php/core/database.php';
-require_once __DIR__ . '/../../src-php/core/layout.php';
 ?>
 <?php renderPageStart('Map', [
     'leaflet' => true,
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',
-    'extraStyles' => [BASE_PATH . '/app/public/css/map.css']
+    'extraStyles' => [BASE_PATH . '/app/public/css/map.css'],
+    'extraScripts' => [
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/map.js" defer></script>'
+    ]
 ]); ?>
       <section class="hero is-fullheight">
         <div class="hero-body is-flex is-flex-direction-column">
@@ -41,5 +41,4 @@ require_once __DIR__ . '/../../src-php/core/layout.php';
           </div>
         </div>
       </section>
-      <script type="module" src="<?php echo BASE_PATH; ?>/app/public/js/map.js" defer></script>
 <?php renderPageEnd(); ?>

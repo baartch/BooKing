@@ -21,7 +21,7 @@
               <?php
                 $lat = number_format((float) $venue['latitude'], 6, '.', '');
                 $lng = number_format((float) $venue['longitude'], 6, '.', '');
-                $mapLink = BASE_PATH . '/app/pages/map/index.php?' . http_build_query([
+                $mapLink = BASE_PATH . '/app/controllers/map/index.php?' . http_build_query([
                     'lat' => $lat,
                     'lng' => $lng,
                     'zoom' => 13
