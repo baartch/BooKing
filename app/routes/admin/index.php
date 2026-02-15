@@ -1,6 +1,7 @@
 <?php
 // Admin panel controller (server-rendered)
 require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/../../src-php/core/htmx_class.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken();
@@ -19,11 +20,17 @@ require_once __DIR__ . '/teams.php';
 require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/logs.php';
 
+if (HTMX::isRequest() && $activeTab === 'users') {
+    require __DIR__ . '/../../pages/admin/users.php';
+    return;
+}
+
 renderPageStart('Admin', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',
     'extraScripts' => [
         '<script type="module" src="' . BASE_PATH . '/app/public/js/tabs.js" defer></script>',
-        '<script type="module" src="' . BASE_PATH . '/app/public/js/mailboxes.js" defer></script>'
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/mailboxes.js" defer></script>',
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/list-panel.js" defer></script>'
     ]
 ]);
 ?>
@@ -65,7 +72,7 @@ renderPageStart('Admin', [
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'users' ? '' : 'is-hidden'; ?>" data-tab-panel="users" role="tabpanel">
-      <?php require __DIR__ . '/../../pages/admin/admin_users.php'; ?>
+      <?php require __DIR__ . '/../../pages/admin/users.php'; ?>
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'teams' ? '' : 'is-hidden'; ?>" data-tab-panel="teams" role="tabpanel">

@@ -116,6 +116,6 @@ bun run build
 - Do NOT create a new markdown file to document each change or summarize your work unless specifically requested by the user.
 - **DO NOT COMMIT** unless the user tells you to. Commit only changes you made.
 
-```
+### Tables
 
-```
+Build tables with the partials in `app/partials/tables`.
