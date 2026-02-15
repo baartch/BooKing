@@ -43,12 +43,13 @@ $listSummaryTags = [
 ];
 $listPrimaryActionHtml = null;
 
-$headerButtons = '';
 if (($currentUser['role'] ?? '') === 'admin') {
     $addUrl = BASE_PATH . '/app/controllers/venues/add.php';
-    $headerButtons = '<div class="buttons"><a href="' . htmlspecialchars($addUrl) . '" class="button is-primary">Add Venue</a><button type="button" class="button" data-import-toggle>Import</button></div>';
+    $listPrimaryActionHtml = '<div class="buttons">'
+        . '<a href="' . htmlspecialchars($addUrl) . '" class="button is-primary">Add Venue</a>'
+        . '<button type="button" class="button" data-import-toggle>Import</button>'
+        . '</div>';
 }
-$headerHtml = '<div class="level mb-4"><div class="level-left"><div><h1 class="title is-3">Venue Management</h1><p class="subtitle is-6">Manage the venues stored in the database.</p></div></div><div class="level-right">' . $headerButtons . '</div></div>';
 
 $listSearch = [
     'action' => $baseUrl,
@@ -71,7 +72,6 @@ if (HTMX::isRequest()) {
     return;
 }
 ?>
-<?php echo $headerHtml; ?>
 <?php if (($currentUser['role'] ?? '') === 'admin'): ?>
   <?php require $importModalPath; ?>
 <?php endif; ?>
@@ -83,29 +83,27 @@ if (HTMX::isRequest()) {
   <div class="notification"><?php echo htmlspecialchars($error); ?></div>
 <?php endforeach; ?>
 
-<div class="box">
-  <?php require __DIR__ . '/../../partials/tables/two_column.php'; ?>
+<?php require __DIR__ . '/../../partials/tables/two_column.php'; ?>
 
-  <nav class="level" aria-label="Pagination">
-    <div class="level-left">
-      <p class="help">Total: <?php echo htmlspecialchars((string) $venuesTotal); ?> venues</p>
+<nav class="level" aria-label="Pagination">
+  <div class="level-left">
+    <p class="help">Total: <?php echo htmlspecialchars((string) $venuesTotal); ?> venues</p>
+  </div>
+  <div class="level-right">
+    <div class="buttons has-addons">
+      <?php if ($venuesPage <= 1): ?>
+        <span class="button is-static">Previous</span>
+      <?php else: ?>
+        <a class="button" href="<?php echo htmlspecialchars($buildUrl($venuesPage - 1)); ?>">Previous</a>
+      <?php endif; ?>
+
+      <span class="button is-static">Page <?php echo htmlspecialchars((string) $venuesPage); ?> / <?php echo htmlspecialchars((string) $venuesTotalPages); ?></span>
+
+      <?php if ($venuesPage >= $venuesTotalPages): ?>
+        <span class="button is-static">Next</span>
+      <?php else: ?>
+        <a class="button" href="<?php echo htmlspecialchars($buildUrl($venuesPage + 1)); ?>">Next</a>
+      <?php endif; ?>
     </div>
-    <div class="level-right">
-      <div class="buttons has-addons">
-        <?php if ($venuesPage <= 1): ?>
-          <span class="button is-static">Previous</span>
-        <?php else: ?>
-          <a class="button" href="<?php echo htmlspecialchars($buildUrl($venuesPage - 1)); ?>">Previous</a>
-        <?php endif; ?>
-
-        <span class="button is-static">Page <?php echo htmlspecialchars((string) $venuesPage); ?> / <?php echo htmlspecialchars((string) $venuesTotalPages); ?></span>
-
-        <?php if ($venuesPage >= $venuesTotalPages): ?>
-          <span class="button is-static">Next</span>
-        <?php else: ?>
-          <a class="button" href="<?php echo htmlspecialchars($buildUrl($venuesPage + 1)); ?>">Next</a>
-        <?php endif; ?>
-      </div>
-    </div>
-  </nav>
-</div>
+  </div>
+</nav>
