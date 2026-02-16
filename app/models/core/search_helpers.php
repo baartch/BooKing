@@ -115,3 +115,26 @@ function fetchMapboxData(array $mapboxResult): ?array
         'longitude' => $longitude
     ];
 }
+
+function runMapboxAddressLookup(string $query, string $country, string $apiKey, array &$errors): ?array
+{
+    $mapboxUrl = 'https://api.mapbox.com/search/geocode/v6/forward?' . http_build_query([
+        'q' => $query,
+        'access_token' => $apiKey,
+        'language' => 'de',
+        'country' => $country,
+        'limit' => 1,
+        'types' => 'address'
+    ]);
+    $mapboxResult = fetchJsonResponse(
+        $mapboxUrl,
+        [
+            'Accept' => '*/*',
+            'User-Agent' => 'InVoloVenue/1.0'
+        ],
+        $errors,
+        'Mapbox geocoding'
+    );
+
+    return $mapboxResult ? fetchMapboxData($mapboxResult) : null;
+}

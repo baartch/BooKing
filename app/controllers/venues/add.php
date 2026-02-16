@@ -79,6 +79,8 @@ if ($mapboxSearchRequested && $mapboxSearchAddress === '' && $mapboxSearchCity =
     $mapboxSearchNotice = 'Enter a city to run a Mapbox search.';
 }
 
+
+// MARK: Brave & Mapbox search
 if ($webSearchQuery !== '' && $editId === 0 && $_SERVER['REQUEST_METHOD'] === 'GET') {
     $settings = loadSettingValues([
         'brave_search_api_key',
@@ -131,25 +133,12 @@ if ($webSearchQuery !== '' && $editId === 0 && $_SERVER['REQUEST_METHOD'] === 'G
             $braveInfo = $braveSearchResult['infobox']['results'][0];
             $displayAddress = $braveInfo['location']['postal_address']['displayAddress'] ?? '';
 
-            $mapboxUrl = 'https://api.mapbox.com/search/geocode/v6/forward?' . http_build_query([
-                'q' => $displayAddress,
-                'access_token' => $settings['mapbox_api_key_server'],
-                'language' => 'de',
-                'country' => $webSearchCountry,
-                'limit' => 1,
-                'types' => 'address'
-            ]);
-            $mapboxResult = fetchJsonResponse(
-                $mapboxUrl,
-                [
-                    'Accept' => '*/*',
-                    'User-Agent' => 'InVoloVenue/1.0'
-                ],
-                $errors,
-                'Mapbox geocoding'
+            $mapboxData = runMapboxAddressLookup(
+                $displayAddress,
+                $webSearchCountry,
+                $settings['mapbox_api_key_server'],
+                $errors
             );
-
-            $mapboxData = $mapboxResult ? fetchMapboxData($mapboxResult) : null;
             if ($mapboxData) {
                 $formValues['name'] = (string) ($braveInfo['title'] ?? $formValues['name']);
                 $formValues['website'] = (string) ($braveInfo['website_url'] ?? $formValues['website']);
@@ -177,6 +166,7 @@ if ($webSearchQuery !== '' && $editId === 0 && $_SERVER['REQUEST_METHOD'] === 'G
     }
 }
 
+// MARK: Mapbox Search only
 if ($mapboxSearchRequested && $_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($mapboxSearchAddress === '' || $mapboxSearchCity === '') {
         $errors[] = 'Enter both address and city before running a Mapbox search.';
@@ -186,26 +176,15 @@ if ($mapboxSearchRequested && $_SERVER['REQUEST_METHOD'] === 'GET') {
             $errors[] = 'Missing Mapbox server API key in settings.';
         } else {
             $mapboxQuery = trim(sprintf('%s, %s', $mapboxSearchAddress, $mapboxSearchCity));
-            $mapboxUrl = 'https://api.mapbox.com/search/geocode/v6/forward?' . http_build_query([
-                'q' => $mapboxQuery,
-                'access_token' => $settings['mapbox_api_key_server'],
-                'language' => 'de',
-                'country' => $mapboxSearchCountry,
-                'limit' => 1,
-                'types' => 'address'
-            ]);
-            $mapboxResult = fetchJsonResponse(
-                $mapboxUrl,
-                [
-                    'Accept' => '*/*',
-                    'User-Agent' => 'InVoloVenue/1.0'
-                ],
-                $errors,
-                'Mapbox geocoding'
+            $mapboxData = runMapboxAddressLookup(
+                $mapboxQuery,
+                $mapboxSearchCountry,
+                $settings['mapbox_api_key_server'],
+                $errors
             );
-
-            $mapboxData = $mapboxResult ? fetchMapboxData($mapboxResult) : null;
             if ($mapboxData) {
+                $formValues['address'] = (string) ($mapboxData['street'] ?? $formValues['address']);
+                $formValues['city'] = (string) ($mapboxData['city'] ?? $formValues['city']);
                 $formValues['postal_code'] = (string) ($mapboxData['postalCode'] ?? $formValues['postal_code']);
                 $formValues['state'] = (string) ($mapboxData['state'] ?? $formValues['state']);
                 if ($mapboxData['latitude'] !== null) {
