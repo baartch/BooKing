@@ -37,7 +37,20 @@ $listColumns = [
     buildListColumn('Contact', null, static function (array $venue): string {
         $buttons = [];
         if (!empty($venue['website'])) {
-            $buttons[] = '<a href="' . htmlspecialchars((string) $venue['website']) . '" class="button is-small" target="_blank" rel="noopener noreferrer" aria-label="Website" title="Website"><span class="icon"><i class="fa-solid fa-globe"></i></span></a>';
+            $websiteUrl = (string) $venue['website'];
+            $buttons[] = '<div class="dropdown" data-email-menu>'
+                . '<div class="dropdown-trigger">'
+                . '<button type="button" class="button is-small" aria-label="Website" title="Website" aria-haspopup="true" data-email-menu-trigger>'
+                . '<span class="icon"><i class="fa-solid fa-globe"></i></span>'
+                . '</button>'
+                . '</div>'
+                . '<div class="dropdown-menu" role="menu">'
+                . '<div class="dropdown-content">'
+                . '<a class="dropdown-item" href="' . htmlspecialchars($websiteUrl) . '" target="_blank" rel="noopener noreferrer">Open</a>'
+                . '<button type="button" class="dropdown-item" data-copy-value="' . htmlspecialchars($websiteUrl) . '">Copy URL</button>'
+                . '</div>'
+                . '</div>'
+                . '</div>';
         }
         if (!empty($venue['contact_email'])) {
             $emailAddress = (string) $venue['contact_email'];
@@ -61,7 +74,20 @@ $listColumns = [
                 . '</div>';
         }
         if (!empty($venue['contact_phone'])) {
-            $buttons[] = '<a href="tel:' . htmlspecialchars((string) $venue['contact_phone']) . '" class="button is-small" aria-label="Phone" title="Phone"><span class="icon"><i class="fa-solid fa-phone"></i></span></a>';
+            $phoneNumber = (string) $venue['contact_phone'];
+            $buttons[] = '<div class="dropdown" data-email-menu>'
+                . '<div class="dropdown-trigger">'
+                . '<button type="button" class="button is-small" aria-label="Phone" title="Phone" aria-haspopup="true" data-email-menu-trigger>'
+                . '<span class="icon"><i class="fa-solid fa-phone"></i></span>'
+                . '</button>'
+                . '</div>'
+                . '<div class="dropdown-menu" role="menu">'
+                . '<div class="dropdown-content">'
+                . '<a class="dropdown-item" href="tel:' . htmlspecialchars($phoneNumber) . '">Call</a>'
+                . '<button type="button" class="dropdown-item" data-copy-value="' . htmlspecialchars($phoneNumber) . '">Copy phone number</button>'
+                . '</div>'
+                . '</div>'
+                . '</div>';
         }
 
         if (!$buttons) {

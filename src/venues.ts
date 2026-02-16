@@ -260,7 +260,9 @@ const initEmailMenu = (): void => {
     menu.dataset.emailMenuBound = "true";
 
     const trigger = menu.querySelector<HTMLButtonElement>("[data-email-menu-trigger]");
-    const copyButton = menu.querySelector<HTMLButtonElement>("[data-copy-email]");
+    const copyEmailButton = menu.querySelector<HTMLButtonElement>("[data-copy-email]");
+    const copyValueButton = menu.querySelector<HTMLButtonElement>("[data-copy-value]");
+    const openLink = menu.querySelector<HTMLAnchorElement>(".dropdown-item[href]");
 
     trigger?.addEventListener("click", (event) => {
       event.preventDefault();
@@ -272,13 +274,27 @@ const initEmailMenu = (): void => {
       }
     });
 
-    copyButton?.addEventListener("click", async (event) => {
+    copyEmailButton?.addEventListener("click", async (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const email = copyButton.dataset.copyEmail ?? "";
+      const email = copyEmailButton.dataset.copyEmail ?? "";
       if (email !== "") {
         await copyEmail(email);
       }
+      closeMenu(menu);
+    });
+
+    copyValueButton?.addEventListener("click", async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const value = copyValueButton.dataset.copyValue ?? "";
+      if (value !== "") {
+        await copyEmail(value);
+      }
+      closeMenu(menu);
+    });
+
+    openLink?.addEventListener("click", () => {
       closeMenu(menu);
     });
   });
