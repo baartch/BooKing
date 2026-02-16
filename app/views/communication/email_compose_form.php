@@ -41,7 +41,7 @@
 
   <div class="field">
     <div class="control has-icons-left has-icons-right">
-      <div class="dropdown is-fullwidth email-recipient-dropdown" data-email-lookup data-lookup-url="<?php echo BASE_PATH; ?>/app/controllers/communication/api/email_recipient_lookup.php">
+      <div class="dropdown is-fullwidth email-recipient-dropdown" data-email-lookup data-lookup-url="<?php echo BASE_PATH; ?>/app/controllers/email/email_recipient_lookup.php">
         <div class="dropdown-trigger">
           <input
             class="input"
@@ -69,7 +69,7 @@
   </div>
   <div class="field">
     <div class="control has-icons-left has-icons-right">
-      <div class="dropdown is-fullwidth email-recipient-dropdown" data-email-lookup data-lookup-url="<?php echo BASE_PATH; ?>/app/controllers/communication/api/email_recipient_lookup.php">
+      <div class="dropdown is-fullwidth email-recipient-dropdown" data-email-lookup data-lookup-url="<?php echo BASE_PATH; ?>/app/controllers/email/email_recipient_lookup.php">
         <div class="dropdown-trigger">
           <input
             class="input"
@@ -96,7 +96,7 @@
   </div>
   <div class="field">
     <div class="control has-icons-left has-icons-right">
-      <div class="dropdown is-fullwidth email-recipient-dropdown" data-email-lookup data-lookup-url="<?php echo BASE_PATH; ?>/app/controllers/communication/api/email_recipient_lookup.php">
+      <div class="dropdown is-fullwidth email-recipient-dropdown" data-email-lookup data-lookup-url="<?php echo BASE_PATH; ?>/app/controllers/email/email_recipient_lookup.php">
         <div class="dropdown-trigger">
           <input
             class="input"
