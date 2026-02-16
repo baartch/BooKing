@@ -206,37 +206,31 @@ if ($pdo && $selectedMailbox && $prefillMessageId > 0) {
 
             $fromName  = trim((string) ($prefillMessage['from_name'] ?? ''));
             $fromEmail = trim((string) ($prefillMessage['from_email'] ?? ''));
-            if ($fromName !== '' && $fromEmail !== '') {
-                $senderLabel = htmlspecialchars($fromName) . ' &lt;' . htmlspecialchars($fromEmail) . '&gt;';
-            } elseif ($fromName !== '') {
-                $senderLabel = htmlspecialchars($fromName);
-            } else {
-                $senderLabel = htmlspecialchars($fromEmail);
+            $senderName = $fromName !== '' ? $fromName : $fromEmail;
+            $senderLabel = htmlspecialchars($senderName);
+
+            $receivedAt = trim((string) ($prefillMessage['received_at'] ?? ''));
+            $quoteDate = '';
+            if ($receivedAt !== '') {
+                try {
+                    $quoteDate = (new DateTime($receivedAt))->format('d.m.Y H:i');
+                } catch (Throwable $error) {
+                    $quoteDate = $receivedAt;
+                }
             }
+            if ($quoteDate === '') {
+                $quoteDate = 'unknown date';
+            }
+            $quoteHeader = '<p>On ' . htmlspecialchars($quoteDate) . ', ' . $senderLabel . ' wrote:</p>';
 
             if ($replyId > 0) {
-                $headerRows = '';
-                $headerRows .= '<b>From:</b> ' . $senderLabel . '<br>';
-                $headerRows .= '<b>Date:</b> ' . htmlspecialchars($prefillMessage['received_at'] ?? '') . '<br>';
-                $headerRows .= '<b>Subject:</b> ' . htmlspecialchars($prefillMessage['subject'] ?? '') . '<br>';
-                $headerRows .= '<b>To:</b> ' . htmlspecialchars($prefillMessage['to_emails'] ?? '');
-
                 $composeValues['body'] = '<p><br></p>'
-                    . '<p>---------- Original message ----------</p>'
-                    . '<p>' . $headerRows . '</p>'
+                    . $quoteHeader
                     . '<blockquote><p>' . $quotedBody . '</p></blockquote>';
             } elseif ($forwardId > 0) {
-                $headerRows = '';
-                $headerRows .= '<b>From:</b> ' . $senderLabel . '<br>';
-                $headerRows .= '<b>Date:</b> ' . htmlspecialchars($prefillMessage['received_at'] ?? '') . '<br>';
-                $headerRows .= '<b>Subject:</b> ' . htmlspecialchars($prefillMessage['subject'] ?? '') . '<br>';
-                $headerRows .= '<b>To:</b> ' . htmlspecialchars($prefillMessage['to_emails'] ?? '');
-
                 $composeValues['body'] = '<p><br></p>'
-                    . '<p>---------- Forwarded message ----------</p>'
-                    . '<p>' . $headerRows . '</p>'
-                    . '<p><br></p>'
-                    . $quotedBody;
+                    . $quoteHeader
+                    . '<blockquote><p>' . $quotedBody . '</p></blockquote>';
             }
             $composeMode = true;
         }
