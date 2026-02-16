@@ -5,11 +5,13 @@ require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../models/core/form_helpers.php';
 require_once __DIR__ . '/../../models/core/search_helpers.php';
 require_once __DIR__ . '/../../models/core/settings.php';
+require_once __DIR__ . '/../../models/venues/venues_repository.php';
 require_once __DIR__ . '/../../models/core/layout.php';
 
 $errors = [];
 $notice = '';
 $editVenue = null;
+$pdo = null;
 $editId = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
 if ($editId <= 0 && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $editId = (int) ($_POST['venue_id'] ?? 0);
@@ -71,6 +73,7 @@ if ($mapboxSearchRequested && $_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 $mapboxSearchNotice = '';
+$mapboxDuplicateNotice = '';
 if ($mapboxSearchRequested && $mapboxSearchAddress === '' && $mapboxSearchCity === '') {
     $mapboxSearchNotice = 'Enter address and city to run a Mapbox search.';
 } elseif ($mapboxSearchRequested && $mapboxSearchAddress === '') {
@@ -157,6 +160,24 @@ if ($webSearchQuery !== '' && $editId === 0 && $_SERVER['REQUEST_METHOD'] === 'G
                 if ($notice === '') {
                     $notice = 'Search completed and form details filled in.';
                 }
+
+                if ($pdo === null) {
+                    $pdo = getDatabaseConnection();
+                }
+
+                if ($pdo && $mapboxData['latitude'] !== null && $mapboxData['longitude'] !== null) {
+                    $duplicateVenue = findVenueNearCoordinates(
+                        $pdo,
+                        (float) $mapboxData['latitude'],
+                        (float) $mapboxData['longitude']
+                    );
+                    if ($duplicateVenue) {
+                        $mapboxDuplicateNotice = sprintf(
+                            'Mapbox result matches existing venue coordinates: %s',
+                            $duplicateVenue['name'] ?? 'Unknown venue'
+                        );
+                    }
+                }
             } else {
                 $errors[] = 'No address details found from Mapbox.';
             }
@@ -196,6 +217,24 @@ if ($mapboxSearchRequested && $_SERVER['REQUEST_METHOD'] === 'GET') {
 
                 if ($notice === '') {
                     $notice = 'Mapbox search completed and location details updated.';
+                }
+
+                if ($pdo === null) {
+                    $pdo = getDatabaseConnection();
+                }
+
+                if ($pdo && $mapboxData['latitude'] !== null && $mapboxData['longitude'] !== null) {
+                    $duplicateVenue = findVenueNearCoordinates(
+                        $pdo,
+                        (float) $mapboxData['latitude'],
+                        (float) $mapboxData['longitude']
+                    );
+                    if ($duplicateVenue) {
+                        $mapboxDuplicateNotice = sprintf(
+                            'Mapbox result matches existing venue coordinates: %s',
+                            $duplicateVenue['name'] ?? 'Unknown venue'
+                        );
+                    }
                 }
             } else {
                 $errors[] = 'No address details found from Mapbox.';

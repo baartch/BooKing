@@ -112,3 +112,42 @@ function fetchVenuesWithPagination(string $filter, int $page, int $pageSize): ar
         'page' => $page
     ];
 }
+
+function findVenueNearCoordinates(PDO $pdo, float $latitude, float $longitude, float $radiusMeters = 100.0): ?array
+{
+    $earthRadius = 6371000.0;
+    $latDelta = rad2deg($radiusMeters / $earthRadius);
+    $lngDelta = $latDelta / max(cos(deg2rad($latitude)), 0.00001);
+
+    $minLat = $latitude - $latDelta;
+    $maxLat = $latitude + $latDelta;
+    $minLng = $longitude - $lngDelta;
+    $maxLng = $longitude + $lngDelta;
+
+    $query = 'SELECT id, name, latitude, longitude,
+                 (6371000 * ACOS(
+                   COS(RADIANS(:lat1)) * COS(RADIANS(latitude)) *
+                   COS(RADIANS(longitude) - RADIANS(:lng1)) +
+                   SIN(RADIANS(:lat2)) * SIN(RADIANS(latitude))
+                 )) AS distance
+              FROM venues
+              WHERE latitude BETWEEN :min_lat AND :max_lat
+                AND longitude BETWEEN :min_lng AND :max_lng
+              HAVING distance <= :radius
+              ORDER BY distance
+              LIMIT 1';
+
+    $stmt = $pdo->prepare($query);
+    $stmt->bindValue(':lat1', $latitude);
+    $stmt->bindValue(':lat2', $latitude);
+    $stmt->bindValue(':lng1', $longitude);
+    $stmt->bindValue(':min_lat', $minLat);
+    $stmt->bindValue(':max_lat', $maxLat);
+    $stmt->bindValue(':min_lng', $minLng);
+    $stmt->bindValue(':max_lng', $maxLng);
+    $stmt->bindValue(':radius', $radiusMeters);
+    $stmt->execute();
+    $row = $stmt->fetch();
+
+    return $row ?: null;
+}

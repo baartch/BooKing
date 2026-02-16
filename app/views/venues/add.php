@@ -29,6 +29,10 @@
             <div class="notification"><?php echo htmlspecialchars($mapboxSearchNotice); ?></div>
           <?php endif; ?>
 
+          <?php if ($mapboxDuplicateNotice !== ''): ?>
+            <div class="notification is-warning"><?php echo htmlspecialchars($mapboxDuplicateNotice); ?></div>
+          <?php endif; ?>
+
           <form method="GET" action="" id="mapbox_search_form" class="is-hidden">
             <input type="hidden" name="mapbox_search" value="1">
             <input type="hidden" name="mapbox_address" id="mapbox_address" value="<?php echo htmlspecialchars($mapboxSearchAddress !== '' ? $mapboxSearchAddress : $formValues['address']); ?>">
