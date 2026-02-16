@@ -34,7 +34,8 @@
     "website": "https://example.com",
     "person": "Maria Example",
     "phone": "+41 44 123 45 67",
-    "email": "hello@example.com"
+    "email": "hello@example.com",
+    "notes": "Door code 1234"
   }
 ]</code></pre>
             </div>

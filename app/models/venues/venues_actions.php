@@ -116,7 +116,7 @@ function handleVenueImport(array $currentUser, array $countryOptions, string $im
                 ':contact_person' => normalizeOptionalString((string) ($entry['contact_person'] ?? $entry['contactPerson'] ?? $entry['person'] ?? '')),
                 ':capacity' => isset($entry['capacity']) && $entry['capacity'] !== '' ? (int) $entry['capacity'] : null,
                 ':website' => $website,
-                ':notes' => normalizeOptionalString((string) ($entry['notes'] ?? ''))
+                ':notes' => normalizeOptionalString((string) ($entry['notes'] ?? $entry['Notes'] ?? ''))
             ]);
 
             $importedCount++;
