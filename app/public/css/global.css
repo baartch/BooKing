@@ -83,3 +83,23 @@
 .detail-link-edit:hover {
   opacity: 0.8;
 }
+
+.venue-import-modal {
+  width: min(720px, 90vw);
+  max-width: 720px;
+}
+
+.venue-import-example {
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, currentColor 6%, transparent);
+  color: inherit;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.75rem;
+}
+
+.venue-import-example code {
+  font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}

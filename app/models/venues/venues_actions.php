@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../core/database.php';
 require_once __DIR__ . '/../core/form_helpers.php';
 require_once __DIR__ . '/../core/object_links.php';
+require_once __DIR__ . '/venues_repository.php';
 
 function handleVenueImport(array $currentUser, array $countryOptions, string $importPayload): array
 {
@@ -52,6 +53,7 @@ function handleVenueImport(array $currentUser, array $countryOptions, string $im
 
         $importedCount = 0;
         $rowErrors = [];
+        $duplicateNotices = [];
 
         foreach ($decoded as $index => $entry) {
             if (!is_array($entry)) {
@@ -82,6 +84,18 @@ function handleVenueImport(array $currentUser, array $countryOptions, string $im
                 continue;
             }
 
+            if ($latitude !== null && $longitude !== null) {
+                $duplicateVenue = findVenueNearCoordinates($pdo, $latitude, $longitude);
+                if ($duplicateVenue) {
+                    $duplicateNotices[] = sprintf(
+                        'Row %d skipped: duplicate near %s.',
+                        $index + 1,
+                        $duplicateVenue['name'] ?? 'Unknown venue'
+                    );
+                    continue;
+                }
+            }
+
             $address = normalizeOptionalString((string) ($entry['street'] ?? $entry['address'] ?? ''));
             $postalCode = normalizeOptionalString((string) ($entry['postalCode'] ?? $entry['postal_code'] ?? ''));
             $city = normalizeOptionalString((string) ($entry['city'] ?? ''));
@@ -110,6 +124,10 @@ function handleVenueImport(array $currentUser, array $countryOptions, string $im
 
         if ($rowErrors) {
             $errors = array_merge($errors, $rowErrors);
+        }
+
+        if ($duplicateNotices) {
+            $errors = array_merge($errors, $duplicateNotices);
         }
 
         if ($importedCount > 0) {

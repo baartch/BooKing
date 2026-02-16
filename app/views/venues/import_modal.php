@@ -1,7 +1,7 @@
 <?php if (($currentUser['role'] ?? '') === 'admin'): ?>
   <div class="modal" data-import-modal data-initial-open="<?php echo $showImportModal ? 'true' : 'false'; ?>">
     <div class="modal-background" data-import-close></div>
-    <div class="modal-card">
+    <div class="modal-card venue-import-modal">
       <header class="modal-card-head">
         <p class="modal-card-title">Import Venues (JSON)</p>
         <button class="delete" aria-label="close" data-import-close></button>
@@ -10,9 +10,30 @@
         <form method="POST" action="" id="import_form">
           <?php renderCsrfField(); ?>
           <input type="hidden" name="action" value="import">
-          <div class="field">
-            <div class="control">
-              <textarea class="textarea" name="import_json" placeholder="Paste JSON here" rows="8"><?php echo htmlspecialchars($importPayload); ?></textarea>
+          <div class="columns is-variable is-4">
+            <div class="column is-7">
+              <div class="field">
+                <div class="control">
+                  <textarea class="textarea" name="import_json" placeholder="Paste JSON here" rows="12"><?php echo htmlspecialchars($importPayload); ?></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="column is-5">
+              <p class="help">Example JSON</p>
+              <pre class="venue-import-example"><code>[
+  {
+    "name": "Example Venue",
+    "address": "Example Street 1",
+    "postal_code": "8000",
+    "city": "Zurich",
+    "state": "ZH",
+    "country": "CH",
+    "latitude": 47.3769,
+    "longitude": 8.5417,
+    "type": "Club",
+    "website": "https://example.com"
+  }
+]</code></pre>
             </div>
           </div>
         </form>
