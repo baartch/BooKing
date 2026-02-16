@@ -64,7 +64,7 @@ $listSearch = [
 
 $listContentPath = __DIR__ . '/venues/list.php';
 $detailContentPath = $showForm ? __DIR__ . '/venues/form.php' : __DIR__ . '/venues/detail.php';
-$importModalPath = __DIR__ . '/../../partials/venues/import_modal.php';
+$importModalPath = __DIR__ . '/import_modal.php';
 $detailWrapperId = 'venues-detail-panel';
 
 if (HTMX::isRequest()) {
