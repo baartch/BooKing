@@ -1,10 +1,10 @@
-type ThemeChoice = 'system' | 'light' | 'dark';
+export type ThemeChoice = 'system' | 'light' | 'dark';
 
-type ThemeSelection = ThemeChoice | null;
+export type ThemeSelection = ThemeChoice | null;
 
 const storageKey = 'appearance_theme';
 
-const getStoredTheme = (): ThemeSelection => {
+export const getStoredTheme = (): ThemeSelection => {
   if (typeof window === 'undefined') {
     return null;
   }

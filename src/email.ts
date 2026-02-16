@@ -1,3 +1,5 @@
+import { getStoredTheme } from "./appearance.js";
+
 const initWysiEditor = (): void => {
   const textarea = document.querySelector<HTMLTextAreaElement>("#email_body");
 
@@ -13,12 +15,16 @@ const initWysiEditor = (): void => {
     return;
   }
 
+  const storedTheme = getStoredTheme();
   const darkModeMql =
     window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)");
   const prefersDarkMode = darkModeMql && darkModeMql.matches;
+  const isDarkMode =
+    storedTheme === "dark" || (storedTheme !== "light" && prefersDarkMode);
+
   wysi.Wysi({
     el: "#email_body",
-    darkMode: prefersDarkMode,
+    darkMode: isDarkMode,
   });
 };
 
@@ -90,7 +96,9 @@ let selectedLinkItems: LinkItem[] = [];
 const renderLinkItems = (): void => {
   const container = document.querySelector<HTMLElement>("[data-email-links]");
   const list = document.querySelector<HTMLElement>("[data-email-links-list]");
-  const inputs = document.querySelector<HTMLElement>("[data-email-link-inputs]");
+  const inputs = document.querySelector<HTMLElement>(
+    "[data-email-link-inputs]",
+  );
   if (!container || !list || !inputs) {
     return;
   }
@@ -134,7 +142,11 @@ const addLinkItem = (item: LinkItem): void => {
   if (!item.type || item.id <= 0 || item.name.trim() === "") {
     return;
   }
-  if (selectedLinkItems.some((existing) => existing.type === item.type && existing.id === item.id)) {
+  if (
+    selectedLinkItems.some(
+      (existing) => existing.type === item.type && existing.id === item.id,
+    )
+  ) {
     return;
   }
   selectedLinkItems = [...selectedLinkItems, item];
@@ -145,7 +157,9 @@ const removeLinkItem = (index: number): void => {
   if (index < 0 || index >= selectedLinkItems.length) {
     return;
   }
-  selectedLinkItems = selectedLinkItems.filter((_, itemIndex) => itemIndex !== index);
+  selectedLinkItems = selectedLinkItems.filter(
+    (_, itemIndex) => itemIndex !== index,
+  );
   renderLinkItems();
 };
 
