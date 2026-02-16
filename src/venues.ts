@@ -223,11 +223,90 @@ const initVenueDetails = (): void => {
   });
 };
 
+const initEmailMenu = (): void => {
+  const menus = qsAll<HTMLElement>("[data-email-menu]");
+  if (!menus.length) {
+    return;
+  }
+
+  const closeMenu = (menu: HTMLElement): void => {
+    menu.classList.remove("is-active");
+  };
+
+  const closeAllMenus = (): void => {
+    menus.forEach((menu) => closeMenu(menu));
+  };
+
+  const copyEmail = async (email: string): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(email);
+    } catch {
+      const fallback = document.createElement("textarea");
+      fallback.value = email;
+      fallback.setAttribute("readonly", "");
+      fallback.style.position = "absolute";
+      fallback.style.left = "-9999px";
+      document.body.appendChild(fallback);
+      fallback.select();
+      document.execCommand("copy");
+      fallback.remove();
+    }
+  };
+
+  menus.forEach((menu) => {
+    if (menu.dataset.emailMenuBound === "true") {
+      return;
+    }
+    menu.dataset.emailMenuBound = "true";
+
+    const trigger = menu.querySelector<HTMLButtonElement>("[data-email-menu-trigger]");
+    const copyButton = menu.querySelector<HTMLButtonElement>("[data-copy-email]");
+
+    trigger?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const isActive = menu.classList.contains("is-active");
+      closeAllMenus();
+      if (!isActive) {
+        menu.classList.add("is-active");
+      }
+    });
+
+    copyButton?.addEventListener("click", async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const email = copyButton.dataset.copyEmail ?? "";
+      if (email !== "") {
+        await copyEmail(email);
+      }
+      closeMenu(menu);
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    const target = event.target as Node | null;
+    if (!target) {
+      closeAllMenus();
+      return;
+    }
+    if (!target || !menus.some((menu) => menu.contains(target))) {
+      closeAllMenus();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeAllMenus();
+    }
+  });
+};
+
 const initVenuesPage = (): void => {
   initImportModal();
   initFilterForm();
   initSorting();
   initVenueDetails();
+  initEmailMenu();
 };
 
 initVenuesPage();

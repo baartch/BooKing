@@ -91,6 +91,12 @@ $composeValues = [
     'body' => '',
 ];
 
+$prefillTo = trim((string) ($_GET['to'] ?? ''));
+if ($prefillTo !== '') {
+    $composeValues['to_emails'] = normalizeEmailList($prefillTo);
+    $composeMode = true;
+}
+
 $messageLinks = [];
 
 $selectedMessageId = (int) ($_GET['message_id'] ?? 0);

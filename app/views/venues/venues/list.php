@@ -40,7 +40,25 @@ $listColumns = [
             $buttons[] = '<a href="' . htmlspecialchars((string) $venue['website']) . '" class="button is-small" target="_blank" rel="noopener noreferrer" aria-label="Website" title="Website"><span class="icon"><i class="fa-solid fa-globe"></i></span></a>';
         }
         if (!empty($venue['contact_email'])) {
-            $buttons[] = '<a href="mailto:' . htmlspecialchars((string) $venue['contact_email']) . '" class="button is-small" aria-label="Email" title="Email"><span class="icon"><i class="fa-solid fa-envelope"></i></span></a>';
+            $emailAddress = (string) $venue['contact_email'];
+            $composeUrl = BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query([
+                'tab' => 'email',
+                'compose' => 1,
+                'to' => $emailAddress
+            ]);
+            $buttons[] = '<div class="dropdown" data-email-menu>'
+                . '<div class="dropdown-trigger">'
+                . '<button type="button" class="button is-small" aria-label="Email" title="Email" aria-haspopup="true" data-email-menu-trigger>'
+                . '<span class="icon"><i class="fa-solid fa-envelope"></i></span>'
+                . '</button>'
+                . '</div>'
+                . '<div class="dropdown-menu" role="menu">'
+                . '<div class="dropdown-content">'
+                . '<a class="dropdown-item" href="' . htmlspecialchars($composeUrl) . '">Send eMail</a>'
+                . '<button type="button" class="dropdown-item" data-copy-email="' . htmlspecialchars($emailAddress) . '">Copy eMail address</button>'
+                . '</div>'
+                . '</div>'
+                . '</div>';
         }
         if (!empty($venue['contact_phone'])) {
             $buttons[] = '<a href="tel:' . htmlspecialchars((string) $venue['contact_phone']) . '" class="button is-small" aria-label="Phone" title="Phone"><span class="icon"><i class="fa-solid fa-phone"></i></span></a>';
