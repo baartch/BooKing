@@ -19,6 +19,9 @@ type LinkEditorState = {
 };
 
 const initLinkEditorModal = (modal: HTMLElement): void => {
+  if (modal.dataset.linkEditorInitialized === "1") {
+    return;
+  }
   const trigger = document.querySelector<HTMLElement>(`[data-link-editor-trigger][data-link-editor-modal-id="${modal.id}"]`);
   if (!trigger) {
     return;
@@ -27,6 +30,7 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
   if (!editor) {
     return;
   }
+  modal.dataset.linkEditorInitialized = "1";
 
   const searchUrl = editor.dataset.searchUrl ?? "";
   const saveUrl = editor.dataset.saveUrl ?? "";
@@ -302,8 +306,8 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
   });
 };
 
-const initLinkEditorModals = (): void => {
-  document.querySelectorAll<HTMLElement>("[data-link-editor-modal]").forEach((modal) => {
+const initLinkEditorModals = (scope: ParentNode = document): void => {
+  scope.querySelectorAll<HTMLElement>("[data-link-editor-modal]").forEach((modal) => {
     if (!modal.id) {
       return;
     }
@@ -317,4 +321,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.addEventListener("tab:activated", () => {
   initLinkEditorModals();
+});
+
+document.addEventListener("htmx:afterSwap", (event) => {
+  const target = (event as CustomEvent<{ target: HTMLElement }>).detail?.target ?? null;
+  if (target) {
+    initLinkEditorModals(target);
+  }
 });
