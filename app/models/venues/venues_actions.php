@@ -111,9 +111,9 @@ function handleVenueImport(array $currentUser, array $countryOptions, string $im
                 ':latitude' => $latitude,
                 ':longitude' => $longitude,
                 ':type' => normalizeOptionalString((string) ($entry['type'] ?? '')),
-                ':contact_email' => normalizeOptionalString((string) ($entry['contact_email'] ?? $entry['contactEmail'] ?? '')),
-                ':contact_phone' => normalizeOptionalString((string) ($entry['contact_phone'] ?? $entry['contactPhone'] ?? '')),
-                ':contact_person' => normalizeOptionalString((string) ($entry['contact_person'] ?? $entry['contactPerson'] ?? '')),
+                ':contact_email' => normalizeOptionalString((string) ($entry['contact_email'] ?? $entry['contactEmail'] ?? $entry['email'] ?? '')),
+                ':contact_phone' => normalizeOptionalString((string) ($entry['contact_phone'] ?? $entry['contactPhone'] ?? $entry['phone'] ?? '')),
+                ':contact_person' => normalizeOptionalString((string) ($entry['contact_person'] ?? $entry['contactPerson'] ?? $entry['person'] ?? '')),
                 ':capacity' => isset($entry['capacity']) && $entry['capacity'] !== '' ? (int) $entry['capacity'] : null,
                 ':website' => $website,
                 ':notes' => normalizeOptionalString((string) ($entry['notes'] ?? ''))

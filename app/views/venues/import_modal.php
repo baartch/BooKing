@@ -23,7 +23,7 @@
               <pre class="venue-import-example"><code>[
   {
     "name": "Example Venue",
-    "address": "Example Street 1",
+    "address": "Street 1",
     "postal_code": "8000",
     "city": "Zurich",
     "state": "ZH",
@@ -31,7 +31,10 @@
     "latitude": 47.3769,
     "longitude": 8.5417,
     "type": "Club",
-    "website": "https://example.com"
+    "website": "https://example.com",
+    "person": "Maria Example",
+    "phone": "+41 44 123 45 67",
+    "email": "hello@example.com"
   }
 ]</code></pre>
             </div>
