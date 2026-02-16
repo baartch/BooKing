@@ -181,7 +181,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                           <div><?php echo htmlspecialchars($activityLabel); ?></div>
                           <div class="is-flex is-align-items-center mt-1">
                             <span class="tag is-small"><?php echo $messageCount; ?> <?php echo $messageLabel; ?></span>
-                            <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/api/close_conversation.php" class="ml-2 is-flex is-align-items-center">
+                            <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation_close.php" class="ml-2 is-flex is-align-items-center">
                               <?php renderCsrfField(); ?>
                               <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
                               <button type="submit" class="button is-small" aria-label="Close conversation" title="Close conversation">
@@ -241,14 +241,14 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                             <div><?php echo htmlspecialchars($activityLabel); ?></div>
                             <div class="is-flex is-align-items-center mt-1">
                               <span class="tag is-small"><?php echo $messageCount; ?> <?php echo $messageLabel; ?></span>
-                              <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/api/reopen_conversation.php" class="ml-2 is-flex is-align-items-center">
+                              <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation_reopen.php" class="ml-2 is-flex is-align-items-center">
                                 <?php renderCsrfField(); ?>
                                 <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
                                 <button type="submit" class="button is-small" aria-label="Reopen conversation" title="Reopen conversation">
                                   <span class="icon"><i class="fa-solid fa-rotate-left"></i></span>
                                 </button>
                               </form>
-                              <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/api/delete_conversation.php" class="ml-2 is-flex is-align-items-center" onsubmit="return confirm('Delete this conversation?');">
+                              <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation_delete.php" class="ml-2 is-flex is-align-items-center" onsubmit="return confirm('Delete this conversation?');">
                                 <?php renderCsrfField(); ?>
                                 <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
                                 <button type="submit" class="button is-small" aria-label="Delete conversation" title="Delete conversation">
@@ -356,7 +356,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
               <span class="ml-2 has-text-weight-semibold">
                 <?php echo htmlspecialchars($isPersonalPlaceholder ? $placeholderLabel : $displayName); ?>
               </span>
-              <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/api/rm_conversation_message.php" class="ml-2" onsubmit="return confirm('Remove this email from the conversation?');">
+              <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation_rm_message.php" class="ml-2" onsubmit="return confirm('Remove this email from the conversation?');">
                 <?php renderCsrfField(); ?>
                 <input type="hidden" name="conversation_id" value="<?php echo (int) $conversationId; ?>">
                 <input type="hidden" name="message_id" value="<?php echo (int) $messageItem['id']; ?>">

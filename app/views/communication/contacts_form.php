@@ -25,7 +25,7 @@ $linkIcons = [
     </div>
   </div>
 
-  <form method="POST" action="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/communication/api/save_contact.php'); ?>">
+  <form method="POST" action="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/communication/contact_save.php'); ?>">
     <?php renderCsrfField(); ?>
     <input type="hidden" name="action" value="<?php echo $isEdit ? 'update_contact' : 'create_contact'; ?>">
     <input type="hidden" name="q" value="<?php echo htmlspecialchars($searchQuery); ?>">

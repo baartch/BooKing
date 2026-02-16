@@ -1,9 +1,9 @@
 <?php
-require_once __DIR__ . '/../../../models/auth/check.php';
-require_once __DIR__ . '/../../../models/core/database.php';
-require_once __DIR__ . '/../../../models/core/object_links.php';
-require_once __DIR__ . '/../../../models/communication/email_helpers.php';
-require_once __DIR__ . '/../../../models/communication/contacts_helpers.php';
+require_once __DIR__ . '/../../models/auth/check.php';
+require_once __DIR__ . '/../../models/core/database.php';
+require_once __DIR__ . '/../../models/core/object_links.php';
+require_once __DIR__ . '/../../models/communication/email_helpers.php';
+require_once __DIR__ . '/../../models/communication/contacts_helpers.php';
 
 header('Content-Type: application/json; charset=utf-8');
 

@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/../../../models/auth/check.php';
-require_once __DIR__ . '/../../../models/core/database.php';
-require_once __DIR__ . '/../../../models/communication/email_helpers.php';
-require_once __DIR__ . '/../../../models/core/form_helpers.php';
+require_once __DIR__ . '/../../models/auth/check.php';
+require_once __DIR__ . '/../../models/core/database.php';
+require_once __DIR__ . '/../../models/communication/email_helpers.php';
+require_once __DIR__ . '/../../models/core/form_helpers.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -12,7 +12,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 verifyCsrfToken();
 
 $userId = (int) ($currentUser['user_id'] ?? 0);
-$messageId = (int) ($_POST['message_id'] ?? 0);
 $conversationId = (int) ($_POST['conversation_id'] ?? 0);
 
 $redirectParams = [
@@ -20,7 +19,7 @@ $redirectParams = [
     'conversation_id' => $conversationId
 ];
 
-if ($messageId <= 0) {
+if ($conversationId <= 0) {
     header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
     exit;
 }
@@ -30,19 +29,19 @@ try {
     $conversation = ensureConversationAccess($pdo, $conversationId, $userId);
     if ($conversation) {
         $stmt = $pdo->prepare(
-            'UPDATE email_messages
-             SET conversation_id = NULL
-             WHERE id = :id AND conversation_id = :conversation_id'
+            'UPDATE email_conversations
+             SET is_closed = 1,
+                 closed_at = NOW()
+             WHERE id = :id'
         );
         $stmt->execute([
-            ':id' => $messageId,
-            ':conversation_id' => $conversationId
+            ':id' => $conversationId
         ]);
 
-        logAction($userId, 'conversation_email_removed', sprintf('Removed email %d from conversation %d', $messageId, $conversationId));
+        logAction($userId, 'conversation_closed', sprintf('Closed conversation %d', $conversationId));
     }
 } catch (Throwable $error) {
-    logAction($userId, 'conversation_email_remove_error', $error->getMessage());
+    logAction($userId, 'conversation_close_error', $error->getMessage());
 }
 
 header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));

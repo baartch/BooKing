@@ -7,6 +7,7 @@ PHP + TypeScript app for venue mapping with MariaDB-backed authentication, sessi
 ## Stack
 
 - PHP 8.0+
+- HTMX
 - MariaDB/MySQL
 - Leaflet + Mapbox
 - TypeScript
