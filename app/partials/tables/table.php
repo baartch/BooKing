@@ -20,7 +20,7 @@ $listRowLink = $listRowLink ?? null;
 <?php if (!$listRows): ?>
   <p><?php echo htmlspecialchars($listEmptyMessage); ?></p>
 <?php else: ?>
-  <div class="table-container">
+  <div class="table-container table-container--dropdowns">
     <table class="table is-fullwidth is-hoverable" data-list-selectable data-list-active-class="is-selected">
       <thead>
         <tr>

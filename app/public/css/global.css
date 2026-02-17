@@ -103,3 +103,7 @@
 .venue-import-example code {
   font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
+
+.table-container.table-container--dropdowns {
+  overflow: visible;
+}
