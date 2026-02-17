@@ -265,7 +265,7 @@
                 <div class="field">
                   <label for="latitude" class="label">Lat</label>
                   <div class="control">
-                    <input type="number" step="0.000001" id="latitude" name="latitude" class="input" value="<?php echo htmlspecialchars($formValues['latitude']); ?>">
+                    <input type="number" step="any" id="latitude" name="latitude" class="input" value="<?php echo htmlspecialchars($formValues['latitude']); ?>">
                   </div>
                 </div>
               </div>
@@ -274,7 +274,7 @@
                 <div class="field">
                   <label for="longitude" class="label">Lng</label>
                   <div class="control">
-                    <input type="number" step="0.000001" id="longitude" name="longitude" class="input" value="<?php echo htmlspecialchars($formValues['longitude']); ?>">
+                    <input type="number" step="any" id="longitude" name="longitude" class="input" value="<?php echo htmlspecialchars($formValues['longitude']); ?>">
                   </div>
                 </div>
               </div>

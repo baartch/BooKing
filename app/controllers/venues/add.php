@@ -269,6 +269,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $longitude = normalizeOptionalNumber($payload['longitude'], 'Longitude', $errors);
     $capacity = normalizeOptionalNumber($payload['capacity'], 'Capacity', $errors, true);
 
+    if ($latitude !== null) {
+        $latitude = round($latitude, 6);
+    }
+    if ($longitude !== null) {
+        $longitude = round($longitude, 6);
+    }
+
     if (!$errors && in_array($action, ['create', 'update'], true)) {
         try {
             $pdo = getDatabaseConnection();
