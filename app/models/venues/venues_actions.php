@@ -57,20 +57,23 @@ function handleVenueImport(array $currentUser, array $countryOptions, string $im
 
         foreach ($decoded as $index => $entry) {
             if (!is_array($entry)) {
-                $rowErrors[] = sprintf('Row %d is not a valid object.', $index + 1);
+                $name = trim((string) ($entry['name'] ?? ''));
+                $city = normalizeOptionalString((string) ($entry['city'] ?? ''));
+                $rowErrors[] = sprintf('Row %d: "%s" (%s) is not a valid object.', $index + 1, $name ?: 'Unknown', $city ?: 'Unknown city');
                 continue;
             }
 
             $name = trim((string) ($entry['name'] ?? ''));
+            $city = normalizeOptionalString((string) ($entry['city'] ?? ''));
             $state = trim((string) ($entry['state'] ?? ''));
             if ($name === '' || $state === '') {
-                $rowErrors[] = sprintf('Row %d: name and state are required.', $index + 1);
+                $rowErrors[] = sprintf('Row %d: "%s" (%s) - name and state are required.', $index + 1, $name ?: 'Unknown', $city ?: 'Unknown city');
                 continue;
             }
 
             $country = trim((string) ($entry['country'] ?? ''));
             if ($country !== '' && !in_array($country, $countryOptions, true)) {
-                $rowErrors[] = sprintf('Row %d: invalid country.', $index + 1);
+                $rowErrors[] = sprintf('Row %d: "%s" (%s) - invalid country.', $index + 1, $name, $city);
                 continue;
             }
 
@@ -80,7 +83,7 @@ function handleVenueImport(array $currentUser, array $countryOptions, string $im
             $longitude = normalizeOptionalNumber((string) ($entry['longitude'] ?? ''), 'Longitude', $rowLongitudeErrors);
 
             if ($rowLatitudeErrors || $rowLongitudeErrors) {
-                $rowErrors[] = sprintf('Row %d: invalid coordinates.', $index + 1);
+                $rowErrors[] = sprintf('Row %d: "%s" (%s) - invalid coordinates.', $index + 1, $name, $city);
                 continue;
             }
 
@@ -88,8 +91,10 @@ function handleVenueImport(array $currentUser, array $countryOptions, string $im
                 $duplicateVenue = findVenueNearCoordinates($pdo, $latitude, $longitude);
                 if ($duplicateVenue) {
                     $duplicateNotices[] = sprintf(
-                        'Row %d skipped: duplicate near %s.',
+                        'Row %d: "%s" (%s) - skipped: duplicate near %s.',
                         $index + 1,
+                        $name,
+                        $city,
                         $duplicateVenue['name'] ?? 'Unknown venue'
                     );
                     continue;
