@@ -41,6 +41,13 @@ $formValues = array_fill_keys($fields, '');
 $resetForm = false;
 $action = '';
 
+$listPage = max(1, (int) ($_GET['page'] ?? 1));
+$listFilter = trim((string) ($_GET['filter'] ?? ''));
+$listPerPage = (int) ($_GET['per_page'] ?? 0);
+if ($listPerPage < 25 || $listPerPage > 500) {
+    $listPerPage = 0;
+}
+
 $webSearchQuery = trim((string) ($_GET['web_search'] ?? ''));
 $webSearchCountry = strtoupper(trim((string) ($_GET['web_search_country'] ?? '')));
 if ($webSearchCountry === '') {
@@ -248,6 +255,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $action = $_POST['action'] ?? '';
 
+    $listPage = max(1, (int) ($_POST['page'] ?? $listPage));
+    $listFilter = trim((string) ($_POST['filter'] ?? $listFilter));
+    $listPerPage = (int) ($_POST['per_page'] ?? $listPerPage);
+    if ($listPerPage < 25 || $listPerPage > 500) {
+        $listPerPage = 0;
+    }
+
     $payload = [];
     foreach ($fields as $field) {
         $payload[$field] = trim((string) ($_POST[$field] ?? ''));
@@ -298,6 +312,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':notes' => normalizeOptionalString($payload['notes'])
             ];
 
+            $listParams = [];
+            if ($listPage > 1) {
+                $listParams['page'] = $listPage;
+            }
+            if ($listPerPage > 0) {
+                $listParams['per_page'] = $listPerPage;
+            }
+            if ($listFilter !== '') {
+                $listParams['filter'] = $listFilter;
+            }
+            $returnUrl = BASE_PATH . '/app/controllers/venues/index.php';
+            if ($listParams) {
+                $returnUrl .= '?' . http_build_query($listParams);
+            }
+
             if ($action === 'create') {
                 $stmt = $pdo->prepare(
                     'INSERT INTO venues
@@ -307,7 +336,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
                 $stmt->execute($data);
                 logAction($currentUser['user_id'] ?? null, 'venue_created', sprintf('Created venue %s', $payload['name']));
-                header('Location: ' . BASE_PATH . '/app/controllers/venues/index.php');
+                header('Location: ' . $returnUrl);
                 exit;
             }
 
@@ -338,7 +367,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                     $stmt->execute($data);
                     logAction($currentUser['user_id'] ?? null, 'venue_updated', sprintf('Updated venue %d', $venueId));
-                    header('Location: ' . BASE_PATH . '/app/controllers/venues/index.php');
+                    header('Location: ' . $returnUrl);
                     exit;
                 }
             }
@@ -377,6 +406,21 @@ if ($editVenue && !$mapboxSearchRequested) {
     foreach ($fields as $field) {
         $formValues[$field] = (string) ($editVenue[$field] ?? '');
     }
+}
+
+$cancelParams = [];
+if ($listPage > 1) {
+    $cancelParams['page'] = $listPage;
+}
+if ($listPerPage > 0) {
+    $cancelParams['per_page'] = $listPerPage;
+}
+if ($listFilter !== '') {
+    $cancelParams['filter'] = $listFilter;
+}
+$cancelUrl = BASE_PATH . '/app/controllers/venues/index.php';
+if ($cancelParams) {
+    $cancelUrl .= '?' . http_build_query($cancelParams);
 }
 
 require __DIR__ . '/../../views/venues/add.php';

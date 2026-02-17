@@ -124,7 +124,15 @@ $listRowLink = static function (array $venue) use ($venuesPage, $venuesPerPage, 
 
 $listRowActions = static function (array $venue) use ($venuesPage, $venuesPerPage, $venuesQuery, $currentUser): string {
     $venueId = (int) ($venue['id'] ?? 0);
-    $editLink = BASE_PATH . '/app/controllers/venues/add.php?edit=' . $venueId;
+    $editParams = [
+        'edit' => $venueId,
+        'page' => $venuesPage,
+        'per_page' => $venuesPerPage
+    ];
+    if ($venuesQuery !== '') {
+        $editParams['filter'] = $venuesQuery;
+    }
+    $editLink = BASE_PATH . '/app/controllers/venues/add.php?' . http_build_query($editParams);
     $detailLink = BASE_PATH . '/app/controllers/venues/index.php?' . http_build_query([
         'venue_id' => $venueId,
         'page' => $venuesPage,

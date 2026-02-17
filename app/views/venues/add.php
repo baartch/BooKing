@@ -41,6 +41,13 @@
             <?php if ($editVenue): ?>
               <input type="hidden" name="edit" value="<?php echo (int) $editVenue['id']; ?>">
             <?php endif; ?>
+            <input type="hidden" name="page" value="<?php echo (int) $listPage; ?>">
+            <?php if ($listPerPage > 0): ?>
+              <input type="hidden" name="per_page" value="<?php echo (int) $listPerPage; ?>">
+            <?php endif; ?>
+            <?php if ($listFilter !== ''): ?>
+              <input type="hidden" name="filter" value="<?php echo htmlspecialchars($listFilter); ?>">
+            <?php endif; ?>
             <input type="hidden" name="name" id="mapbox_name" value="<?php echo htmlspecialchars($formValues['name']); ?>">
             <input type="hidden" name="postal_code" id="mapbox_postal_code" value="<?php echo htmlspecialchars($formValues['postal_code']); ?>">
             <input type="hidden" name="state" id="mapbox_state" value="<?php echo htmlspecialchars($formValues['state']); ?>">
@@ -57,6 +64,13 @@
 
           <div class="box mb-4">
             <form method="GET" action="" class="columns is-multiline is-vcentered">
+              <input type="hidden" name="page" value="<?php echo (int) $listPage; ?>">
+              <?php if ($listPerPage > 0): ?>
+                <input type="hidden" name="per_page" value="<?php echo (int) $listPerPage; ?>">
+              <?php endif; ?>
+              <?php if ($listFilter !== ''): ?>
+                <input type="hidden" name="filter" value="<?php echo htmlspecialchars($listFilter); ?>">
+              <?php endif; ?>
               <div class="column is-5">
                 <label for="web_search" class="label">Search the web</label>
                 <div class="control has-icons-left">
@@ -90,6 +104,13 @@
             </form>
 
             <form method="GET" action="" class="columns is-multiline is-vcentered">
+              <input type="hidden" name="page" value="<?php echo (int) $listPage; ?>">
+              <?php if ($listPerPage > 0): ?>
+                <input type="hidden" name="per_page" value="<?php echo (int) $listPerPage; ?>">
+              <?php endif; ?>
+              <?php if ($listFilter !== ''): ?>
+                <input type="hidden" name="filter" value="<?php echo htmlspecialchars($listFilter); ?>">
+              <?php endif; ?>
               <div class="column is-5">
                 <label for="mapbox_address_input" class="label">Address</label>
                 <div class="control">
@@ -142,6 +163,13 @@
               <input type="hidden" name="action" value="<?php echo $editVenue ? 'update' : 'create'; ?>">
               <?php if ($editVenue): ?>
                 <input type="hidden" name="venue_id" value="<?php echo (int) $editVenue['id']; ?>">
+              <?php endif; ?>
+              <input type="hidden" name="page" value="<?php echo (int) $listPage; ?>">
+              <?php if ($listPerPage > 0): ?>
+                <input type="hidden" name="per_page" value="<?php echo (int) $listPerPage; ?>">
+              <?php endif; ?>
+              <?php if ($listFilter !== ''): ?>
+                <input type="hidden" name="filter" value="<?php echo htmlspecialchars($listFilter); ?>">
               <?php endif; ?>
 
               <div class="column is-12">
@@ -328,7 +356,7 @@
               <div class="column is-12">
                 <div class="buttons">
                   <button type="submit" class="button is-primary"><?php echo $editVenue ? 'Update Venue' : 'Add Venue'; ?></button>
-                  <a href="<?php echo BASE_PATH; ?>/app/controllers/venues/index.php" class="button">Cancel</a>
+                  <a href="<?php echo htmlspecialchars($cancelUrl); ?>" class="button">Cancel</a>
                 </div>
               </div>
             </form>
