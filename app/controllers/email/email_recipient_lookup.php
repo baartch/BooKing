@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../../../models/auth/check.php';
-require_once __DIR__ . '/../../../models/core/database.php';
-require_once __DIR__ . '/../../../models/communication/email_helpers.php';
+require_once __DIR__ . '/../../models/auth/check.php';
+require_once __DIR__ . '/../../models/core/database.php';
+require_once __DIR__ . '/../../models/communication/email_helpers.php';
 
 $query = trim((string) ($_GET['q'] ?? ''));
 
