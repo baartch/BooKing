@@ -114,6 +114,13 @@ const initListSelection = (): void => {
       return;
     }
 
+    const ignoreElement = target.closest('[data-list-ignore]');
+    if (ignoreElement) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     const interactiveElement = target.closest('a, button, input, select, textarea, label');
     if (!interactiveElement && row.hasAttribute('data-row-link')) {
       event.preventDefault();

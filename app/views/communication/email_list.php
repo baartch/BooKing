@@ -83,7 +83,7 @@
                     <div class="is-size-7 email-meta-right">
                       <div><?php echo htmlspecialchars($dateLabel); ?></div>
                       <div class="email-delete-action">
-                        <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/email/delete.php">
+                        <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/email/delete.php" data-list-ignore>
                           <?php renderCsrfField(); ?>
                           <input type="hidden" name="email_id" value="<?php echo (int) $row['id']; ?>">
                           <input type="hidden" name="mailbox_id" value="<?php echo (int) $selectedMailbox['id']; ?>">
@@ -92,7 +92,7 @@
                           <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
                           <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
                           <input type="hidden" name="tab" value="email">
-                          <button type="submit" class="button is-small" aria-label="Move email to trash" title="Move email to trash">
+                          <button type="submit" class="button is-small" aria-label="Move email to trash" title="Move email to trash" onclick="event.stopPropagation();">
                             <span class="icon"><i class="fa-solid fa-trash"></i></span>
                           </button>
                         </form>
