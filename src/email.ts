@@ -193,6 +193,57 @@ const initLinkList = (): void => {
   renderLinkItems();
 };
 
+const initQuoteToggle = (): void => {
+  const detailBlocks = document.querySelectorAll<HTMLElement>(
+    "[data-email-detail]",
+  );
+  if (!detailBlocks.length) {
+    return;
+  }
+
+  detailBlocks.forEach((detailBlock) => {
+    const body = detailBlock.querySelector<HTMLElement>(
+      "[data-email-detail-body]",
+    );
+    const toggle = detailBlock.querySelector<HTMLButtonElement>(
+      "[data-email-quote-toggle]",
+    );
+    if (!body || !toggle) {
+      return;
+    }
+
+    const updateLabel = (isCollapsed: boolean): void => {
+      toggle.innerHTML = isCollapsed
+        ? '<span class="icon is-small"><i class="fa-solid fa-quote-left"></i></span>'
+        : '<span class="icon is-small"><i class="fa-solid fa-quote-right"></i></span>';
+      toggle.dataset.emailQuoteState = isCollapsed ? "collapsed" : "expanded";
+    };
+
+    const hasQuotes = body.querySelector("blockquote[type=\"cite\"]");
+    const toggleWrapper = toggle.closest<HTMLElement>(
+      ".email-detail-quote-toggle",
+    );
+    if (!hasQuotes) {
+      toggleWrapper?.classList.add("is-hidden");
+      return;
+    }
+
+    toggleWrapper?.classList.remove("is-hidden");
+    body.classList.add("is-quotes-collapsed");
+    updateLabel(true);
+
+    if (toggle.dataset.quoteToggleBound === "true") {
+      return;
+    }
+    toggle.dataset.quoteToggleBound = "true";
+
+    toggle.addEventListener("click", () => {
+      const collapsed = body.classList.toggle("is-quotes-collapsed");
+      updateLabel(collapsed);
+    });
+  });
+};
+
 const initEmailValidation = (): void => {
   const inputs = Array.from(
     document.querySelectorAll<HTMLInputElement>("[data-email-input]"),
@@ -437,12 +488,14 @@ const initRecipientLookup = (): void => {
 
 const bindWysiEditor = (): void => {
   initWysiEditor();
+  initQuoteToggle();
   initEmailValidation();
   initRecipientLookup();
   initLinkList();
   initMailboxSwitch();
   document.addEventListener("tab:activated", () => {
     initWysiEditor();
+    initQuoteToggle();
     initEmailValidation();
     initRecipientLookup();
     initLinkList();
@@ -452,4 +505,14 @@ const bindWysiEditor = (): void => {
 
 document.addEventListener("DOMContentLoaded", () => {
   bindWysiEditor();
+});
+
+document.addEventListener("htmx:afterSwap", (event) => {
+  const target = (event as CustomEvent<{ target: HTMLElement }>).detail?.target ?? null;
+  if (!target) {
+    return;
+  }
+  if (target.matches("[data-email-detail]") || target.querySelector("[data-email-detail]")) {
+    initQuoteToggle();
+  }
 });

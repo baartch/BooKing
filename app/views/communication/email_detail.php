@@ -12,7 +12,7 @@ $composeMode = $composeMode ?? false;
 $templates = $templates ?? [];
 $selectedMailbox = $selectedMailbox ?? null;
 
-$wrapperAttributes = 'class="' . htmlspecialchars($emailDetailWrapperClass) . '"';
+$wrapperAttributes = 'class="' . htmlspecialchars($emailDetailWrapperClass) . '" data-email-detail';
 if ($emailDetailWrapperId) {
     $wrapperAttributes .= ' id="' . htmlspecialchars($emailDetailWrapperId) . '"';
 }
@@ -246,7 +246,7 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
     </div>
 
     <!-- Body -->
-    <div class="email-detail-body content">
+    <div class="email-detail-body content" data-email-detail-body>
       <?php
         $messageBody = (string) ($message['body_html'] ?? '');
         if ($messageBody === '') {
@@ -258,6 +258,11 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
             echo formatPlainEmailBodyWithQuotes($messageBody);
         }
       ?>
+    </div>
+    <div class="email-detail-quote-toggle is-hidden">
+      <button type="button" class="button is-small is-light" data-email-quote-toggle data-email-quote-state="collapsed">
+        <span class="icon is-small"><i class="fa-solid fa-quote-left"></i></span>
+      </button>
     </div>
 
     <!-- Attachments -->

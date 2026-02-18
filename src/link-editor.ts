@@ -26,6 +26,10 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
   if (!trigger) {
     return;
   }
+
+  trigger.addEventListener("click", (event) => {
+    event.preventDefault();
+  });
   const editor = modal.querySelector<HTMLElement>("[data-link-editor]");
   if (!editor) {
     return;
