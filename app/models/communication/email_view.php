@@ -227,16 +227,19 @@ if ($pdo && $selectedMailbox && $prefillMessageId > 0) {
             if ($quoteDate === '') {
                 $quoteDate = 'unknown date';
             }
-            $quoteHeader = '<p>On ' . htmlspecialchars($quoteDate) . ', ' . $senderLabel . ' wrote:</p>';
+            $quoteHeader = '<div class="moz-cite-prefix">On ' . htmlspecialchars($quoteDate) . ', ' . $senderLabel . ' wrote:<br></div>';
+            $messageId = trim((string) ($prefillMessage['message_id'] ?? ''));
+            $citeAttribute = $messageId !== '' ? ' cite="' . htmlspecialchars($messageId) . '"' : '';
+            $quoteBlock = '<blockquote type="cite"' . $citeAttribute . '>' . $quotedBody . '</blockquote>';
 
             if ($replyId > 0) {
                 $composeValues['body'] = '<p><br></p>'
                     . $quoteHeader
-                    . '<blockquote><p>' . $quotedBody . '</p></blockquote>';
+                    . $quoteBlock;
             } elseif ($forwardId > 0) {
                 $composeValues['body'] = '<p><br></p>'
                     . $quoteHeader
-                    . '<blockquote><p>' . $quotedBody . '</p></blockquote>';
+                    . $quoteBlock;
             }
             $composeMode = true;
         }

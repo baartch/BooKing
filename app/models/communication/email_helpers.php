@@ -398,6 +398,43 @@ function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int 
     return $results;
 }
 
+function formatPlainEmailBodyWithQuotes(string $body): string
+{
+    $lines = preg_split("/\r\n|\r|\n/", $body) ?: [];
+    $html = '';
+    $depth = 0;
+
+    foreach ($lines as $line) {
+        $lineDepth = 0;
+        if (preg_match('/^\s*(>+)(\s?)/', $line, $matches)) {
+            $lineDepth = strlen($matches[1]);
+        }
+
+        $content = preg_replace('/^\s*>+\s?/', '', $line);
+        while ($depth < $lineDepth) {
+            $html .= '<blockquote type="cite">';
+            $depth++;
+        }
+        while ($depth > $lineDepth) {
+            $html .= '</blockquote>';
+            $depth--;
+        }
+
+        if ($content === '') {
+            $html .= '<br>';
+        } else {
+            $html .= htmlspecialchars($content) . '<br>';
+        }
+    }
+
+    while ($depth > 0) {
+        $html .= '</blockquote>';
+        $depth--;
+    }
+
+    return $html;
+}
+
 function getEmailFolderOptions(): array
 {
     return [

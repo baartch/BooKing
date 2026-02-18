@@ -255,7 +255,7 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
         if ($messageBody !== '' && $messageBody !== strip_tags($messageBody)) {
             echo $messageBody;
         } else {
-            echo nl2br(htmlspecialchars($messageBody));
+            echo formatPlainEmailBodyWithQuotes($messageBody);
         }
       ?>
     </div>

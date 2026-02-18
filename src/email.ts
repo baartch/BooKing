@@ -8,7 +8,11 @@ const initWysiEditor = (): void => {
   }
 
   const wysi = window as typeof window & {
-    Wysi?: (options: { el: string; darkMode?: boolean }) => void;
+    Wysi?: (options: {
+      el: string;
+      darkMode?: boolean;
+      customTags?: Array<{ tags: string[]; attributes?: string[] }>;
+    }) => void;
   };
 
   if (typeof wysi.Wysi !== "function") {
@@ -25,6 +29,12 @@ const initWysiEditor = (): void => {
   wysi.Wysi({
     el: "#email_body",
     darkMode: isDarkMode,
+    customTags: [
+      {
+        tags: ["blockquote"],
+        attributes: ["type", "cite"],
+      },
+    ],
   });
 };
 
