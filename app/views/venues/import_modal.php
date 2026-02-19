@@ -19,7 +19,7 @@
               </div>
             </div>
             <div class="column is-5">
-              <p class="help">Example JSON</p>
+              <p class="help">Example JSON ("url" or "website" is accepted)</p>
               <pre class="venue-import-example"><code>[
   {
     "name": "Example Venue",
