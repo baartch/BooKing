@@ -67,7 +67,13 @@
               $displayName = $folder === 'inbox'
                   ? trim(($row['from_name'] ?? '') !== '' ? $row['from_name'] : ($row['from_email'] ?? 'Unknown'))
                   : trim((string) ($row['to_emails'] ?? ''));
-              $dateValue = $folder === 'inbox' ? ($row['received_at'] ?? $row['created_at']) : ($row['sent_at'] ?? $row['created_at']);
+              if ($folder === 'inbox') {
+                  $dateValue = $row['received_at'] ?? $row['created_at'];
+              } elseif ($folder === 'drafts') {
+                  $dateValue = $row['sent_at'] ?? $row['scheduled_at'] ?? $row['created_at'];
+              } else {
+                  $dateValue = $row['sent_at'] ?? $row['created_at'];
+              }
               $dateLabel = $dateValue ? date('Y-m-d H:i', strtotime((string) $dateValue)) : '';
               $isUnread = !$row['is_read'] && $folder === 'inbox';
               $itemClass = $isUnread ? 'email-list-item warning' : 'email-list-item';

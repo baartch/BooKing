@@ -288,6 +288,163 @@ const initMailboxSwitch = (): void => {
   });
 };
 
+const initSendMenu = (): void => {
+  const dropdown = document.querySelector<HTMLElement>("[data-email-send-menu]");
+  const trigger = dropdown?.querySelector<HTMLElement>(
+    ".dropdown-trigger button",
+  );
+
+  if (!dropdown || !trigger) {
+    return;
+  }
+
+  if (dropdown.dataset.emailSendMenuBound === "true") {
+    return;
+  }
+  dropdown.dataset.emailSendMenuBound = "true";
+
+  const closeMenu = (): void => {
+    dropdown.classList.remove("is-active");
+  };
+
+  trigger.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    dropdown.classList.toggle("is-active");
+  });
+
+  dropdown.querySelectorAll<HTMLElement>(".dropdown-item").forEach((item) => {
+    item.addEventListener("click", () => {
+      closeMenu();
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!dropdown.contains(event.target as Node)) {
+      closeMenu();
+    }
+  });
+};
+
+const initScheduleModal = (): void => {
+  if (document.body.dataset.scheduleModalBound === "true") {
+    return;
+  }
+  document.body.dataset.scheduleModalBound = "true";
+
+  const resolveModalState = () => {
+    const modal = document.querySelector<HTMLElement>(
+      "[data-email-schedule-modal]",
+    );
+    const form = document.querySelector<HTMLFormElement>(
+      "[data-email-compose-form]",
+    );
+    if (!modal || !form) {
+      return null;
+    }
+
+    const dateField = form.querySelector<HTMLInputElement>(
+      "[name=\"schedule_date\"]",
+    );
+    const timeField = form.querySelector<HTMLInputElement>(
+      "[name=\"schedule_time\"]",
+    );
+    const datePicker = modal.querySelector<HTMLInputElement>(
+      "[data-email-schedule-date]",
+    );
+    const timePicker = modal.querySelector<HTMLInputElement>(
+      "[data-email-schedule-time]",
+    );
+
+    if (!dateField || !timeField || !datePicker || !timePicker) {
+      return null;
+    }
+
+    return {
+      modal,
+      form,
+      dateField,
+      timeField,
+      datePicker,
+      timePicker,
+    };
+  };
+
+  const openModal = (): void => {
+    const state = resolveModalState();
+    if (!state) {
+      return;
+    }
+    state.datePicker.value = state.dateField.value;
+    state.timePicker.value = state.timeField.value;
+    state.datePicker.classList.remove("is-danger");
+    state.timePicker.classList.remove("is-danger");
+    state.modal.classList.add("is-active");
+  };
+
+  const closeModal = (): void => {
+    const state = resolveModalState();
+    if (!state) {
+      return;
+    }
+    state.modal.classList.remove("is-active");
+  };
+
+  document.addEventListener("click", (event) => {
+    const target = (event.target as HTMLElement | null)?.closest(
+      "[data-email-schedule-trigger]",
+    );
+    if (!target) {
+      return;
+    }
+    event.preventDefault();
+    openModal();
+  });
+
+  document.addEventListener("click", (event) => {
+    const target = (event.target as HTMLElement | null)?.closest(
+      "[data-email-schedule-close]",
+    );
+    if (!target) {
+      return;
+    }
+    event.preventDefault();
+    closeModal();
+  });
+
+  document.addEventListener("click", (event) => {
+    const target = (event.target as HTMLElement | null)?.closest(
+      "[data-email-schedule-submit]",
+    );
+    if (!target) {
+      return;
+    }
+    event.preventDefault();
+
+    const state = resolveModalState();
+    if (!state) {
+      return;
+    }
+
+    state.dateField.value = state.datePicker.value;
+    state.timeField.value = state.timePicker.value;
+
+    if (!state.dateField.value || !state.timeField.value) {
+      state.datePicker.classList.toggle("is-danger", !state.datePicker.value);
+      state.timePicker.classList.toggle("is-danger", !state.timePicker.value);
+      return;
+    }
+
+    const actionField = document.createElement("input");
+    actionField.type = "hidden";
+    actionField.name = "action";
+    actionField.value = "schedule_send";
+    state.form.appendChild(actionField);
+    state.form.submit();
+    actionField.remove();
+  });
+};
+
 const initRecipientLookup = (): void => {
   const lookups = Array.from(
     document.querySelectorAll<HTMLElement>("[data-email-lookup]"),
@@ -493,6 +650,8 @@ const bindWysiEditor = (): void => {
   initRecipientLookup();
   initLinkList();
   initMailboxSwitch();
+  initSendMenu();
+  initScheduleModal();
   document.addEventListener("tab:activated", () => {
     initWysiEditor();
     initQuoteToggle();
@@ -500,6 +659,8 @@ const bindWysiEditor = (): void => {
     initRecipientLookup();
     initLinkList();
     initMailboxSwitch();
+    initSendMenu();
+    initScheduleModal();
   });
 };
 
@@ -514,5 +675,12 @@ document.addEventListener("htmx:afterSwap", (event) => {
   }
   if (target.matches("[data-email-detail]") || target.querySelector("[data-email-detail]")) {
     initQuoteToggle();
+  }
+  if (
+    target.matches("[data-email-compose-form]") ||
+    target.querySelector("[data-email-compose-form]")
+  ) {
+    initSendMenu();
+    initScheduleModal();
   }
 });

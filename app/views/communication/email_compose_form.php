@@ -1,6 +1,6 @@
 <?php
 ?>
-<form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/email/send.php">
+<form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/email/send.php" data-email-compose-form>
   <?php renderCsrfField(); ?>
   <?php if (!empty($composeConversationId)): ?>
     <input type="hidden" name="conversation_id" value="<?php echo (int) $composeConversationId; ?>">
@@ -38,6 +38,8 @@
   <input type="hidden" name="page" value="<?php echo (int) $page; ?>">
   <input type="hidden" name="tab" value="email">
   <input type="hidden" name="draft_id" value="<?php echo $message && ($message['folder'] ?? '') === 'drafts' ? (int) $message['id'] : ''; ?>">
+  <input type="hidden" name="schedule_date" value="<?php echo htmlspecialchars($composeValues['schedule_date'] ?? ''); ?>">
+  <input type="hidden" name="schedule_time" value="<?php echo htmlspecialchars($composeValues['schedule_time'] ?? ''); ?>">
 
   <div class="field">
     <div class="control has-icons-left has-icons-right">
@@ -146,11 +148,59 @@
   </div>
   <div class="field">
     <div class="control">
-      <div class="buttons has-addons">
-        <button type="submit" class="button is-primary" name="action" value="send_email">Send</button>
-        <button type="submit" class="button" name="action" value="save_draft">Save Draft</button>
-        <a href="<?php echo htmlspecialchars($composeCancelUrl ?? ($baseEmailUrl . '?' . http_build_query($baseQuery))); ?>" class="button">Cancel</a>
+      <div class="field has-addons">
+        <div class="control">
+          <div class="dropdown" data-email-send-menu>
+            <div class="dropdown-trigger">
+              <button type="button" class="button is-primary" aria-haspopup="true" aria-controls="send-email-menu">
+                <span>Send</span>
+                <span class="icon is-small"><i class="fa-solid fa-angle-down"></i></span>
+              </button>
+            </div>
+            <div class="dropdown-menu" id="send-email-menu" role="menu">
+              <div class="dropdown-content">
+                <button type="submit" class="dropdown-item" name="action" value="send_email">Immediately</button>
+                <button type="button" class="dropdown-item" data-email-schedule-trigger>On schedule</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="control">
+          <button type="submit" class="button" name="action" value="save_draft">Save Draft</button>
+        </div>
+        <div class="control">
+          <a href="<?php echo htmlspecialchars($composeCancelUrl ?? ($baseEmailUrl . '?' . http_build_query($baseQuery))); ?>" class="button">Cancel</a>
+        </div>
       </div>
     </div>
   </div>
 </form>
+
+<div class="modal" data-email-schedule-modal>
+  <div class="modal-background" data-email-schedule-close></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Schedule send</p>
+      <button class="delete" aria-label="close" data-email-schedule-close></button>
+    </header>
+    <section class="modal-card-body">
+      <div class="field">
+        <label class="label" for="email_schedule_date">Date</label>
+        <div class="control">
+          <input class="input" type="date" id="email_schedule_date" name="schedule_date" data-email-schedule-date>
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" for="email_schedule_time">Time</label>
+        <div class="control">
+          <input class="input" type="time" id="email_schedule_time" name="schedule_time" data-email-schedule-time>
+        </div>
+      </div>
+      <p class="help" data-email-schedule-help>Select when to send this email.</p>
+    </section>
+    <footer class="modal-card-foot">
+      <button type="button" class="button" data-email-schedule-close>Cancel</button>
+      <button type="button" class="button is-primary" data-email-schedule-submit>Schedule</button>
+    </footer>
+  </div>
+</div>

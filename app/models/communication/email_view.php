@@ -43,6 +43,8 @@ if ($noticeKey === 'sent') {
     $notice = 'Email deleted.';
 } elseif ($noticeKey === 'send_failed') {
     $notice = 'Email could not be sent. Saved as draft.';
+} elseif ($noticeKey === 'scheduled') {
+    $notice = 'Email scheduled and saved to drafts.';
 }
 
 try {
@@ -89,6 +91,8 @@ $composeValues = [
     'bcc_emails' => '',
     'subject' => '',
     'body' => '',
+    'schedule_date' => '',
+    'schedule_time' => ''
 ];
 
 $prefillTo = trim((string) ($_GET['to'] ?? ''));
@@ -129,6 +133,11 @@ if ($pdo && $selectedMailbox && $selectedMessageId > 0) {
             $composeValues['body'] = (string) ($message['body_html'] ?? '');
             if ($composeValues['body'] === '') {
                 $composeValues['body'] = (string) ($message['body'] ?? '');
+            }
+            $scheduledAt = (string) ($message['scheduled_at'] ?? '');
+            if ($scheduledAt !== '') {
+                $composeValues['schedule_date'] = date('Y-m-d', strtotime($scheduledAt));
+                $composeValues['schedule_time'] = date('H:i', strtotime($scheduledAt));
             }
             $composeMode = true;
         } elseif ($message && !(bool) $message['is_read']) {
@@ -305,7 +314,7 @@ if ($pdo && $selectedMailbox) {
         }
 
         $listSql = 'SELECT id, subject, from_name, from_email, to_emails, is_read,
-                    received_at, sent_at, created_at
+                    received_at, sent_at, scheduled_at, created_at
              FROM email_messages
              WHERE ' . $scopeSql . ' AND folder = :folder ' . $filterSql .
             ' ORDER BY ' . $sortColumn . ' ' . $sortDirection .

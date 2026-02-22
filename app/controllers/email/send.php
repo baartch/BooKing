@@ -24,8 +24,23 @@ $bccEmails = normalizeEmailList((string) ($_POST['bcc_emails'] ?? ''));
 $subject = trim((string) ($_POST['subject'] ?? ''));
 $body = trim((string) ($_POST['body'] ?? ''));
 $startNewConversation = !empty($_POST['start_new_conversation']);
+$scheduleDate = trim((string) ($_POST['schedule_date'] ?? ''));
+$scheduleTime = trim((string) ($_POST['schedule_time'] ?? ''));
 $linkItems = $_POST['link_items'] ?? [];
 $linkItems = is_array($linkItems) ? $linkItems : [];
+
+$parseScheduledAt = static function (string $date, string $time): ?string {
+    if ($date === '' || $time === '') {
+        return null;
+    }
+
+    $timestamp = strtotime($date . ' ' . $time);
+    if ($timestamp === false) {
+        return null;
+    }
+
+    return date('Y-m-d H:i:s', $timestamp);
+};
 
 $redirectParams = [
     'tab' => 'email',
@@ -68,7 +83,16 @@ try {
         $redirectParams['mailbox_id'] = $conversation['mailbox_id'] ?? $mailboxId;
     }
 
-    if ($action === 'save_draft') {
+    $scheduledAt = $parseScheduledAt($scheduleDate, $scheduleTime);
+    $isScheduleAction = $action === 'schedule_send';
+
+    if ($action === 'save_draft' || $isScheduleAction) {
+        if ($isScheduleAction && (!$scheduledAt || $toEmails === '')) {
+            $redirectParams['notice'] = 'send_failed';
+            header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
+            exit;
+        }
+
         if ($draftId > 0) {
             $stmt = $pdo->prepare(
                 'UPDATE email_messages
@@ -81,6 +105,7 @@ try {
                      cc_emails = :cc_emails,
                      bcc_emails = :bcc_emails,
                      conversation_id = :conversation_id,
+                     scheduled_at = :scheduled_at,
                      updated_at = NOW()
                  WHERE id = :id
                    AND mailbox_id = :mailbox_id
@@ -96,6 +121,7 @@ try {
                 ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
                 ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
                 ':conversation_id' => $conversationId > 0 ? $conversationId : null,
+                ':scheduled_at' => $isScheduleAction ? $scheduledAt : null,
                 ':id' => $draftId,
                 ':mailbox_id' => $mailbox['id']
             ]);
@@ -122,13 +148,15 @@ try {
                     createObjectLink($pdo, 'email', $draftId, (string) $type, (int) $id, $linkTeamId, $linkUserId);
                 }
             }
-            logAction($userId, 'email_draft_updated', sprintf('Updated draft %d in mailbox %d', $draftId, $mailboxId));
+            $logActionKey = $isScheduleAction ? 'email_scheduled_updated' : 'email_draft_updated';
+            $logActionLabel = $isScheduleAction ? 'Scheduled email updated' : 'Updated draft';
+            logAction($userId, $logActionKey, sprintf('%s %d in mailbox %d', $logActionLabel, $draftId, $mailboxId));
         } else {
             $stmt = $pdo->prepare(
                 'INSERT INTO email_messages
-                 (mailbox_id, team_id, user_id, conversation_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, created_at)
+                 (mailbox_id, team_id, user_id, conversation_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, created_at, scheduled_at)
                  VALUES
-                 (:mailbox_id, :team_id, :user_id, :conversation_id, "drafts", :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW())'
+                 (:mailbox_id, :team_id, :user_id, :conversation_id, "drafts", :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), :scheduled_at)'
             );
             $stmt->execute([
                 ':mailbox_id' => $mailbox['id'],
@@ -143,7 +171,8 @@ try {
                 ':to_emails' => $toEmails !== '' ? $toEmails : null,
                 ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
                 ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
-                ':created_by' => $userId
+                ':created_by' => $userId,
+                ':scheduled_at' => $isScheduleAction ? $scheduledAt : null
             ]);
             $draftId = (int) $pdo->lastInsertId();
             if ($draftId > 0 && $linkItems) {
@@ -155,9 +184,11 @@ try {
                     createObjectLink($pdo, 'email', $draftId, (string) $type, (int) $id, $linkTeamId, $linkUserId);
                 }
             }
-            logAction($userId, 'email_draft_saved', sprintf('Saved draft in mailbox %d', $mailboxId));
+            $logActionKey = $isScheduleAction ? 'email_scheduled_saved' : 'email_draft_saved';
+            $logActionLabel = $isScheduleAction ? 'Scheduled email saved' : 'Saved draft';
+            logAction($userId, $logActionKey, sprintf('%s in mailbox %d', $logActionLabel, $mailboxId));
         }
-        $redirectParams['notice'] = 'draft_saved';
+        $redirectParams['notice'] = $isScheduleAction ? 'scheduled' : 'draft_saved';
         $redirectParams['folder'] = 'drafts';
         header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
         exit;

@@ -1,6 +1,9 @@
 <?php
 $emailDetailWrapperTag = $emailDetailWrapperTag ?? 'section';
 $emailDetailWrapperClass = $emailDetailWrapperClass ?? 'column email-column email-detail-column';
+if (!empty($composeMode)) {
+    $emailDetailWrapperClass .= ' email-compose-column';
+}
 $emailDetailWrapperId = $emailDetailWrapperId ?? null;
 $emailDetailIncludeLinkEditor = $emailDetailIncludeLinkEditor ?? true;
 $emailDetailShowActions = $emailDetailShowActions ?? true;

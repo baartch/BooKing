@@ -120,6 +120,10 @@
   overflow: hidden;
 }
 
+.email-compose-column {
+  overflow: visible;
+}
+
 .email-detail-empty {
   display: flex;
   flex-direction: column;
