@@ -19,11 +19,37 @@ if ($activeVenue) {
     $detailActionsHtml = '<a class="button is-small" href="' . htmlspecialchars($editLink) . '">Edit</a>';
 
     $contactValue = (string) ($activeVenue['contact_person'] ?? '');
-    if (!empty($activeVenue['contact_email'])) {
-        $contactValue .= ($contactValue !== '' ? "\n" : '') . $activeVenue['contact_email'];
+    $contactLines = [];
+    if ($contactValue !== '') {
+        $contactLines[] = htmlspecialchars($contactValue);
     }
-    if (!empty($activeVenue['contact_phone'])) {
-        $contactValue .= ($contactValue !== '' ? "\n" : '') . $activeVenue['contact_phone'];
+
+    $emailValue = trim((string) ($activeVenue['contact_email'] ?? ''));
+    if ($emailValue !== '') {
+        $composeUrl = BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query([
+            'tab' => 'email',
+            'compose' => 1,
+            'to' => $emailValue
+        ]);
+        $contactLines[] = '<a href="' . htmlspecialchars($composeUrl) . '">' . htmlspecialchars($emailValue) . '</a>';
+    }
+
+    $phoneValue = trim((string) ($activeVenue['contact_phone'] ?? ''));
+    if ($phoneValue !== '') {
+        $contactLines[] = htmlspecialchars($phoneValue);
+    }
+
+    $contactValue = $contactLines ? implode('<br>', $contactLines) : '';
+
+    $websiteValue = trim((string) ($activeVenue['website'] ?? ''));
+    $websiteLabel = $websiteValue;
+    if ($websiteValue !== '') {
+        if (!preg_match('/^https?:\/\//i', $websiteValue)) {
+            $websiteValue = 'https://' . $websiteValue;
+        }
+        $websiteLabel = '<a href="' . htmlspecialchars($websiteValue) . '" target="_blank" rel="noopener noreferrer">'
+            . htmlspecialchars(trim((string) ($activeVenue['website'] ?? '')))
+            . '</a>';
     }
 
     $detailRows = [
@@ -32,8 +58,8 @@ if ($activeVenue) {
         buildDetailRow('State', (string) ($activeVenue['state'] ?? '')),
         buildDetailRow('Postal Code', (string) ($activeVenue['postal_code'] ?? '')),
         buildDetailRow('Country', (string) ($activeVenue['country'] ?? '')),
-        buildDetailRow('Contact', $contactValue),
-        buildDetailRow('Website', (string) ($activeVenue['website'] ?? '')),
+        buildDetailRow('Contact', $contactValue, true),
+        buildDetailRow('Website', $websiteLabel, $websiteValue !== ''),
         buildDetailRow('Notes', (string) ($activeVenue['notes'] ?? '')),
         buildDetailRow('Created', (string) ($activeVenue['created_at'] ?? '')),
         buildDetailRow('Updated', (string) ($activeVenue['updated_at'] ?? ''))
