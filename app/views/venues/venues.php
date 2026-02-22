@@ -5,8 +5,8 @@ $baseUrl = BASE_PATH . '/app/controllers/venues/index.php';
 $mode = (string) ($_GET['mode'] ?? '');
 $selectedVenueId = (int) ($_GET['venue_id'] ?? 0);
 
-$activeVenue = null;
-if ($selectedVenueId > 0) {
+$activeVenue = $selectedVenue ?? null;
+if (!$activeVenue && $selectedVenueId > 0) {
     foreach ($venues as $venue) {
         if ((int) ($venue['id'] ?? 0) === $selectedVenueId) {
             $activeVenue = $venue;

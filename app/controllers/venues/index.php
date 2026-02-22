@@ -21,6 +21,8 @@ if ($pageSizeOverride >= 25 && $pageSizeOverride <= 500) {
     $pageSize = $pageSizeOverride;
 }
 $page = max(1, (int) ($_GET['page'] ?? 1));
+$selectedVenueId = (int) ($_GET['venue_id'] ?? 0);
+$selectedVenue = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken();
@@ -71,6 +73,13 @@ try {
     $totalVenues = $result['totalVenues'];
     $totalPages = $result['totalPages'];
     $page = $result['page'];
+
+    if ($selectedVenueId > 0) {
+        $selectedVenue = fetchVenueById($selectedVenueId);
+        if (!$selectedVenue) {
+            $errors[] = 'Selected venue not found.';
+        }
+    }
 } catch (Throwable $error) {
     $venues = [];
     $totalVenues = 0;

@@ -113,6 +113,20 @@ function fetchVenuesWithPagination(string $filter, int $page, int $pageSize): ar
     ];
 }
 
+function fetchVenueById(int $venueId): ?array
+{
+    if ($venueId <= 0) {
+        return null;
+    }
+
+    $pdo = getDatabaseConnection();
+    $stmt = $pdo->prepare('SELECT * FROM venues WHERE id = :id');
+    $stmt->execute([':id' => $venueId]);
+    $venue = $stmt->fetch();
+
+    return $venue ?: null;
+}
+
 function findVenueNearCoordinates(PDO $pdo, float $latitude, float $longitude, float $radiusMeters = 100.0): ?array
 {
     $earthRadius = 6371000.0;

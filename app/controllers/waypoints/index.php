@@ -17,7 +17,7 @@ try {
         $venues = [];
     } else {
         $stmt = $pdo->prepare(
-            'SELECT name, website, address, postal_code, city, state, country, type, contact_email,
+            'SELECT id, name, website, address, postal_code, city, state, country, type, contact_email,
                     contact_phone, contact_person, capacity, notes, latitude, longitude
              FROM venues
              WHERE latitude IS NOT NULL AND longitude IS NOT NULL
@@ -47,6 +47,14 @@ try {
         $name = $xml->createElement('name');
         $name->appendChild($xml->createTextNode((string) $venue['name']));
         $wpt->appendChild($name);
+
+        if (!empty($venue['id'])) {
+            $link = $xml->createElement('link');
+            $link->setAttribute('href', BASE_PATH . '/app/controllers/venues/index.php?' . http_build_query([
+                'venue_id' => (int) $venue['id']
+            ]));
+            $wpt->appendChild($link);
+        }
 
         if (!empty($venue['website'])) {
             $url = $xml->createElement('url');
