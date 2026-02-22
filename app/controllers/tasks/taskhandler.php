@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../models/communication/email_helpers.php';
 require_once __DIR__ . '/../../models/communication/email_schedule.php';
 require_once __DIR__ . '/../../models/core/object_links.php';
-require_once __DIR__ . '/task_handler_helpers.php';
+require_once __DIR__ . '/../../models/communication/mail_fetch_helpers.php';
 require_once __DIR__ . '/schedule_send.php';
 require_once __DIR__ . '/fetch_emails.php';
 require_once __DIR__ . '/cleanup.php';

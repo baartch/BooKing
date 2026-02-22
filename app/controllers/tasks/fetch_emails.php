@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../models/communication/mail_fetch_helpers.php';
 
 function runFetchEmailsTask(PDO $pdo): void
 {
