@@ -52,12 +52,27 @@ if ($activeVenue) {
             . '</a>';
     }
 
+    $latitude = $activeVenue['latitude'] ?? null;
+    $longitude = $activeVenue['longitude'] ?? null;
+    $coordinateLabel = '';
+    if (!empty($latitude) && !empty($longitude)) {
+        $lat = number_format((float) $latitude, 6, '.', '');
+        $lng = number_format((float) $longitude, 6, '.', '');
+        $mapLink = BASE_PATH . '/app/controllers/map/index.php?' . http_build_query([
+            'lat' => $lat,
+            'lng' => $lng,
+            'zoom' => 13
+        ]);
+        $coordinateLabel = '<a href="' . htmlspecialchars($mapLink) . '">' . htmlspecialchars($lat . ', ' . $lng) . '</a>';
+    }
+
     $detailRows = [
         buildDetailRow('Address', (string) ($activeVenue['address'] ?? '')),
         buildDetailRow('City', (string) ($activeVenue['city'] ?? '')),
         buildDetailRow('State', (string) ($activeVenue['state'] ?? '')),
         buildDetailRow('Postal Code', (string) ($activeVenue['postal_code'] ?? '')),
         buildDetailRow('Country', (string) ($activeVenue['country'] ?? '')),
+        buildDetailRow('Coordinates', $coordinateLabel, $coordinateLabel !== ''),
         buildDetailRow('Contact', $contactValue, true),
         buildDetailRow('Website', $websiteLabel, $websiteValue !== ''),
         buildDetailRow('Notes', (string) ($activeVenue['notes'] ?? '')),
