@@ -1,3 +1,48 @@
+.map-page {
+  position: relative;
+  overflow: hidden;
+}
+
+.map-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.map-page .hero-body,
+.map-page .container {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.map-overlay {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.map-background {
+  z-index: 1;
+  pointer-events: auto;
+  cursor: default;
+}
+
+.map-page .leaflet-marker-icon,
+.map-page .leaflet-marker-shadow,
+.map-page .leaflet-interactive {
+  cursor: pointer;
+}
+
+.map-page .button,
+.map-page .input,
+.map-page .select select,
+.map-page .dropdown-item {
+  cursor: pointer;
+}
+
 .map-search-dropdown {
   position: relative;
 }

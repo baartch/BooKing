@@ -8,36 +8,38 @@
         '<script type="module" src="' . BASE_PATH . '/app/public/js/map.js" defer></script>'
     ]
 ]); ?>
-      <section class="hero is-fullheight">
+      <section class="hero is-fullheight map-page">
+        <div id="mapid" class="map-background" data-mapbox-token="<?php echo htmlspecialchars($mapboxToken); ?>" data-team-id="<?php echo (int) $requestedTeamId; ?>"></div>
         <div class="hero-body is-flex is-flex-direction-column">
           <div class="container is-fluid is-flex is-flex-direction-column is-flex-grow-1">
-            <div class="level mb-4">
-              <div class="level-left">
-                <h1 class="title is-4">Map</h1>
-              </div>
-              <div class="level-right">
-                <div class="field has-addons">
-                  <div class="control has-icons-left is-expanded">
-                    <div class="dropdown is-fullwidth map-search-dropdown" data-search-dropdown>
-                      <div class="dropdown-trigger">
-                        <input class="input" type="text" id="waypoint-search" placeholder="Search for venues...">
-                        <span class="icon is-left"><i class="fa-solid fa-magnifying-glass"></i></span>
-                      </div>
-                      <div id="search-results" class="dropdown-menu is-hidden" role="menu">
-                        <div class="dropdown-content"></div>
+            <div class="map-overlay">
+              <div class="level mb-4">
+                <div class="level-left">
+                  <h1 class="title is-4">Map</h1>
+                </div>
+                <div class="level-right">
+                  <div class="field has-addons">
+                    <div class="control has-icons-left is-expanded">
+                      <div class="dropdown is-fullwidth map-search-dropdown" data-search-dropdown>
+                        <div class="dropdown-trigger">
+                          <input class="input" type="text" id="waypoint-search" placeholder="Search for venues...">
+                          <span class="icon is-left"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        </div>
+                        <div id="search-results" class="dropdown-menu is-hidden" role="menu">
+                          <div class="dropdown-content"></div>
+                        </div>
                       </div>
                     </div>
+                    <p class="control">
+                      <span class="button is-static">Ctrl+K</span>
+                    </p>
                   </div>
-                  <p class="control">
-                    <span class="button is-static">Ctrl+K</span>
-                  </p>
                 </div>
               </div>
+              <div id="map-zoom-hint" class="notification is-hidden" role="status" aria-live="polite" aria-hidden="true">
+                Zoom in to load venues.
+              </div>
             </div>
-            <div id="map-zoom-hint" class="notification is-hidden" role="status" aria-live="polite" aria-hidden="true">
-              Zoom in to load venues.
-            </div>
-            <div id="mapid" class="box is-flex-grow-1" data-mapbox-token="<?php echo htmlspecialchars($mapboxToken); ?>" data-team-id="<?php echo (int) $requestedTeamId; ?>"></div>
           </div>
         </div>
       </section>
