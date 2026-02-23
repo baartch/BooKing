@@ -20,7 +20,12 @@ try {
     $pdo = getDatabaseConnection();
     runScheduleSendTask($pdo);
     runFetchEmailsTask($pdo);
-    runCleanupTask($pdo, $argv ?? []);
+
+    $now = new DateTime('now');
+    $cleanupTime = $now->format('H:i');
+    if ($cleanupTime === '03:00') {
+        runCleanupTask($pdo, $argv ?? []);
+    }
 } catch (Throwable $error) {
     echo "Task handler failed: " . $error->getMessage() . "\n";
     exit(1);
