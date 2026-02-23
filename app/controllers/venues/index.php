@@ -6,6 +6,8 @@ require_once __DIR__ . '/../../models/core/htmx_class.php';
 require_once __DIR__ . '/../../models/core/layout.php';
 require_once __DIR__ . '/../../models/venues/venues_actions.php';
 require_once __DIR__ . '/../../models/venues/venues_repository.php';
+require_once __DIR__ . '/../../models/venues/venue_ratings.php';
+require_once __DIR__ . '/../../models/communication/team_helpers.php';
 
 $errors = [];
 $notice = '';
@@ -14,6 +16,8 @@ $importPayload = '';
 $showImportModal = false;
 $action = '';
 $filter = trim((string) ($_GET['filter'] ?? ''));
+$requestedTeamId = (int) ($_GET['team_id'] ?? 0);
+$selectedVenueId = (int) ($_GET['venue_id'] ?? 0);
 $pageSize = (int) ($currentUser['venues_page_size'] ?? 25);
 $pageSize = max(25, min(500, $pageSize));
 $pageSizeOverride = isset($_GET['per_page']) ? (int) $_GET['per_page'] : 0;
@@ -21,13 +25,18 @@ if ($pageSizeOverride >= 25 && $pageSizeOverride <= 500) {
     $pageSize = $pageSizeOverride;
 }
 $page = max(1, (int) ($_GET['page'] ?? 1));
-$selectedVenueId = (int) ($_GET['venue_id'] ?? 0);
 $selectedVenue = null;
+$activeTeamId = 0;
+$userTeams = [];
+$teamRatings = [];
+$selectedVenueRating = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken();
 
     $action = $_POST['action'] ?? '';
+    $selectedVenueId = (int) ($_POST['venue_id'] ?? $selectedVenueId);
+    $requestedTeamId = (int) ($_POST['team_id'] ?? $requestedTeamId);
 
     if ($action === 'import') {
         $importPayload = trim((string) ($_POST['import_json'] ?? ''));
@@ -41,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'delete') {
         $venueId = (int) ($_POST['venue_id'] ?? 0);
         $result = handleVenueDelete($currentUser, $venueId);
+        $selectedVenueId = 0;
         $errors = array_merge($errors, $result['errors'] ?? []);
         if (!empty($result['notice'])) {
             $notice = $result['notice'];
@@ -67,17 +77,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+if ($requestedTeamId <= 0) {
+    $requestedTeamId = (int) ($_GET['team_id'] ?? 0);
+}
+
 try {
+    $pdo = getDatabaseConnection();
+    $userId = (int) ($currentUser['user_id'] ?? 0);
+    $activeTeamId = resolveActiveTeamId($pdo, $userId, $requestedTeamId);
+    $userTeams = fetchUserTeams($pdo, $userId);
+
     $result = fetchVenuesWithPagination($filter, $page, $pageSize);
     $venues = $result['venues'];
     $totalVenues = $result['totalVenues'];
     $totalPages = $result['totalPages'];
     $page = $result['page'];
 
+    if ($activeTeamId > 0 && $venues) {
+        $venueIds = array_map('intval', array_column($venues, 'id'));
+        $teamRatings = fetchVenueRatingsForList($pdo, $venueIds, $activeTeamId);
+    }
+
     if ($selectedVenueId > 0) {
         $selectedVenue = fetchVenueById($selectedVenueId);
         if (!$selectedVenue) {
             $errors[] = 'Selected venue not found.';
+        } elseif ($activeTeamId > 0) {
+            $selectedVenueRating = fetchVenueRatingForTeam($pdo, $selectedVenueId, $activeTeamId);
         }
     }
 } catch (Throwable $error) {

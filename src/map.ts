@@ -34,6 +34,7 @@ interface Waypoint {
   url: string;
   detailUrl: string;
   description: string;
+  rating: string;
   lat: number;
   lon: number;
   marker: any;
@@ -53,6 +54,11 @@ const MAPBOX_ACCESS_TOKEN = (() => {
   const container = document.getElementById(MAP_CONTAINER_ID) as HTMLElement | null;
   return container?.dataset.mapboxToken ?? '';
 })();
+
+const MAP_TEAM_ID = (() => {
+  const container = document.getElementById(MAP_CONTAINER_ID) as HTMLElement | null;
+  return container?.dataset.teamId ?? '';
+})();
 const SEARCH_INPUT_ID = 'waypoint-search';
 const SEARCH_RESULTS_ID = 'search-results';
 const WAYPOINTS_URL = 'app/controllers/waypoints/index.php';
@@ -66,7 +72,10 @@ const DEFAULT_LAT = 50.394512;
 const DEFAULT_LNG = 11.480713;
 const DEFAULT_ZOOM = 6;
 const FOCUS_ZOOM = 15;
-const MARKER_COLOR = 60;
+const MARKER_COLOR_DEFAULT = [0, 60, 30];
+const MARKER_COLOR_A = [35, 155, 90];
+const MARKER_COLOR_B = [205, 170, 0];
+const MARKER_COLOR_C = [210, 130, 20];
 const MIN_FETCH_ZOOM = 9;
 const URL_LAT_PARAM = 'lat';
 const URL_LNG_PARAM = 'lng';
@@ -90,19 +99,36 @@ const markerHtmlStyles = `
   transform: rotate(45deg);
   border: 1px solid #FFFFFF;`;
 
-const createMarkerIcon = (): any => L.divIcon({
-  className: 'my-custom-pin',
-  iconAnchor: [0, 24],
-  labelAnchor: [-6, 0],
-  popupAnchor: [0, -36],
-  html: `<span style="background-color: rgb(0, ${MARKER_COLOR}, ${MARKER_COLOR / 2}); ${markerHtmlStyles}" />`
-});
+const markerColorByRating = (rating: string): number[] => {
+  switch (rating) {
+    case "A":
+      return MARKER_COLOR_A;
+    case "B":
+      return MARKER_COLOR_B;
+    case "C":
+      return MARKER_COLOR_C;
+    default:
+      return MARKER_COLOR_DEFAULT;
+  }
+};
+
+const createMarkerIcon = (rating: string): any => {
+  const [r, g, b] = markerColorByRating(rating);
+  return L.divIcon({
+    className: 'my-custom-pin',
+    iconAnchor: [0, 24],
+    labelAnchor: [-6, 0],
+    popupAnchor: [0, -36],
+    html: `<span style="background-color: rgb(${r}, ${g}, ${b}); ${markerHtmlStyles}" />`
+  });
+};
 
 const parseWaypointElement = (wpt: Element): Waypoint | null => {
   const name = wpt.getElementsByTagName('name')[0]?.textContent?.trim() || 'Unknown venue';
   const url = wpt.getElementsByTagName('url')[0]?.textContent?.trim() || '';
   const detailUrl = wpt.getElementsByTagName('link')[0]?.getAttribute('href')?.trim() || '';
   const description = wpt.getElementsByTagName('desc')[0]?.textContent?.trim() || '';
+  const rating = wpt.getAttribute('rating')?.trim() || '';
   const lat = Number(wpt.getAttribute('lat'));
   const lon = Number(wpt.getAttribute('lon'));
 
@@ -115,6 +141,7 @@ const parseWaypointElement = (wpt: Element): Waypoint | null => {
     url,
     detailUrl,
     description,
+    rating,
     lat,
     lon,
     marker: null,
@@ -224,6 +251,10 @@ const buildWaypointsUrl = (): string | null => {
     maxLng: bounds.getEast().toFixed(6)
   });
 
+  if (MAP_TEAM_ID) {
+    params.set("team_id", MAP_TEAM_ID);
+  }
+
   return `${WAYPOINTS_URL}?${params.toString()}`;
 };
 
@@ -243,8 +274,6 @@ async function parseWaypoints(): Promise<void> {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(await response.text(), 'text/xml');
   const waypointNodes = Array.from(xmlDoc.getElementsByTagName('wpt'));
-  const markerIcon = createMarkerIcon();
-
   clearWaypoints();
   waypointNodes.forEach((node) => {
     const parsed = parseWaypointElement(node);
@@ -252,6 +281,7 @@ async function parseWaypoints(): Promise<void> {
       return;
     }
 
+    const markerIcon = createMarkerIcon(parsed.rating);
     const waypoint = createWaypointMarker(parsed, markerIcon);
     allWaypoints.push(waypoint);
   });

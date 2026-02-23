@@ -10,8 +10,11 @@ require_once __DIR__ . '/../../../models/core/list_helpers.php';
 
 $mapIcon = '<span class="icon"><i class="fa-solid fa-location-dot"></i></span>';
 
+$teamRatings = $teamRatings ?? [];
+$activeTeamId = (int) ($activeTeamId ?? 0);
+
 $listColumns = [
-    buildListColumn('Marker Icon', null, static function (array $venue) use ($mapIcon): string {
+    buildListColumn('Marker Icon', null, static function (array $venue) use ($mapIcon, $activeTeamId): string {
         $latitude = $venue['latitude'] ?? null;
         $longitude = $venue['longitude'] ?? null;
         if (empty($latitude) || empty($longitude)) {
@@ -22,12 +25,26 @@ $listColumns = [
         $mapLink = BASE_PATH . '/app/controllers/map/index.php?' . http_build_query([
             'lat' => $lat,
             'lng' => $lng,
-            'zoom' => 13
+            'zoom' => 13,
+            'team_id' => $activeTeamId > 0 ? $activeTeamId : null
         ]);
 
         return '<a href="' . htmlspecialchars($mapLink) . '" class="icon" aria-label="Open map" title="Open map">' . $mapIcon . '</a>';
     }, true),
-    buildListColumn('Name', 'name'),
+    buildListColumn('Name', null, static function (array $venue) use ($teamRatings): string {
+        $name = htmlspecialchars((string) ($venue['name'] ?? ''));
+        $rating = $teamRatings[(int) ($venue['id'] ?? 0)] ?? '';
+        if ($rating === '') {
+            return $name;
+        }
+        $ratingClass = match ($rating) {
+            'A' => 'venue-rating-a',
+            'B' => 'venue-rating-b',
+            'C' => 'venue-rating-c',
+            default => 'venue-rating-default'
+        };
+        return $name . ' <span class="tag ' . $ratingClass . '">' . htmlspecialchars($rating) . '</span>';
+    }, true),
     buildListColumn('City', null, static function (array $venue): string {
         return (string) ($venue['city'] ?? '');
     }),
@@ -101,17 +118,18 @@ $listColumns = [
 $listRows = $venues;
 $listEmptyMessage = 'No venues found.';
 
-$listRowLink = static function (array $venue) use ($venuesPage, $venuesPerPage, $venuesQuery): array {
+$listRowLink = static function (array $venue) use ($venuesPage, $venuesPerPage, $venuesQuery, $activeTeamId): array {
     $venueId = (int) ($venue['id'] ?? 0);
     $params = [
         'venue_id' => $venueId,
         'page' => $venuesPage,
-        'per_page' => $venuesPerPage
+        'per_page' => $venuesPerPage,
+        'team_id' => $activeTeamId > 0 ? $activeTeamId : null
     ];
     if ($venuesQuery !== '') {
         $params['filter'] = $venuesQuery;
     }
-    $detailLink = BASE_PATH . '/app/controllers/venues/index.php?' . http_build_query($params);
+    $detailLink = BASE_PATH . '/app/controllers/venues/index.php?' . http_build_query(array_filter($params, static fn($value) => $value !== null && $value !== ''));
 
     return [
         'href' => $detailLink,
@@ -122,7 +140,7 @@ $listRowLink = static function (array $venue) use ($venuesPage, $venuesPerPage, 
     ];
 };
 
-$listRowActions = static function (array $venue) use ($venuesPage, $venuesPerPage, $venuesQuery, $currentUser): string {
+$listRowActions = static function (array $venue) use ($venuesPage, $venuesPerPage, $venuesQuery, $currentUser, $activeTeamId): string {
     $venueId = (int) ($venue['id'] ?? 0);
     $editParams = [
         'edit' => $venueId,
@@ -133,12 +151,13 @@ $listRowActions = static function (array $venue) use ($venuesPage, $venuesPerPag
         $editParams['filter'] = $venuesQuery;
     }
     $editLink = BASE_PATH . '/app/controllers/venues/add.php?' . http_build_query($editParams);
-    $detailLink = BASE_PATH . '/app/controllers/venues/index.php?' . http_build_query([
+    $detailLink = BASE_PATH . '/app/controllers/venues/index.php?' . http_build_query(array_filter([
         'venue_id' => $venueId,
         'page' => $venuesPage,
         'per_page' => $venuesPerPage,
-        'filter' => $venuesQuery !== '' ? $venuesQuery : null
-    ]);
+        'filter' => $venuesQuery !== '' ? $venuesQuery : null,
+        'team_id' => $activeTeamId > 0 ? $activeTeamId : null
+    ], static fn($value) => $value !== null && $value !== ''));
     ob_start();
     ?>
       <div class="buttons are-small is-justify-content-flex-end">
@@ -150,6 +169,9 @@ $listRowActions = static function (array $venue) use ($venuesPage, $venuesPerPag
             <?php renderCsrfField(); ?>
             <input type="hidden" name="action" value="delete">
             <input type="hidden" name="venue_id" value="<?php echo $venueId; ?>">
+            <?php if ($activeTeamId > 0): ?>
+              <input type="hidden" name="team_id" value="<?php echo (int) $activeTeamId; ?>">
+            <?php endif; ?>
             <button type="submit" class="button" aria-label="Delete venue" title="Delete venue">
               <span class="icon"><i class="fa-solid fa-trash"></i></span>
             </button>

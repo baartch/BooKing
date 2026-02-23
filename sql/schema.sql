@@ -226,6 +226,22 @@ CREATE TABLE email_templates (
     UNIQUE KEY uniq_team_template_name (team_id, name)
 );
 
+CREATE TABLE venue_ratings (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    venue_id INT NOT NULL,
+    team_id INT NOT NULL,
+    rating ENUM('A', 'B', 'C') NOT NULL,
+    rated_by INT DEFAULT NULL,
+    rated_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    UNIQUE KEY uniq_team_venue_rating (team_id, venue_id),
+    INDEX idx_venue_ratings_team (team_id),
+    INDEX idx_venue_ratings_venue (venue_id),
+    FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE,
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (rated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
 CREATE TABLE rate_limits (
     id INT PRIMARY KEY AUTO_INCREMENT,
     identifier VARCHAR(255) NOT NULL COMMENT 'IP address or user identifier',

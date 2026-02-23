@@ -107,3 +107,23 @@
 .table-container.table-container--dropdowns {
   overflow: visible;
 }
+
+.venue-rating-a {
+  background-color: #21b358;
+  color: #fff;
+}
+
+.venue-rating-b {
+  background-color: #f4d03f;
+  color: #1d1d1d;
+}
+
+.venue-rating-c {
+  background-color: #f29d38;
+  color: #1d1d1d;
+}
+
+.venue-rating-default {
+  background-color: color-mix(in srgb, currentColor 18%, transparent);
+  color: currentColor;
+}

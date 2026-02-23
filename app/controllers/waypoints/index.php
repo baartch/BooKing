@@ -12,19 +12,24 @@ try {
     $maxLat = isset($_GET['maxLat']) ? (float) $_GET['maxLat'] : null;
     $minLng = isset($_GET['minLng']) ? (float) $_GET['minLng'] : null;
     $maxLng = isset($_GET['maxLng']) ? (float) $_GET['maxLng'] : null;
+    $teamId = isset($_GET['team_id']) ? (int) $_GET['team_id'] : 0;
 
     if ($minLat === null || $maxLat === null || $minLng === null || $maxLng === null) {
         $venues = [];
     } else {
         $stmt = $pdo->prepare(
-            'SELECT id, name, website, address, postal_code, city, state, country, type, contact_email,
-                    contact_phone, contact_person, capacity, notes, latitude, longitude
-             FROM venues
-             WHERE latitude IS NOT NULL AND longitude IS NOT NULL
-               AND latitude BETWEEN :minLat AND :maxLat
-               AND longitude BETWEEN :minLng AND :maxLng'
+            'SELECT v.id, v.name, v.website, v.address, v.postal_code, v.city, v.state, v.country, v.type,
+                    v.contact_email, v.contact_phone, v.contact_person, v.capacity, v.notes, v.latitude, v.longitude,
+                    vr.rating
+             FROM venues v
+             LEFT JOIN venue_ratings vr
+               ON vr.venue_id = v.id AND vr.team_id = :team_id
+             WHERE v.latitude IS NOT NULL AND v.longitude IS NOT NULL
+               AND v.latitude BETWEEN :minLat AND :maxLat
+               AND v.longitude BETWEEN :minLng AND :maxLng'
         );
         $stmt->execute([
+            ':team_id' => $teamId,
             ':minLat' => $minLat,
             ':maxLat' => $maxLat,
             ':minLng' => $minLng,
@@ -43,6 +48,9 @@ try {
         $wpt = $xml->createElement('wpt');
         $wpt->setAttribute('lat', (string) $venue['latitude']);
         $wpt->setAttribute('lon', (string) $venue['longitude']);
+        if (!empty($venue['rating'])) {
+            $wpt->setAttribute('rating', (string) $venue['rating']);
+        }
 
         $name = $xml->createElement('name');
         $name->appendChild($xml->createTextNode((string) $venue['name']));
