@@ -680,6 +680,11 @@ document.addEventListener("htmx:afterSwap", (event) => {
     target.matches("[data-email-compose-form]") ||
     target.querySelector("[data-email-compose-form]")
   ) {
+    initWysiEditor();
+    initEmailValidation();
+    initRecipientLookup();
+    initLinkList();
+    initMailboxSwitch();
     initSendMenu();
     initScheduleModal();
   }

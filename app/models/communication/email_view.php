@@ -263,9 +263,10 @@ if ($pdo && $selectedMailbox) {
         $templates = fetchTeamTemplates($pdo, $userId, (int) $selectedMailbox['team_id']);
         if ($templateId > 0) {
             $template = ensureTemplateAccess($pdo, $templateId, $userId);
-            if ($template && (int) $template['team_id'] === (int) $selectedMailbox['team_id']) {
-                $composeValues['subject'] = $composeValues['subject'] !== '' ? $composeValues['subject'] : (string) ($template['subject'] ?? '');
-                $composeValues['body'] = $composeValues['body'] !== '' ? $composeValues['body'] : (string) ($template['body'] ?? '');
+            $mailboxTeamId = (int) ($selectedMailbox['team_id'] ?? 0);
+            if ($template && ($mailboxTeamId === 0 || (int) $template['team_id'] === $mailboxTeamId)) {
+                $composeValues['subject'] = (string) ($template['subject'] ?? '');
+                $composeValues['body'] = (string) ($template['body'] ?? '');
                 $composeMode = true;
             }
         }
