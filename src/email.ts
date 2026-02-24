@@ -288,6 +288,44 @@ const initMailboxSwitch = (): void => {
   });
 };
 
+const initRecipientToggle = (): void => {
+  const toggleButton = document.querySelector<HTMLButtonElement>(
+    "[data-email-recipient-toggle-button]",
+  );
+  const extraFields = document.querySelector<HTMLElement>(
+    "[data-email-recipient-extra]",
+  );
+
+  if (!toggleButton || !extraFields) {
+    return;
+  }
+
+  if (toggleButton.dataset.recipientToggleBound === "true") {
+    return;
+  }
+  toggleButton.dataset.recipientToggleBound = "true";
+
+  const updateState = (isExpanded: boolean): void => {
+    extraFields.classList.toggle("is-hidden", !isExpanded);
+    toggleButton.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+    const icon = toggleButton.querySelector("i");
+    if (icon) {
+      icon.classList.toggle("fa-chevron-down", !isExpanded);
+      icon.classList.toggle("fa-chevron-up", isExpanded);
+    }
+  };
+
+  const hasPrefill = extraFields.querySelector<HTMLInputElement>(
+    "input[value]:not([value=''])",
+  );
+  updateState(Boolean(hasPrefill));
+
+  toggleButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    updateState(extraFields.classList.contains("is-hidden"));
+  });
+};
+
 const initSendMenu = (): void => {
   const dropdown = document.querySelector<HTMLElement>("[data-email-send-menu]");
   const trigger = dropdown?.querySelector<HTMLElement>(
@@ -650,6 +688,7 @@ const bindWysiEditor = (): void => {
   initRecipientLookup();
   initLinkList();
   initMailboxSwitch();
+  initRecipientToggle();
   initSendMenu();
   initScheduleModal();
   document.addEventListener("tab:activated", () => {
@@ -659,6 +698,7 @@ const bindWysiEditor = (): void => {
     initRecipientLookup();
     initLinkList();
     initMailboxSwitch();
+    initRecipientToggle();
     initSendMenu();
     initScheduleModal();
   });
@@ -685,6 +725,7 @@ document.addEventListener("htmx:afterSwap", (event) => {
     initRecipientLookup();
     initLinkList();
     initMailboxSwitch();
+    initRecipientToggle();
     initSendMenu();
     initScheduleModal();
   }

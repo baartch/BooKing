@@ -72,6 +72,23 @@
   right: 0;
 }
 
+.email-recipient-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.email-recipient-row .input {
+  flex: 1;
+}
+
+.email-recipient-toggle {
+  border: none;
+}
+
+.email-recipient-extra.is-hidden {
+  display: none;
+}
+
 .email-recipient-badge {
   background-color: color-mix(in srgb, currentColor 18%, transparent);
   color: currentColor;
