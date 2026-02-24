@@ -40,6 +40,8 @@
                 Zoom in to load venues.
               </div>
             </div>
+            <div class="map-detail-panel is-hidden" data-map-venue-detail></div>
+            </div>
           </div>
         </div>
       </section>

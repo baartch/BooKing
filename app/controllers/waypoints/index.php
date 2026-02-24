@@ -48,6 +48,9 @@ try {
         $wpt = $xml->createElement('wpt');
         $wpt->setAttribute('lat', (string) $venue['latitude']);
         $wpt->setAttribute('lon', (string) $venue['longitude']);
+        if (!empty($venue['id'])) {
+            $wpt->setAttribute('venue_id', (string) $venue['id']);
+        }
         if (!empty($venue['rating'])) {
             $wpt->setAttribute('rating', (string) $venue['rating']);
         }

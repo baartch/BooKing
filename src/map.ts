@@ -30,6 +30,7 @@ const loadLeaflet: LeafletLoader = (): Promise<void> => {
 };
 
 interface Waypoint {
+  id: number;
   name: string;
   url: string;
   detailUrl: string;
@@ -49,6 +50,10 @@ interface SearchResult {
   website: string;
 }
 
+type VenueDetailResponse = {
+  html: string;
+};
+
 const MAP_CONTAINER_ID = 'mapid';
 const MAPBOX_ACCESS_TOKEN = (() => {
   const container = document.getElementById(MAP_CONTAINER_ID) as HTMLElement | null;
@@ -62,6 +67,7 @@ const MAP_TEAM_ID = (() => {
 const SEARCH_INPUT_ID = 'waypoint-search';
 const SEARCH_RESULTS_ID = 'search-results';
 const WAYPOINTS_URL = 'app/controllers/waypoints/index.php';
+const VENUE_DETAIL_URL = 'app/controllers/venues/detail.php';
 const SEARCH_RESULT_CLASS = 'dropdown-item';
 const SELECTED_CLASS = 'is-active';
 const DROPDOWN_ACTIVE_CLASS = 'is-active';
@@ -129,6 +135,7 @@ const parseWaypointElement = (wpt: Element): Waypoint | null => {
   const detailUrl = wpt.getElementsByTagName('link')[0]?.getAttribute('href')?.trim() || '';
   const description = wpt.getElementsByTagName('desc')[0]?.textContent?.trim() || '';
   const rating = wpt.getAttribute('rating')?.trim() || '';
+  const id = Number(wpt.getAttribute('venue_id'));
   const lat = Number(wpt.getAttribute('lat'));
   const lon = Number(wpt.getAttribute('lon'));
 
@@ -137,6 +144,7 @@ const parseWaypointElement = (wpt: Element): Waypoint | null => {
   }
 
   return {
+    id: Number.isNaN(id) ? 0 : id,
     name,
     url,
     detailUrl,
@@ -157,21 +165,15 @@ const createWaypointMarker = (waypoint: Waypoint, icon: any): Waypoint => {
         .map(line => `<div>${line}</div>`)
         .join('')}</div>`
     : '';
-  const nameHtml = waypoint.detailUrl
-    ? `<a href="${waypoint.detailUrl}">${waypoint.name}</a>`
-    : waypoint.name;
-  const popup = marker.bindPopup(`
-    <div>
-      <h3>${nameHtml}</h3>
-      ${waypoint.url ? `<div><a href="${waypoint.url}" target="_blank" rel="noopener noreferrer">${waypoint.url}</a></div>` : ''}
-      ${descriptionHtml}
-    </div>
-  `);
+  marker.on("click", (event: { originalEvent?: Event }) => {
+    event.originalEvent?.stopPropagation();
+    void fetchVenueDetail(waypoint.id);
+  });
 
   return {
     ...waypoint,
     marker,
-    popup
+    popup: null
   };
 };
 
@@ -182,7 +184,6 @@ const focusWaypoint = (
   searchDropdown?: HTMLElement | null
 ): void => {
   map.setView([waypoint.lat, waypoint.lon], FOCUS_ZOOM);
-  waypoint.popup.openPopup();
 
   if (searchInput) {
     searchInput.value = waypoint.name;
@@ -216,6 +217,54 @@ const clearWaypoints = (): void => {
   allWaypoints.length = 0;
   if (markerLayer) {
     markerLayer.clearLayers();
+  }
+};
+
+const getVenueDetailContainer = (): HTMLElement | null =>
+  document.querySelector<HTMLElement>("[data-map-venue-detail]");
+
+const hideVenueDetail = (): void => {
+  const container = getVenueDetailContainer();
+  if (!container) {
+    return;
+  }
+  container.classList.add("is-hidden");
+  container.innerHTML = "";
+};
+
+const showVenueDetail = (html: string): void => {
+  const container = getVenueDetailContainer();
+  if (!container) {
+    return;
+  }
+  container.innerHTML = html;
+  container.classList.remove("is-hidden");
+};
+
+const fetchVenueDetail = async (venueId: number): Promise<void> => {
+  const container = getVenueDetailContainer();
+  if (!container || venueId <= 0) {
+    return;
+  }
+  const params = new URLSearchParams({ venue_id: String(venueId) });
+  if (MAP_TEAM_ID) {
+    params.set("team_id", MAP_TEAM_ID);
+  }
+
+  try {
+    const response = await fetch(`${VENUE_DETAIL_URL}?${params.toString()}`);
+    if (!response.ok) {
+      hideVenueDetail();
+      return;
+    }
+    const data = (await response.json()) as VenueDetailResponse;
+    if (!data.html) {
+      hideVenueDetail();
+      return;
+    }
+    showVenueDetail(data.html);
+  } catch {
+    hideVenueDetail();
   }
 };
 
@@ -284,6 +333,11 @@ async function parseWaypoints(): Promise<void> {
     const markerIcon = createMarkerIcon(parsed.rating);
     const waypoint = createWaypointMarker(parsed, markerIcon);
     allWaypoints.push(waypoint);
+  });
+
+  map.off("click");
+  map.on("click", () => {
+    hideVenueDetail();
   });
 }
 

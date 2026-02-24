@@ -24,6 +24,15 @@
   pointer-events: auto;
 }
 
+.map-detail-panel,
+.map-detail-panel .button,
+.map-detail-panel .select select,
+.map-detail-panel .input,
+.map-detail-panel a,
+.map-detail-panel .dropdown-item {
+  pointer-events: auto;
+}
+
 .map-background {
   z-index: 1;
   pointer-events: auto;
@@ -41,6 +50,21 @@
 .map-page .select select,
 .map-page .dropdown-item {
   cursor: pointer;
+}
+
+.map-detail-panel {
+  margin-top: 1rem;
+  max-width: 40vw;
+  margin-left: auto;
+  pointer-events: auto;
+}
+
+.map-detail-panel .box {
+  margin-bottom: 0;
+}
+
+.map-detail-panel.is-hidden {
+  display: none;
 }
 
 .map-search-dropdown {
