@@ -76,7 +76,7 @@
               </div>
 
               <div class="column is-12">
-                <div class="field">
+                <div class="field template-editor">
                   <label class="label" for="template_body">Body</label>
                   <div class="control">
                     <textarea id="template_body" name="body" class="textarea" rows="8"><?php echo htmlspecialchars($formValues['body']); ?></textarea>

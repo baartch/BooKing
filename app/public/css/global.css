@@ -101,7 +101,9 @@
 }
 
 .venue-import-example code {
-  font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family:
+    "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 }
 
 .table-container.table-container--dropdowns {
@@ -126,4 +128,17 @@
 .venue-rating-default {
   background-color: color-mix(in srgb, currentColor 18%, transparent);
   color: currentColor;
+}
+
+.wysi-wrapper {
+  resize: vertical;
+  overflow: auto;
+  min-height: 240px;
+  height: 20em;
+}
+
+.wysi-wrapper .wysi-editor {
+  flex: 1 1 auto;
+  max-height: none;
+  height: 100%;
 }
