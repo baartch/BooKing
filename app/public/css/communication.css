@@ -221,6 +221,11 @@
   color: color-mix(in srgb, currentColor 60%, transparent);
 }
 
+.wysi-wrapper {
+  resize: vertical;
+  overflow: auto;
+}
+
 .email-detail-body blockquote[type="cite"],
 .wysi-editor blockquote[type="cite"] {
   margin: 0 0 0.75rem;
