@@ -55,10 +55,6 @@ $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
             </a>
           </li>
         <?php endif; ?>
-      </ul>
-    </nav>
-    <nav class="menu">
-      <ul class="menu-list">
         <li>
           <a href="<?php echo BASE_PATH; ?>/app/controllers/profile/index.php" class="<?php echo $isProfile ? 'is-active' : ''; ?>" aria-label="Profile">
             <span class="icon"><i class="fa-solid fa-user"></i></span>

@@ -134,7 +134,49 @@
   resize: vertical;
   overflow: auto;
   min-height: 240px;
-  height: 20em;
+  max-height: 20em;
+}
+
+@media (orientation: portrait) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .app-layout > aside {
+    width: 100%;
+  }
+
+  .app-layout > aside .is-fullheight {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .app-layout > aside nav {
+    flex: 1 1 auto;
+  }
+
+  .app-layout > aside .menu-list {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  .app-layout > aside .menu-list li {
+    margin: 0;
+  }
+
+  .app-layout > aside .menu-list a {
+    padding: 0.25rem 0.4rem;
+  }
+
+  .app-layout > aside .menu-list .icon {
+    font-size: 0.85rem;
+  }
 }
 
 .wysi-wrapper .wysi-editor {
