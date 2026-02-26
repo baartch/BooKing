@@ -233,6 +233,10 @@ CREATE TABLE team_tasks (
     description TEXT DEFAULT NULL,
     priority ENUM('A', 'B', 'C') NOT NULL DEFAULT 'B',
     due_date DATE DEFAULT NULL,
+    is_template TINYINT(1) NOT NULL DEFAULT 0,
+    trigger_day TINYINT(2) DEFAULT NULL,
+    trigger_month TINYINT(2) DEFAULT NULL,
+    trigger_last_year INT DEFAULT NULL,
     created_by INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -240,7 +244,8 @@ CREATE TABLE team_tasks (
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_team_tasks_team (team_id),
     INDEX idx_team_tasks_priority (team_id, priority),
-    INDEX idx_team_tasks_due (team_id, due_date)
+    INDEX idx_team_tasks_due (team_id, due_date),
+    INDEX idx_team_tasks_trigger (team_id, is_template, trigger_month, trigger_day)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
 CREATE TABLE venue_ratings (

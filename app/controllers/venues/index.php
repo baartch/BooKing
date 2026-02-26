@@ -7,10 +7,12 @@ require_once __DIR__ . '/../../models/core/layout.php';
 require_once __DIR__ . '/../../models/venues/venues_actions.php';
 require_once __DIR__ . '/../../models/venues/venues_repository.php';
 require_once __DIR__ . '/../../models/venues/venue_ratings.php';
+require_once __DIR__ . '/../../models/venues/venue_task_triggers.php';
 require_once __DIR__ . '/../../models/communication/team_helpers.php';
 
 $errors = [];
 $notice = '';
+$triggerNotice = '';
 $countryOptions = ['DE', 'CH', 'AT', 'IT', 'FR'];
 $importPayload = '';
 $showImportModal = false;
@@ -30,6 +32,18 @@ $activeTeamId = 0;
 $userTeams = [];
 $teamRatings = [];
 $selectedVenueRating = null;
+$venueTaskTriggers = [];
+
+$noticeKey = (string) ($_GET['notice'] ?? '');
+if ($noticeKey === 'trigger_created') {
+    $triggerNotice = 'Trigger created successfully.';
+} elseif ($noticeKey === 'trigger_updated') {
+    $triggerNotice = 'Trigger updated successfully.';
+} elseif ($noticeKey === 'trigger_deleted') {
+    $triggerNotice = 'Trigger deleted successfully.';
+} elseif ($noticeKey === 'trigger_error') {
+    $triggerNotice = 'Failed to save trigger.';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrfToken();
@@ -104,6 +118,7 @@ try {
             $errors[] = 'Selected venue not found.';
         } elseif ($activeTeamId > 0) {
             $selectedVenueRating = fetchVenueRatingForTeam($pdo, $selectedVenueId, $activeTeamId);
+            $venueTaskTriggers = fetchVenueTaskTriggers($pdo, $selectedVenueId, $activeTeamId);
         }
     }
 } catch (Throwable $error) {

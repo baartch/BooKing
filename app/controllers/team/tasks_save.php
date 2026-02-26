@@ -85,9 +85,9 @@ try {
 
         $stmt = $pdo->prepare(
             'INSERT INTO team_tasks
-                (team_id, title, description, priority, due_date, created_by)
+                (team_id, title, description, priority, due_date, is_template, trigger_day, trigger_month, trigger_last_year, created_by)
              VALUES
-                (:team_id, :title, :description, :priority, :due_date, :created_by)'
+                (:team_id, :title, :description, :priority, :due_date, 0, NULL, NULL, NULL, :created_by)'
         );
         $stmt->execute([
             ':team_id' => $teamId,
@@ -140,7 +140,7 @@ try {
                  description = :description,
                  priority = :priority,
                  due_date = :due_date
-             WHERE id = :id AND team_id = :team_id'
+             WHERE id = :id AND team_id = :team_id AND is_template = 0'
         );
         $stmt->execute([
             ':title' => $payload['title'],

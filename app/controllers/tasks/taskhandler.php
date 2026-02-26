@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../models/core/object_links.php';
 require_once __DIR__ . '/../../models/communication/mail_fetch_helpers.php';
 require_once __DIR__ . '/schedule_send.php';
 require_once __DIR__ . '/fetch_emails.php';
+require_once __DIR__ . '/venue_task_triggers.php';
 require_once __DIR__ . '/cleanup.php';
 
 if (PHP_SAPI !== 'cli') {
@@ -20,6 +21,7 @@ try {
     $pdo = getDatabaseConnection();
     runScheduleSendTask($pdo);
     runFetchEmailsTask($pdo);
+    runVenueTaskTriggerTask($pdo);
 
     $now = new DateTime('now');
     $cleanupTime = $now->format('H:i');

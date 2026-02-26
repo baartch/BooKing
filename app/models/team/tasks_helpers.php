@@ -21,6 +21,8 @@ function fetchTeamTasks(PDO $pdo, int $teamId, ?string $search = null): array
         $params[':like_description'] = $like;
     }
 
+    $where .= ' AND is_template = 0';
+
     $stmt = $pdo->prepare(
         'SELECT id, title, priority, due_date, updated_at
          FROM team_tasks

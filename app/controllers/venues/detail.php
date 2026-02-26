@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../models/auth/check.php';
 require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../models/venues/venues_repository.php';
 require_once __DIR__ . '/../../models/venues/venue_ratings.php';
+require_once __DIR__ . '/../../models/venues/venue_task_triggers.php';
 require_once __DIR__ . '/../../models/communication/team_helpers.php';
 
 $venueId = (int) ($_GET['venue_id'] ?? 0);
@@ -29,9 +30,9 @@ try {
         exit;
     }
 
-    $page = 1;
-    $pageSize = 25;
-    $filter = '';
+    $page = max(1, (int) ($_GET['page'] ?? 1));
+    $pageSize = max(25, (int) ($_GET['per_page'] ?? 25));
+    $filter = trim((string) ($_GET['filter'] ?? ''));
 
     $detailActionsHtml = null;
     $detailRows = [];
@@ -40,8 +41,23 @@ try {
     $detailEmptyMessage = 'Select a venue to see the details.';
 
     $selectedVenueRating = null;
+    $venueTaskTriggers = [];
+    $triggerNotice = '';
+
+    $noticeKey = (string) ($_GET['notice'] ?? '');
+    if ($noticeKey === 'trigger_created') {
+        $triggerNotice = 'Trigger created successfully.';
+    } elseif ($noticeKey === 'trigger_updated') {
+        $triggerNotice = 'Trigger updated successfully.';
+    } elseif ($noticeKey === 'trigger_deleted') {
+        $triggerNotice = 'Trigger deleted successfully.';
+    } elseif ($noticeKey === 'trigger_error') {
+        $triggerNotice = 'Failed to save trigger.';
+    }
+
     if ($activeTeamId > 0) {
         $selectedVenueRating = fetchVenueRatingForTeam($pdo, $venueId, $activeTeamId);
+        $venueTaskTriggers = fetchVenueTaskTriggers($pdo, $venueId, $activeTeamId);
     }
 
     ob_start();
