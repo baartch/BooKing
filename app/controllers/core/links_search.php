@@ -100,6 +100,35 @@ try {
         }
     }
 
+    if (in_array('task', $types, true)) {
+        $stmt = $pdo->prepare(
+            'SELECT tt.id, tt.title, tt.priority
+             FROM team_tasks tt
+             JOIN team_members tm ON tm.team_id = tt.team_id
+             WHERE tm.user_id = :user_id
+               AND (tt.title LIKE :term_title OR tt.description LIKE :term_description)
+             ORDER BY FIELD(tt.priority, "A", "B", "C"), tt.due_date IS NULL, tt.due_date
+             LIMIT 8'
+        );
+        $stmt->execute([
+            ':user_id' => $userId,
+            ':term_title' => $term,
+            ':term_description' => $term
+        ]);
+        foreach ($stmt->fetchAll() as $row) {
+            $label = trim((string) ($row['title'] ?? ''));
+            if ($label === '') {
+                $label = 'Task #' . $row['id'];
+            }
+            $items[] = [
+                'id' => (int) $row['id'],
+                'type' => 'task',
+                'label' => $label,
+                'detail' => 'Priority ' . (string) ($row['priority'] ?? 'B')
+            ];
+        }
+    }
+
     if (in_array('conversation', $types, true) && $scopeMailboxId > 0) {
         $mailbox = ensureMailboxAccess($pdo, $scopeMailboxId, $userId);
         if ($mailbox) {

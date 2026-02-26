@@ -1,34 +1,50 @@
 <?php
-require_once __DIR__ . '/../../models/auth/team_admin_check.php';
+require_once __DIR__ . '/../../models/auth/check.php';
 require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../models/core/htmx_class.php';
 require_once __DIR__ . '/../../models/core/layout.php';
 require_once __DIR__ . '/../../models/communication/mailbox_helpers.php';
 require_once __DIR__ . '/../../models/communication/email_templates_helpers.php';
 require_once __DIR__ . '/../../models/communication/email_helpers.php';
+require_once __DIR__ . '/../../models/communication/team_helpers.php';
+require_once __DIR__ . '/../../models/team/tasks_helpers.php';
 
-$activeTab = $_GET['tab'] ?? 'members';
-$validTabs = ['members', 'mailboxes', 'templates'];
+$isTeamAdmin = (bool) ($currentUser['is_team_admin'] ?? false);
+$activeTab = $_GET['tab'] ?? 'tasks';
+$validTabs = $isTeamAdmin
+    ? ['tasks', 'members', 'mailboxes', 'templates']
+    : ['tasks', 'members'];
 if (!in_array($activeTab, $validTabs, true)) {
-    $activeTab = 'members';
+    $activeTab = 'tasks';
 }
 
 $errors = [
+    'tasks' => [],
     'mailboxes' => [],
     'templates' => []
 ];
 $notice = [
+    'tasks' => '',
     'mailboxes' => '',
     'templates' => ''
 ];
 
+$tasks = [];
 $mailboxes = [];
 $templates = [];
 $teams = [];
 $teamIds = [];
 
 $noticeKey = (string) ($_GET['notice'] ?? '');
-if ($noticeKey === 'mailbox_created') {
+if ($noticeKey === 'task_created') {
+    $notice['tasks'] = 'Task created successfully.';
+} elseif ($noticeKey === 'task_updated') {
+    $notice['tasks'] = 'Task updated successfully.';
+} elseif ($noticeKey === 'task_deleted') {
+    $notice['tasks'] = 'Task deleted successfully.';
+} elseif ($noticeKey === 'task_error') {
+    $notice['tasks'] = 'Failed to save task.';
+} elseif ($noticeKey === 'mailbox_created') {
     $notice['mailboxes'] = 'Mailbox created successfully.';
 } elseif ($noticeKey === 'mailbox_updated') {
     $notice['mailboxes'] = 'Mailbox updated successfully.';
@@ -41,8 +57,11 @@ if ($noticeKey === 'mailbox_created') {
 $pdo = null;
 try {
     $pdo = getDatabaseConnection();
-    [$teams, $teamIds] = loadTeamAdminTeams($pdo, (int) ($currentUser['user_id'] ?? 0));
+    if ($isTeamAdmin) {
+        [$teams, $teamIds] = loadTeamAdminTeams($pdo, (int) ($currentUser['user_id'] ?? 0));
+    }
 } catch (Throwable $error) {
+    $errors['tasks'][] = 'Failed to load teams.';
     $errors['mailboxes'][] = 'Failed to load teams.';
     $errors['templates'][] = 'Failed to load teams.';
     logAction($currentUser['user_id'] ?? null, 'team_team_load_error', $error->getMessage());
@@ -103,7 +122,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-if ($pdo && $teamIds) {
+$activeTeamId = 0;
+$userTeams = [];
+$searchQuery = trim((string) ($_GET['q'] ?? ''));
+$selectedTaskId = (int) ($_GET['task_id'] ?? 0);
+$taskLinks = [];
+
+if ($pdo) {
+    try {
+        $userId = (int) ($currentUser['user_id'] ?? 0);
+        $requestedTeamId = (int) ($_GET['team_id'] ?? 0);
+        $activeTeamId = resolveActiveTeamId($pdo, $userId, $requestedTeamId);
+        $userTeams = fetchUserTeams($pdo, $userId);
+
+        if ($activeTeamId > 0) {
+            $tasks = fetchTeamTasks($pdo, $activeTeamId, $searchQuery);
+        } else {
+            $errors['tasks'][] = 'No team access available.';
+        }
+
+        if ($activeTeamId > 0 && $selectedTaskId > 0) {
+            $taskLinks = fetchLinkedObjects($pdo, 'task', $selectedTaskId, $activeTeamId, null);
+        }
+    } catch (Throwable $error) {
+        $errors['tasks'][] = 'Failed to load tasks.';
+        logAction($currentUser['user_id'] ?? null, 'team_task_list_error', $error->getMessage());
+    }
+}
+
+if ($pdo && $isTeamAdmin && $teamIds) {
     try {
         $placeholders = implode(',', array_fill(0, count($teamIds), '?'));
         $stmt = $pdo->prepare(
@@ -121,7 +168,7 @@ if ($pdo && $teamIds) {
     }
 }
 
-if ($pdo) {
+if ($pdo && $isTeamAdmin) {
     try {
         $templates = loadTeamTemplates($pdo, (int) ($currentUser['user_id'] ?? 0));
     } catch (Throwable $error) {
@@ -130,9 +177,21 @@ if ($pdo) {
     }
 }
 
+if (HTMX::isRequest() && $activeTab === 'tasks') {
+    HTMX::pushUrl($_SERVER['REQUEST_URI']);
+    require __DIR__ . '/../../views/team/tasks/tasks.php';
+    return;
+}
+
 if (HTMX::isRequest() && $activeTab === 'mailboxes') {
     HTMX::pushUrl($_SERVER['REQUEST_URI']);
     require __DIR__ . '/../../views/team/mailboxes/mailboxes.php';
+    return;
+}
+
+if (HTMX::isRequest() && $activeTab === 'templates') {
+    HTMX::pushUrl($_SERVER['REQUEST_URI']);
+    require __DIR__ . '/../../views/team/templates.php';
     return;
 }
 

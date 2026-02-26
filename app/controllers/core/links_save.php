@@ -40,7 +40,7 @@ $conversationId = isset($input['conversation_id']) ? (int) $input['conversation_
 $detachConversation = !empty($input['detach_conversation']);
 $links = (array) ($input['links'] ?? []);
 
-$allowedSourceTypes = ['email', 'contact', 'venue'];
+$allowedSourceTypes = ['email', 'contact', 'venue', 'task'];
 if (!in_array($sourceType, $allowedSourceTypes, true) || $sourceId <= 0) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid source']);
@@ -78,22 +78,34 @@ try {
             ? (int) $mailbox['user_id']
             : (!empty($messageScope['user_id']) ? (int) $messageScope['user_id'] : null);
     } else {
-        // For contacts/venues, scope to the contact's team (team-scoped contacts)
-        if ($sourceType !== 'contact') {
+        if ($sourceType !== 'contact' && $sourceType !== 'task') {
             http_response_code(400);
             echo json_encode(['error' => 'Unsupported link scope']);
             exit;
         }
 
-        $contactStmt = $pdo->prepare('SELECT team_id FROM contacts WHERE id = :id LIMIT 1');
-        $contactStmt->execute([':id' => $sourceId]);
-        $contactRow = $contactStmt->fetch();
-        $teamId = !empty($contactRow['team_id']) ? (int) $contactRow['team_id'] : null;
+        if ($sourceType === 'contact') {
+            $contactStmt = $pdo->prepare('SELECT team_id FROM contacts WHERE id = :id LIMIT 1');
+            $contactStmt->execute([':id' => $sourceId]);
+            $contactRow = $contactStmt->fetch();
+            $teamId = !empty($contactRow['team_id']) ? (int) $contactRow['team_id'] : null;
 
-        if ($teamId === null || !userHasTeamAccess($pdo, $userId, $teamId)) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Contact access denied']);
-            exit;
+            if ($teamId === null || !userHasTeamAccess($pdo, $userId, $teamId)) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Contact access denied']);
+                exit;
+            }
+        } else {
+            $taskStmt = $pdo->prepare('SELECT team_id FROM team_tasks WHERE id = :id LIMIT 1');
+            $taskStmt->execute([':id' => $sourceId]);
+            $taskRow = $taskStmt->fetch();
+            $teamId = !empty($taskRow['team_id']) ? (int) $taskRow['team_id'] : null;
+
+            if ($teamId === null || !userHasTeamAccess($pdo, $userId, $teamId)) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Task access denied']);
+                exit;
+            }
         }
 
         $scopeUserId = null;
@@ -120,7 +132,7 @@ try {
         if ($linkType === '' || $linkId <= 0) {
             continue;
         }
-        if (!in_array($linkType, ['contact', 'venue', 'email'], true)) {
+        if (!in_array($linkType, ['contact', 'venue', 'email', 'task'], true)) {
             continue;
         }
         $linkTeamId = $teamId;

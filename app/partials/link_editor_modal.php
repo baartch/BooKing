@@ -51,7 +51,7 @@ $linkEditorModalId = htmlspecialchars('link-editor-' . $linkEditorSourceType . '
           <label class="label is-small">Links</label>
           <div data-link-editor-tags class="field is-grouped is-grouped-multiline mb-2"></div>
           <div class="control has-icons-left">
-            <input class="input is-small" type="text" placeholder="Search contacts, venues, or emails…" data-link-editor-search>
+            <input class="input is-small" type="text" placeholder="Search contacts, venues, emails, or tasks…" data-link-editor-search>
             <span class="icon is-small is-left"><i class="fa-solid fa-search"></i></span>
           </div>
           <div class="dropdown is-fullwidth" data-link-editor-dropdown>

@@ -56,6 +56,7 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
 
   const saveButton = modal.querySelector<HTMLButtonElement>("[data-link-editor-save]");
   const errorEl = editor.querySelector<HTMLElement>("[data-link-editor-error]");
+  const collector = editor.closest<HTMLElement>("form")?.querySelector<HTMLElement>("[data-link-editor-collector]");
 
   if (!tagsContainer || !searchInput || !resultsContainer || !dropdown || !saveButton) {
     return;
@@ -87,6 +88,7 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
     if (type === "contact") return "fa-solid fa-user";
     if (type === "venue") return "fa-solid fa-location-dot";
     if (type === "email") return "fa-solid fa-envelope";
+    if (type === "task") return "fa-solid fa-list-check";
     return "fa-solid fa-link";
   };
 
@@ -292,6 +294,16 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
         return response.json() as Promise<{ ok: boolean }>;
       })
       .then(() => {
+        if (collector) {
+          collector.innerHTML = "";
+          state.links.forEach((link) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "link_items[]";
+            input.value = `${link.type}:${link.id}`;
+            collector.appendChild(input);
+          });
+        }
         modal.classList.remove("is-active");
         window.location.reload();
       })

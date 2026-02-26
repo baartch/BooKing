@@ -226,6 +226,23 @@ CREATE TABLE email_templates (
     UNIQUE KEY uniq_team_template_name (team_id, name)
 );
 
+CREATE TABLE team_tasks (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    team_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT DEFAULT NULL,
+    priority ENUM('A', 'B', 'C') NOT NULL DEFAULT 'B',
+    due_date DATE DEFAULT NULL,
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_team_tasks_team (team_id),
+    INDEX idx_team_tasks_priority (team_id, priority),
+    INDEX idx_team_tasks_due (team_id, due_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
 CREATE TABLE venue_ratings (
     id INT PRIMARY KEY AUTO_INCREMENT,
     venue_id INT NOT NULL,

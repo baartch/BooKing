@@ -300,7 +300,8 @@ function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int 
     $idsByType = [
         'contact' => [],
         'venue' => [],
-        'email' => []
+        'email' => [],
+        'task' => []
     ];
 
     foreach ($rows as $row) {
@@ -377,6 +378,22 @@ function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int 
             $to = trim((string) ($row['to_emails'] ?? ''));
             $label = $subject !== '' ? $subject : ($from !== '' ? $from : ($to !== '' ? $to : 'Email #' . (int) $row['id']));
             $labels['email:' . (int) $row['id']] = $label;
+        }
+    }
+
+    if ($idsByType['task']) {
+        $taskIds = array_values(array_unique($idsByType['task']));
+        $placeholders = implode(',', array_fill(0, count($taskIds), '?'));
+        $stmt = $pdo->prepare(
+            'SELECT id, title, priority
+             FROM team_tasks
+             WHERE id IN (' . $placeholders . ')'
+        );
+        $stmt->execute($taskIds);
+        foreach ($stmt->fetchAll() as $row) {
+            $title = trim((string) ($row['title'] ?? ''));
+            $label = $title !== '' ? $title : 'Task #' . (int) $row['id'];
+            $labels['task:' . (int) $row['id']] = $label;
         }
     }
 

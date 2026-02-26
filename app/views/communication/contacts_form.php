@@ -15,7 +15,8 @@ $contactLinks = $contactLinks ?? [];
 $linkIcons = [
   'contact' => 'fa-user',
   'venue' => 'fa-location-dot',
-  'email' => 'fa-envelope'
+  'email' => 'fa-envelope',
+  'task' => 'fa-list-check'
 ];
 ?>
 <div class="box">
@@ -52,6 +53,8 @@ $linkIcons = [
                         $linkUrl = BASE_PATH . '/app/controllers/venues/index.php?q=' . urlencode($link['label']);
                     } elseif ($link['type'] === 'email') {
                         $linkUrl = BASE_PATH . '/app/controllers/communication/index.php?tab=email&message_id=' . (int) $link['id'];
+                    } elseif ($link['type'] === 'task') {
+                        $linkUrl = BASE_PATH . '/app/controllers/team/index.php?tab=tasks&task_id=' . (int) $link['id'];
                     }
                   ?>
                   <a href="<?php echo htmlspecialchars($linkUrl); ?>" class="detail-link-pill">
@@ -175,7 +178,7 @@ $linkIcons = [
       $linkEditorSourceType = 'contact';
       $linkEditorSourceId = (int) $editContact['id'];
       $linkEditorMailboxId = 0;
-      $linkEditorSearchTypes = 'contact,venue,email';
+      $linkEditorSearchTypes = 'contact,venue,email,task';
       $linkEditorLinks = [];
       if (!empty($contactLinks)) {
           foreach ($contactLinks as $link) {

@@ -94,6 +94,9 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
                       'message_id' => $link['id']
                   ]));
                   $linkItems[] = ['type' => 'email', 'label' => $link['label'], 'url' => $url];
+              } elseif ($link['type'] === 'task') {
+                  $url = BASE_PATH . '/app/controllers/team/index.php?tab=tasks&task_id=' . (int) $link['id'];
+                  $linkItems[] = ['type' => 'task', 'label' => $link['label'], 'url' => $url];
               }
               $linkEditorLinks[] = [
                   'type' => $link['type'],
@@ -123,7 +126,8 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
           'contact' => 'fa-user',
           'venue' => 'fa-location-dot',
           'email' => 'fa-envelope',
-          'conversation' => 'fa-comments'
+          'conversation' => 'fa-comments',
+          'task' => 'fa-list-check'
       ];
 
       if ($linkEditorConversationId !== null) {
@@ -293,7 +297,7 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
         $linkEditorSourceType = 'email';
         $linkEditorSourceId = (int) $message['id'];
         $linkEditorMailboxId = (int) $selectedMailbox['id'];
-        $linkEditorSearchTypes = 'contact,venue,email';
+        $linkEditorSearchTypes = 'contact,venue,email,task';
         require __DIR__ . '/../../partials/link_editor_modal.php';
       ?>
     <?php endif; ?>
