@@ -98,6 +98,24 @@ const focusRowLink = (row: HTMLElement): void => {
 };
 
 const initListSelection = (): void => {
+  const emptyStates = new Map<HTMLElement, { target: HTMLElement; html: string }>();
+
+  document.querySelectorAll<HTMLElement>('[data-list-selectable]').forEach((list) => {
+    const row = list.querySelector<HTMLElement>('[data-row-target]');
+    if (!row) {
+      return;
+    }
+    const targetSelector = row.getAttribute('data-row-target');
+    if (!targetSelector) {
+      return;
+    }
+    const target = document.querySelector<HTMLElement>(targetSelector);
+    if (!target) {
+      return;
+    }
+    emptyStates.set(list, { target, html: target.innerHTML });
+  });
+
   document.addEventListener('click', (event) => {
     const target = event.target as HTMLElement | null;
     if (!target) {
@@ -122,12 +140,23 @@ const initListSelection = (): void => {
     }
 
     const interactiveElement = target.closest('a, button, input, select, textarea, label');
+    const activeClass = list.dataset.listActiveClass || 'is-active';
+
+    if (!interactiveElement && row.classList.contains(activeClass)) {
+      event.preventDefault();
+      row.classList.remove(activeClass);
+      const emptyState = emptyStates.get(list);
+      if (emptyState) {
+        emptyState.target.innerHTML = emptyState.html;
+      }
+      return;
+    }
+
     if (!interactiveElement && row.hasAttribute('data-row-link')) {
       event.preventDefault();
       focusRowLink(row);
     }
 
-    const activeClass = list.dataset.listActiveClass || 'is-active';
     const items = list.querySelectorAll<HTMLElement>('[data-list-item]');
     items.forEach((element) => {
       element.classList.remove(activeClass);
