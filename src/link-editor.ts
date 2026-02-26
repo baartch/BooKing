@@ -162,15 +162,19 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
       showDropdown(dropdownEl);
 
       container.querySelectorAll<HTMLElement>("[data-result-index]").forEach((el) => {
-        el.addEventListener("click", (e) => {
-          e.preventDefault();
+        const handleSelect = (event: Event) => {
+          event.preventDefault();
+          event.stopPropagation();
           const index = Number(el.dataset.resultIndex ?? -1);
           const item = data.items[index];
           if (item) {
             onSelect(item);
           }
           hideDropdown(dropdownEl);
-        });
+        };
+
+        el.addEventListener("mousedown", handleSelect);
+        el.addEventListener("click", handleSelect);
       });
     } catch {
       hideDropdown(dropdownEl);
@@ -237,6 +241,10 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
     setTimeout(() => hideDropdown(dropdown), 150);
   });
 
+  dropdown.addEventListener("mousedown", (event) => {
+    event.preventDefault();
+  });
+
   // Event: search conversations
   if (conversationSearch && conversationResults && conversationDropdown) {
     conversationSearch.addEventListener("input", () => {
@@ -254,6 +262,10 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
 
     conversationSearch.addEventListener("blur", () => {
       setTimeout(() => hideDropdown(conversationDropdown), 150);
+    });
+
+    conversationDropdown.addEventListener("mousedown", (event) => {
+      event.preventDefault();
     });
   }
 
