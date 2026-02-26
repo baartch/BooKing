@@ -10,6 +10,7 @@
 ?>
 <?php
 require_once __DIR__ . '/../../models/core/list_helpers.php';
+require_once __DIR__ . '/../../models/core/link_helpers.php';
 
 $detailTitle = null;
 $detailSubtitle = null;
@@ -20,12 +21,7 @@ $contactLinks = $contactLinks ?? [];
 
 $linkItems = [];
 $linkEditorLinks = [];
-$linkIcons = [
-    'contact' => 'fa-user',
-    'venue' => 'fa-location-dot',
-    'email' => 'fa-envelope',
-    'task' => 'fa-list-check'
-];
+$linkIcons = getLinkIcons();
 
 if ($activeContact) {
     $nameParts = [];

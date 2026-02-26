@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../models/core/link_helpers.php';
 require_once __DIR__ . '/../../models/communication/email_helpers.php';
 
 $errors = [];

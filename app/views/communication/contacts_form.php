@@ -9,15 +9,12 @@
  * - string $searchQuery
  * - array $contactLinks
  */
+require_once __DIR__ . '/../../models/core/link_helpers.php';
+
 $cancelUrl = $cancelUrl ?? (BASE_PATH . '/app/controllers/communication/index.php?tab=contacts');
 $searchQuery = $searchQuery ?? '';
 $contactLinks = $contactLinks ?? [];
-$linkIcons = [
-  'contact' => 'fa-user',
-  'venue' => 'fa-location-dot',
-  'email' => 'fa-envelope',
-  'task' => 'fa-list-check'
-];
+$linkIcons = getLinkIcons();
 ?>
 <div class="box">
   <div class="level mb-3">

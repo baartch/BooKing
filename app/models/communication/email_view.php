@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/email_helpers.php';
+require_once __DIR__ . '/../core/link_helpers.php';
 
 $errors = [];
 $notice = '';

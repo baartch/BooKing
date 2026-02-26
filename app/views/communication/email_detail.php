@@ -122,13 +122,7 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
           }
       }
 
-      $linkIcons = [
-          'contact' => 'fa-user',
-          'venue' => 'fa-location-dot',
-          'email' => 'fa-envelope',
-          'conversation' => 'fa-comments',
-          'task' => 'fa-list-check'
-      ];
+      $linkIcons = getLinkIcons();
 
       if ($linkEditorConversationId !== null) {
           $conversationUrl = BASE_PATH . '/app/controllers/communication/index.php?tab=conversations&conversation_id=' . $linkEditorConversationId;

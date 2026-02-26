@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../models/communication/email_templates_helpers.php'
 require_once __DIR__ . '/../../models/communication/email_helpers.php';
 require_once __DIR__ . '/../../models/communication/team_helpers.php';
 require_once __DIR__ . '/../../models/team/tasks_helpers.php';
+require_once __DIR__ . '/../../models/core/link_helpers.php';
 
 $isTeamAdmin = (bool) ($currentUser['is_team_admin'] ?? false);
 $activeTab = $_GET['tab'] ?? 'tasks';
