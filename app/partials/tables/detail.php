@@ -14,7 +14,7 @@ $detailRows = $detailRows ?? [];
 $detailEmptyMessage = $detailEmptyMessage ?? 'Select an entry to see the details.';
 ?>
 <?php if (!$detailTitle && !$detailRows): ?>
-  <div class="notification is-light">
+  <div class="notification">
     <p><?php echo htmlspecialchars($detailEmptyMessage); ?></p>
   </div>
 <?php else: ?>
