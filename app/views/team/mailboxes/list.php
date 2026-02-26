@@ -35,9 +35,11 @@ $listRowActions = static function (array $mailbox) use ($baseUrl, $baseQuery): s
     ob_start();
     ?>
       <div class="buttons are-small is-justify-content-flex-end">
-        <a class="button" href="<?php echo htmlspecialchars($editLink); ?>" aria-label="Edit mailbox" title="Edit mailbox">
-          <span class="icon"><i class="fa-solid fa-pen"></i></span>
-        </a>
+        <form method="GET" action="<?php echo htmlspecialchars($editLink); ?>">
+          <button type="submit" class="button" aria-label="Edit mailbox" title="Edit mailbox">
+            <span class="icon"><i class="fa-solid fa-pen"></i></span>
+          </button>
+        </form>
         <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/team/index.php?tab=mailboxes" onsubmit="return confirm('Delete this mailbox?');">
           <?php renderCsrfField(); ?>
           <input type="hidden" name="action" value="delete_mailbox">

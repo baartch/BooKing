@@ -42,9 +42,12 @@
                 <td><?php echo htmlspecialchars($template['subject'] ?? ''); ?></td>
                 <td>
                   <div class="buttons are-small">
-                    <a href="<?php echo BASE_PATH; ?>/app/controllers/team/template_form.php?edit_template_id=<?php echo (int) $template['id']; ?>" class="button" aria-label="Edit template" title="Edit template">
-                      <span class="icon"><i class="fa-solid fa-pen"></i></span>
-                    </a>
+                    <form method="GET" action="<?php echo BASE_PATH; ?>/app/controllers/team/template_form.php">
+                      <input type="hidden" name="edit_template_id" value="<?php echo (int) $template['id']; ?>">
+                      <button type="submit" class="button" aria-label="Edit template" title="Edit template">
+                        <span class="icon"><i class="fa-solid fa-pen"></i></span>
+                      </button>
+                    </form>
                     <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/team/index.php?tab=templates" onsubmit="return confirm('Delete this template?');">
                       <?php renderCsrfField(); ?>
                       <input type="hidden" name="action" value="delete_template">

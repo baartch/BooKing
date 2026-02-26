@@ -44,9 +44,11 @@ $listRowActions = static function (array $user) use ($baseUrl, $baseQuery): stri
     ob_start();
     ?>
       <div class="buttons are-small is-justify-content-flex-end">
-        <a class="button" href="<?php echo htmlspecialchars($editLink); ?>" aria-label="Edit user" title="Edit user">
-          <span class="icon"><i class="fa-solid fa-pen"></i></span>
-        </a>
+        <form method="GET" action="<?php echo htmlspecialchars($editLink); ?>">
+          <button type="submit" class="button" aria-label="Edit user" title="Edit user">
+            <span class="icon"><i class="fa-solid fa-pen"></i></span>
+          </button>
+        </form>
         <form method="POST" action="" onsubmit="return confirm('Delete this user?');">
           <?php renderCsrfField(); ?>
           <input type="hidden" name="action" value="delete">

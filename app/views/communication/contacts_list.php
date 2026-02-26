@@ -48,9 +48,11 @@ $listRowActions = static function (array $contact) use ($baseUrl, $baseQuery, $s
     ob_start();
     ?>
       <div class="buttons are-small is-justify-content-flex-end">
-        <a class="button" href="<?php echo htmlspecialchars($editLink); ?>" aria-label="Edit contact" title="Edit contact">
-          <span class="icon"><i class="fa-solid fa-pen"></i></span>
-        </a>
+        <form method="GET" action="<?php echo htmlspecialchars($editLink); ?>">
+          <button type="submit" class="button" aria-label="Edit contact" title="Edit contact">
+            <span class="icon"><i class="fa-solid fa-pen"></i></span>
+          </button>
+        </form>
         <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/contact_delete.php" onsubmit="return confirm('Delete this contact?');">
           <?php renderCsrfField(); ?>
           <input type="hidden" name="contact_id" value="<?php echo (int) $contactId; ?>">

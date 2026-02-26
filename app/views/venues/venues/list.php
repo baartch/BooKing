@@ -161,9 +161,11 @@ $listRowActions = static function (array $venue) use ($venuesPage, $venuesPerPag
     ob_start();
     ?>
       <div class="buttons are-small is-justify-content-flex-end">
-        <a class="button" href="<?php echo htmlspecialchars($editLink); ?>" aria-label="Edit venue" title="Edit venue">
-          <span class="icon"><i class="fa-solid fa-pen"></i></span>
-        </a>
+        <form method="GET" action="<?php echo htmlspecialchars($editLink); ?>">
+          <button type="submit" class="button" aria-label="Edit venue" title="Edit venue">
+            <span class="icon"><i class="fa-solid fa-pen"></i></span>
+          </button>
+        </form>
         <?php if (($currentUser['role'] ?? '') === 'admin'): ?>
           <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/venues/index.php" onsubmit="return confirm('Delete this venue?');">
             <?php renderCsrfField(); ?>
