@@ -24,11 +24,14 @@ $page = (int) ($_POST['page'] ?? 1);
 $pageSize = (int) ($_POST['per_page'] ?? 25);
 $filter = trim((string) ($_POST['filter'] ?? ''));
 
+$showTriggers = !empty($_POST['show_triggers']);
+
 $redirectParams = [
     'venue_id' => $venueId,
     'page' => $page,
     'per_page' => $pageSize,
-    'team_id' => $teamId
+    'team_id' => $teamId,
+    'show_triggers' => $showTriggers ? 1 : null
 ];
 if ($filter !== '') {
     $redirectParams['filter'] = $filter;
