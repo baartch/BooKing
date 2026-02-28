@@ -106,6 +106,7 @@ try {
                      bcc_emails = :bcc_emails,
                      conversation_id = :conversation_id,
                      scheduled_at = :scheduled_at,
+                     start_new_conversation = :start_new_conversation,
                      updated_at = NOW()
                  WHERE id = :id
                    AND mailbox_id = :mailbox_id
@@ -122,6 +123,7 @@ try {
                 ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
                 ':conversation_id' => $conversationId > 0 ? $conversationId : null,
                 ':scheduled_at' => $isScheduleAction ? $scheduledAt : null,
+                ':start_new_conversation' => $startNewConversation ? 1 : 0,
                 ':id' => $draftId,
                 ':mailbox_id' => $mailbox['id']
             ]);
@@ -154,9 +156,9 @@ try {
         } else {
             $stmt = $pdo->prepare(
                 'INSERT INTO email_messages
-                 (mailbox_id, team_id, user_id, conversation_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, created_at, scheduled_at)
+                 (mailbox_id, team_id, user_id, conversation_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, created_at, scheduled_at, start_new_conversation)
                  VALUES
-                 (:mailbox_id, :team_id, :user_id, :conversation_id, "drafts", :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), :scheduled_at)'
+                 (:mailbox_id, :team_id, :user_id, :conversation_id, "drafts", :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), :scheduled_at, :start_new_conversation)'
             );
             $stmt->execute([
                 ':mailbox_id' => $mailbox['id'],
@@ -172,7 +174,8 @@ try {
                 ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
                 ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
                 ':created_by' => $userId,
-                ':scheduled_at' => $isScheduleAction ? $scheduledAt : null
+                ':scheduled_at' => $isScheduleAction ? $scheduledAt : null,
+                ':start_new_conversation' => $startNewConversation ? 1 : 0
             ]);
             $draftId = (int) $pdo->lastInsertId();
             if ($draftId > 0 && $linkItems) {

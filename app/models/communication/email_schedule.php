@@ -25,6 +25,7 @@ function markScheduledEmailAsSent(PDO $pdo, int $emailId, ?int $conversationId):
         'UPDATE email_messages
          SET folder = "sent",
              scheduled_at = NULL,
+             start_new_conversation = 0,
              sent_at = NOW(),
              conversation_id = :conversation_id,
              updated_at = NOW()
@@ -87,27 +88,19 @@ function runScheduledEmailTasks(PDO $pdo): void
         if ($conversationId <= 0) {
             $teamScopeId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
             $userScopeId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
-            $conversationId = $teamScopeId
-                ? findConversationForEmail(
-                    $pdo,
-                    $mailbox,
-                    getMailboxPrimaryEmail($mailbox),
-                    $toEmails,
-                    $payload['subject'] ?? '',
-                    date('Y-m-d H:i:s'),
-                    $teamScopeId,
-                    null
-                )
-                : findConversationForEmail(
-                    $pdo,
-                    $mailbox,
-                    getMailboxPrimaryEmail($mailbox),
-                    $toEmails,
-                    $payload['subject'] ?? '',
-                    date('Y-m-d H:i:s'),
-                    null,
-                    $userScopeId
-                );
+            $forceNewConversation = !empty($email['start_new_conversation']);
+
+            $conversationId = ensureConversationForEmail(
+                $pdo,
+                $mailbox,
+                getMailboxPrimaryEmail($mailbox),
+                $toEmails,
+                $payload['subject'] ?? '',
+                $forceNewConversation,
+                date('Y-m-d H:i:s'),
+                $teamScopeId,
+                $userScopeId
+            ) ?? 0;
         }
 
         markScheduledEmailAsSent($pdo, $emailId, $conversationId > 0 ? $conversationId : null);

@@ -138,7 +138,7 @@
   <div class="field">
     <div class="control">
       <label class="checkbox">
-        <input type="checkbox" name="start_new_conversation" value="1">
+        <input type="checkbox" name="start_new_conversation" value="1" <?php echo !empty($composeValues['start_new_conversation']) ? 'checked' : ''; ?>>
         Start a new conversation
       </label>
     </div>

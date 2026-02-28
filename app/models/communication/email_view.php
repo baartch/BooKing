@@ -93,7 +93,8 @@ $composeValues = [
     'subject' => '',
     'body' => '',
     'schedule_date' => '',
-    'schedule_time' => ''
+    'schedule_time' => '',
+    'start_new_conversation' => false
 ];
 
 $prefillTo = trim((string) ($_GET['to'] ?? ''));
@@ -140,6 +141,7 @@ if ($pdo && $selectedMailbox && $selectedMessageId > 0) {
                 $composeValues['schedule_date'] = date('Y-m-d', strtotime($scheduledAt));
                 $composeValues['schedule_time'] = date('H:i', strtotime($scheduledAt));
             }
+            $composeValues['start_new_conversation'] = !empty($message['start_new_conversation']);
             $composeMode = true;
         } elseif ($message && !(bool) $message['is_read']) {
             $updateStmt = $pdo->prepare('UPDATE email_messages SET is_read = 1 WHERE id = :id');
