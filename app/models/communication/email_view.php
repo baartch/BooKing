@@ -264,7 +264,15 @@ if ($pdo && $selectedMailbox && $prefillMessageId > 0) {
             }
             $composeValues['subject'] = $subject;
             if ($replyId > 0) {
-                $composeValues['to_emails'] = (string) ($prefillMessage['from_email'] ?? '');
+                $replyTarget = '';
+                $prefillFolder = (string) ($prefillMessage['folder'] ?? '');
+                if ($prefillFolder === 'sent') {
+                    $replyTarget = normalizeEmailList((string) ($prefillMessage['to_emails'] ?? ''));
+                }
+                if ($replyTarget === '') {
+                    $replyTarget = normalizeEmailList((string) ($prefillMessage['from_email'] ?? ''));
+                }
+                $composeValues['to_emails'] = $replyTarget;
             }
             $composeConversationId = !empty($prefillMessage['conversation_id'])
                 ? (int) $prefillMessage['conversation_id']
@@ -282,18 +290,20 @@ if ($pdo && $selectedMailbox && $prefillMessageId > 0) {
             $senderLabel = htmlspecialchars($senderName);
 
             $receivedAt = trim((string) ($prefillMessage['received_at'] ?? ''));
+            $sentAt = trim((string) ($prefillMessage['sent_at'] ?? ''));
+            $createdAt = trim((string) ($prefillMessage['created_at'] ?? ''));
+            $quoteSourceDate = $receivedAt !== '' ? $receivedAt : ($sentAt !== '' ? $sentAt : $createdAt);
             $quoteDate = '';
-            if ($receivedAt !== '') {
+            if ($quoteSourceDate !== '') {
                 try {
-                    $quoteDate = (new DateTime($receivedAt))->format('d.m.Y H:i');
+                    $quoteDate = (new DateTime($quoteSourceDate))->format('d.m.Y H:i');
                 } catch (Throwable $error) {
-                    $quoteDate = $receivedAt;
+                    $quoteDate = $quoteSourceDate;
                 }
             }
-            if ($quoteDate === '') {
-                $quoteDate = 'unknown date';
-            }
-            $quoteHeader = '<div class="moz-cite-prefix">On ' . htmlspecialchars($quoteDate) . ', ' . $senderLabel . ' wrote:<br></div>';
+            $quoteHeader = $quoteDate !== ''
+                ? '<div class="moz-cite-prefix">On ' . htmlspecialchars($quoteDate) . ', ' . $senderLabel . ' wrote:<br></div>'
+                : '<div class="moz-cite-prefix">' . $senderLabel . ' wrote:<br></div>';
             $messageId = trim((string) ($prefillMessage['message_id'] ?? ''));
             $citeAttribute = $messageId !== '' ? ' cite="' . htmlspecialchars($messageId) . '"' : '';
             $quoteBlock = '<blockquote type="cite"' . $citeAttribute . '>' . $quotedBody . '</blockquote>';
