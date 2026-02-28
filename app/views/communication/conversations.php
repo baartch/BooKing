@@ -159,7 +159,8 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                   $participantLabel = $conversation['participant_key'] === 'unknown'
                       ? 'Unknown participants'
                       : str_replace('|', ' · ', $conversation['participant_key']);
-                  $activityLabel = $lastActivityTime ? date('Y-m-d H:i', $lastActivityTime) : '';
+                  $ageDays = $lastActivityTime ? (int) floor((time() - $lastActivityTime) / 86400) : null;
+                  $activityLabel = $ageDays !== null ? ($ageDays . 'd') : '—';
                   $messageCount = (int) ($conversation['message_count'] ?? 0);
                   $messageLabel = $messageCount === 1 ? 'mail' : 'mails';
                   $lastFolder = (string) ($conversation['last_message_folder'] ?? '');
@@ -218,7 +219,8 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                     $participantLabel = $conversation['participant_key'] === 'unknown'
                         ? 'Unknown participants'
                         : str_replace('|', ' · ', $conversation['participant_key']);
-                    $activityLabel = $lastActivityTime ? date('Y-m-d H:i', $lastActivityTime) : '';
+                    $ageDays = $lastActivityTime ? (int) floor((time() - $lastActivityTime) / 86400) : null;
+                    $activityLabel = $ageDays !== null ? ($ageDays . 'd') : '—';
                     $messageCount = (int) ($conversation['message_count'] ?? 0);
                     $messageLabel = $messageCount === 1 ? 'mail' : 'mails';
                     $lastFolder = (string) ($conversation['last_message_folder'] ?? '');
