@@ -716,13 +716,16 @@ const initRecipientLookup = (): void => {
       }, 150);
     });
 
-    content.addEventListener("click", (event) => {
+    const handleResultSelection = (event: Event): void => {
       const target = (event.target as HTMLElement).closest(
         ".dropdown-item",
       ) as HTMLElement | null;
       if (!target || !target.dataset.index) {
         return;
       }
+
+      event.preventDefault();
+      event.stopPropagation();
 
       const index = Number(target.dataset.index);
       const item = Number.isNaN(index) ? undefined : currentItems[index];
@@ -738,7 +741,10 @@ const initRecipientLookup = (): void => {
           name: item.name,
         });
       }
-    });
+    };
+
+    content.addEventListener("mousedown", handleResultSelection);
+    content.addEventListener("click", handleResultSelection);
 
     input.addEventListener("keydown", (event) => {
       if (!currentItems.length) {
