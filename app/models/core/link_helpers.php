@@ -36,7 +36,11 @@ function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int 
         ':right_id' => $id
     ];
 
-    if ($userId !== null) {
+    if ($userId !== null && $teamId !== null) {
+        $sql .= '(user_id = :user_id OR (user_id IS NULL AND team_id = :team_id))';
+        $params[':user_id'] = $userId;
+        $params[':team_id'] = $teamId;
+    } elseif ($userId !== null) {
         $sql .= 'user_id = :user_id';
         $params[':user_id'] = $userId;
     } else {

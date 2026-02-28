@@ -135,7 +135,7 @@ $activeContact = null;
 $contactLinks = [];
 if ($contactRecord && $pdo && $activeTeamId > 0) {
     try {
-        $contactLinks = fetchLinkedObjects($pdo, 'contact', (int) $contactRecord['id'], $activeTeamId, null);
+        $contactLinks = fetchLinkedObjects($pdo, 'contact', (int) $contactRecord['id'], $activeTeamId, $userId > 0 ? $userId : null);
     } catch (Throwable $error) {
         logAction($userId, 'contacts_links_load_error', $error->getMessage());
     }
