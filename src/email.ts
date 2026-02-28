@@ -840,15 +840,15 @@ document.addEventListener("htmx:afterSwap", (event) => {
     target.matches("[data-email-detail]") ||
     Boolean(target.querySelector("[data-email-detail]"));
 
-  const hasComposeForm =
-    target.matches("[data-email-compose-form]") ||
-    Boolean(target.querySelector("[data-email-compose-form]"));
+  const hasComposeFormInDom = Boolean(
+    document.querySelector("[data-email-compose-form]"),
+  );
 
   if (hasEmailDetail) {
     initQuoteToggle();
   }
 
-  if (hasComposeForm) {
+  if (hasComposeFormInDom) {
     initWysiEditor();
     initWysiPasteSanitizer();
     initEmailValidation();
