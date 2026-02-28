@@ -259,8 +259,14 @@ if ($pdo && $selectedMailbox && $prefillMessageId > 0) {
             $originalSubject = (string) ($prefillMessage['subject'] ?? '');
             $subjectPrefix = $replyId > 0 ? 'Re: ' : 'Fwd: ';
             $subject = $originalSubject;
-            if ($subject !== '' && stripos($subject, $subjectPrefix) !== 0) {
-                $subject = $subjectPrefix . $subject;
+            if ($subject !== '') {
+                $trimmedSubject = ltrim($subject);
+                $hasReplyPrefix = preg_match('/^re\s*:/i', $trimmedSubject) === 1;
+                $hasForwardPrefix = preg_match('/^fwd?\s*:/i', $trimmedSubject) === 1;
+                $shouldPrefix = $replyId > 0 ? !$hasReplyPrefix : !$hasForwardPrefix;
+                if ($shouldPrefix) {
+                    $subject = $subjectPrefix . $subject;
+                }
             }
             $composeValues['subject'] = $subject;
             if ($replyId > 0) {
