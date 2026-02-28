@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../../models/auth/check.php';
 require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../models/communication/contacts_helpers.php';
+require_once __DIR__ . '/../../models/communication/navigation_helpers.php';
+require_once __DIR__ . '/../../models/core/error_helpers.php';
 require_once __DIR__ . '/../../models/core/object_links.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -16,13 +18,10 @@ $contactId = (int) ($_POST['contact_id'] ?? 0);
 $searchQuery = trim((string) ($_POST['q'] ?? ''));
 $teamId = (int) ($_POST['team_id'] ?? 0);
 
-$redirectParams = ['tab' => 'contacts'];
-if ($teamId > 0) {
-    $redirectParams['team_id'] = $teamId;
-}
-if ($searchQuery !== '') {
-    $redirectParams['q'] = $searchQuery;
-}
+$redirectParams = buildContactsTabQuery(
+    $teamId > 0 ? $teamId : null,
+    $searchQuery !== '' ? $searchQuery : null
+);
 
 try {
     $pdo = getDatabaseConnection();
@@ -48,9 +47,9 @@ try {
         }
     }
 } catch (Throwable $error) {
-    logAction($userId, 'contact_delete_error', $error->getMessage());
+    logThrowable($userId, 'contact_delete_error', $error);
     $redirectParams['notice'] = 'contact_error';
 }
 
-header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
+header('Location: ' . buildCommunicationUrl($redirectParams));
 exit;

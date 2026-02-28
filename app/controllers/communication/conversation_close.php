@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../../models/auth/check.php';
 require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../models/communication/email_helpers.php';
+require_once __DIR__ . '/../../models/communication/navigation_helpers.php';
+require_once __DIR__ . '/../../models/core/error_helpers.php';
 require_once __DIR__ . '/../../models/core/form_helpers.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -14,13 +16,10 @@ verifyCsrfToken();
 $userId = (int) ($currentUser['user_id'] ?? 0);
 $conversationId = (int) ($_POST['conversation_id'] ?? 0);
 
-$redirectParams = [
-    'tab' => 'conversations',
-    'conversation_id' => $conversationId
-];
+$redirectParams = buildConversationsTabQuery($conversationId);
 
 if ($conversationId <= 0) {
-    header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
+    header('Location: ' . buildCommunicationUrl($redirectParams));
     exit;
 }
 
@@ -41,8 +40,8 @@ try {
         logAction($userId, 'conversation_closed', sprintf('Closed conversation %d', $conversationId));
     }
 } catch (Throwable $error) {
-    logAction($userId, 'conversation_close_error', $error->getMessage());
+    logThrowable($userId, 'conversation_close_error', $error);
 }
 
-header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
+header('Location: ' . buildCommunicationUrl($redirectParams));
 exit;
