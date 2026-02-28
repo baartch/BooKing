@@ -3,7 +3,9 @@
 <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/email/send.php" data-email-compose-form>
   <?php renderCsrfField(); ?>
   <?php if (!empty($composeConversationId)): ?>
-    <input type="hidden" name="conversation_id" value="<?php echo (int) $composeConversationId; ?>">
+    <input type="hidden" name="conversation_id" value="<?php echo (int) $composeConversationId; ?>" data-email-conversation-id>
+  <?php else: ?>
+    <input type="hidden" name="conversation_id" value="" data-email-conversation-id>
   <?php endif; ?>
 
   <?php if (isset($teamMailboxes) && count($teamMailboxes) > 1): ?>
@@ -156,6 +158,14 @@
       >
         <span class="has-text-grey is-size-7">No links yet</span>
       </span>
+      <span class="mr-1" data-email-conversation-pill>
+        <?php if (!empty($composeValues['conversation_id'])): ?>
+          <span class="detail-link-pill">
+            <span class="icon is-small"><i class="fa-solid fa-comments"></i></span>
+            <span><?php echo htmlspecialchars((string) ($composeValues['conversation_label'] ?? ('Conversation #' . (int) $composeValues['conversation_id']))); ?></span>
+          </span>
+        <?php endif; ?>
+      </span>
       <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars('link-editor-email-0'); ?>" title="Edit links">
         <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
       </a>
@@ -237,10 +247,16 @@
           ];
       }
   }
+  $composeLinkEditorConversationId = !empty($composeValues['conversation_id'])
+      ? (int) $composeValues['conversation_id']
+      : null;
+  $composeLinkEditorConversationLabel = (string) ($composeValues['conversation_label'] ?? '');
   $linkEditorSourceType = $composeLinkEditorSourceType;
   $linkEditorSourceId = $composeLinkEditorSourceId;
   $linkEditorMailboxId = $composeLinkEditorMailboxId;
   $linkEditorLinks = $composeLinkEditorLinks;
+  $linkEditorConversationId = $composeLinkEditorConversationId;
+  $linkEditorConversationLabel = $composeLinkEditorConversationLabel;
   $linkEditorSearchTypes = 'contact,venue';
   $linkEditorLocalOnly = true;
   $linkEditorCollectorSelector = '#email-compose-link-collector';

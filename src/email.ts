@@ -171,6 +171,9 @@ type LocalLinkEditorSavedEvent = CustomEvent<{
   sourceType?: string;
   sourceId?: number;
   links?: Array<{ type: string; id: number; label: string }>;
+  conversationId?: number | null;
+  conversationLabel?: string;
+  detachConversation?: boolean;
 }>;
 
 const renderLinkItems = (): void => {
@@ -939,6 +942,43 @@ const initComposeLinkRefresh = (): void => {
           type: link.type,
           name: link.label || `${link.type} #${link.id}`,
         }));
+    }
+
+    const composeConversationInput = document.querySelector<HTMLInputElement>(
+      "[data-email-conversation-id]",
+    );
+    const composeConversationPill = document.querySelector<HTMLElement>(
+      "[data-email-conversation-pill]",
+    );
+
+    if (composeConversationInput) {
+      const shouldDetach = Boolean(detail?.detachConversation);
+      if (shouldDetach) {
+        composeConversationInput.value = "";
+      } else if (
+        typeof detail?.conversationId === "number" &&
+        detail.conversationId > 0
+      ) {
+        composeConversationInput.value = String(detail.conversationId);
+      }
+    }
+
+    if (composeConversationPill) {
+      const shouldDetach = Boolean(detail?.detachConversation);
+      if (shouldDetach) {
+        composeConversationPill.innerHTML = "";
+      } else if (
+        typeof detail?.conversationId === "number" &&
+        detail.conversationId > 0
+      ) {
+        const label =
+          detail?.conversationLabel?.trim() ||
+          `Conversation #${detail.conversationId}`;
+        const safe = document.createElement("span");
+        safe.textContent = label;
+        composeConversationPill.innerHTML =
+          `<span class="detail-link-pill"><span class="icon is-small"><i class="fa-solid fa-comments"></i></span><span>${safe.innerHTML}</span></span>`;
+      }
     }
 
     renderLinkItems();

@@ -130,7 +130,9 @@ $composeValues = [
     'schedule_date' => '',
     'schedule_time' => '',
     'start_new_conversation' => false,
-    'link_items' => []
+    'link_items' => [],
+    'conversation_id' => null,
+    'conversation_label' => ''
 ];
 
 $prefillTo = trim((string) ($_GET['to'] ?? ''));
@@ -185,6 +187,22 @@ if ($pdo && $selectedMailbox && $selectedMessageId > 0) {
                 $composeValues['schedule_time'] = date('H:i', strtotime($scheduledAt));
             }
             $composeValues['start_new_conversation'] = !empty($message['start_new_conversation']);
+            $composeValues['conversation_id'] = !empty($message['conversation_id'])
+                ? (int) $message['conversation_id']
+                : null;
+            if (!empty($composeValues['conversation_id']) && isset($pdo)) {
+                try {
+                    $convStmt = $pdo->prepare('SELECT subject FROM email_conversations WHERE id = :id LIMIT 1');
+                    $convStmt->execute([':id' => (int) $composeValues['conversation_id']]);
+                    $convRow = $convStmt->fetch();
+                    $composeValues['conversation_label'] = trim((string) ($convRow['subject'] ?? ''));
+                    if ($composeValues['conversation_label'] === '') {
+                        $composeValues['conversation_label'] = 'Conversation #' . (int) $composeValues['conversation_id'];
+                    }
+                } catch (Throwable $error) {
+                    $composeValues['conversation_label'] = 'Conversation #' . (int) $composeValues['conversation_id'];
+                }
+            }
             $composeMode = true;
         } elseif ($message && !(bool) $message['is_read']) {
             $updateStmt = $pdo->prepare('UPDATE email_messages SET is_read = 1 WHERE id = :id');
@@ -283,6 +301,50 @@ if ($pdo && $selectedMailbox && $prefillMessageId > 0) {
             $composeConversationId = !empty($prefillMessage['conversation_id'])
                 ? (int) $prefillMessage['conversation_id']
                 : null;
+            $composeValues['conversation_id'] = $composeConversationId;
+            if (!empty($composeConversationId) && isset($pdo)) {
+                try {
+                    $convStmt = $pdo->prepare('SELECT subject FROM email_conversations WHERE id = :id LIMIT 1');
+                    $convStmt->execute([':id' => (int) $composeConversationId]);
+                    $convRow = $convStmt->fetch();
+                    $composeValues['conversation_label'] = trim((string) ($convRow['subject'] ?? ''));
+                    if ($composeValues['conversation_label'] === '') {
+                        $composeValues['conversation_label'] = 'Conversation #' . (int) $composeConversationId;
+                    }
+                } catch (Throwable $error) {
+                    $composeValues['conversation_label'] = 'Conversation #' . (int) $composeConversationId;
+                }
+            }
+
+            try {
+                $prefillLinkTeamId = !empty($selectedMailbox['team_id'])
+                    ? (int) $selectedMailbox['team_id']
+                    : (!empty($prefillMessage['team_id']) ? (int) $prefillMessage['team_id'] : null);
+                $prefillLinkUserId = !empty($selectedMailbox['user_id'])
+                    ? (int) $selectedMailbox['user_id']
+                    : (!empty($prefillMessage['user_id']) ? (int) $prefillMessage['user_id'] : null);
+
+                $prefillLinks = fetchLinkedObjects(
+                    $pdo,
+                    'email',
+                    (int) $prefillMessage['id'],
+                    $prefillLinkTeamId,
+                    $prefillLinkUserId
+                );
+
+                if (!empty($prefillLinks)) {
+                    $composeValues['link_items'] = array_map(
+                        static fn(array $link): array => [
+                            'type' => (string) ($link['type'] ?? ''),
+                            'id' => (int) ($link['id'] ?? 0),
+                            'label' => (string) ($link['label'] ?? '')
+                        ],
+                        $prefillLinks
+                    );
+                }
+            } catch (Throwable $error) {
+                logAction($userId, 'email_prefill_links_load_error', $error->getMessage());
+            }
             $originalBody = (string) ($prefillMessage['body_html'] ?? '');
             if ($originalBody === '') {
                 $originalBody = (string) ($prefillMessage['body'] ?? '');

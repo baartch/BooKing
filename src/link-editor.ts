@@ -325,6 +325,9 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
               id: link.id,
               label: link.label,
             })),
+            conversationId: state.conversationId,
+            conversationLabel: state.conversationLabel,
+            detachConversation: state.detachConversation,
           },
         }),
       );
