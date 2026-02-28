@@ -9,6 +9,7 @@ $emailDetailIncludeLinkEditor = $emailDetailIncludeLinkEditor ?? true;
 $emailDetailShowActions = $emailDetailShowActions ?? true;
 $emailDetailShowLinks = $emailDetailShowLinks ?? true;
 $emailDetailShowAttachments = $emailDetailShowAttachments ?? true;
+$emailDetailSubjectUrl = $emailDetailSubjectUrl ?? null;
 $messageLinks = $messageLinks ?? [];
 $attachments = $attachments ?? [];
 $composeMode = $composeMode ?? false;
@@ -153,7 +154,11 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
     <!-- Header: Subject + Actions -->
     <div class="email-detail-header">
       <div class="email-detail-subject-row">
-        <h2 class="email-detail-subject"><?php echo htmlspecialchars($message['subject'] ?? '(No subject)'); ?></h2>
+        <?php if (!empty($emailDetailSubjectUrl)): ?>
+          <h2 class="email-detail-subject"><a href="<?php echo htmlspecialchars((string) $emailDetailSubjectUrl); ?>"><?php echo htmlspecialchars($message['subject'] ?? '(No subject)'); ?></a></h2>
+        <?php else: ?>
+          <h2 class="email-detail-subject"><?php echo htmlspecialchars($message['subject'] ?? '(No subject)'); ?></h2>
+        <?php endif; ?>
         <?php if ($emailDetailShowActions): ?>
           <div class="field has-addons email-detail-actions">
             <div class="control">

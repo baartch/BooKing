@@ -335,6 +335,13 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                   'tab' => 'conversations',
                   'conversation_id' => $conversationId
               ];
+              $messageFolderForLink = (string) ($messageItem['folder'] ?? 'inbox');
+              $emailDetailSubjectUrl = BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query([
+                  'tab' => 'email',
+                  'mailbox_id' => (int) ($messageItem['mailbox_id'] ?? 0),
+                  'folder' => $messageFolderForLink,
+                  'message_id' => (int) ($messageItem['id'] ?? 0)
+              ]);
               $emailDetailWrapperTag = 'article';
               $emailDetailWrapperClass = 'box mb-4';
               $emailDetailIncludeLinkEditor = false;
