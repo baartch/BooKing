@@ -108,7 +108,9 @@ try {
             }
         }
 
-        $scopeUserId = null;
+        // Contact/task detail can show team-scoped and user-scoped links,
+        // so clear both scopes for the current user before re-creating links.
+        $scopeUserId = $userId > 0 ? $userId : null;
     }
 
     if ($teamId === null && $scopeUserId === null) {
@@ -119,8 +121,14 @@ try {
 
     $pdo->beginTransaction();
 
-    // Clear existing object links (contacts/venues) and re-create
-    if ($teamId === null) {
+    // Clear existing object links and re-create.
+    if ($sourceType === 'contact' || $sourceType === 'task') {
+        // Remove both team-scoped and user-scoped links for this object.
+        clearObjectLinks($pdo, $sourceType, $sourceId, $teamId, null);
+        if ($scopeUserId !== null) {
+            clearObjectLinks($pdo, $sourceType, $sourceId, null, $scopeUserId);
+        }
+    } elseif ($teamId === null) {
         clearObjectLinks($pdo, $sourceType, $sourceId, null, $scopeUserId);
     } else {
         clearObjectLinks($pdo, $sourceType, $sourceId, $teamId, null);
@@ -137,11 +145,16 @@ try {
         }
         $linkTeamId = $teamId;
         $linkUserId = $scopeUserId;
-        if ($teamId !== null) {
+
+        if ($sourceType === 'contact' || $sourceType === 'task') {
+            // Persist as team-scoped links for shared visibility/editing.
+            $linkUserId = null;
+        } elseif ($teamId !== null) {
             $linkUserId = null;
         } elseif ($scopeUserId !== null) {
             $linkTeamId = null;
         }
+
         createObjectLink($pdo, $sourceType, $sourceId, $linkType, $linkId, $linkTeamId, $linkUserId);
     }
 
