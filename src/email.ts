@@ -419,24 +419,59 @@ const initEmailValidation = (): void => {
   });
 };
 
+const mailboxStorageKey = "email:selectedMailboxId";
+
 const initMailboxSwitch = (): void => {
-  const selects = Array.from(
-    document.querySelectorAll<HTMLSelectElement>("[data-mailbox-switch]"),
+  const avatars = Array.from(
+    document.querySelectorAll<HTMLElement>("[data-mailbox-avatar][data-mailbox-id]"),
   );
 
-  selects.forEach((select) => {
-    if (select.dataset.mailboxSwitchBound === "true") {
-      return;
-    }
-    select.dataset.mailboxSwitchBound = "true";
+  if (!avatars.length) {
+    return;
+  }
 
-    select.addEventListener("change", () => {
-      const form = select.closest("form");
-      if (form instanceof HTMLFormElement) {
-        form.submit();
-      }
-    });
-  });
+  const selectedFromUrl = new URL(window.location.href).searchParams.get(
+    "mailbox_id",
+  );
+
+  if (selectedFromUrl) {
+    window.localStorage.setItem(mailboxStorageKey, selectedFromUrl);
+  } else {
+    const activeAvatar = avatars.find((avatar) =>
+      avatar.classList.contains("is-active"),
+    );
+    const activeMailboxId = activeAvatar?.dataset.mailboxId ?? "";
+    if (activeMailboxId !== "") {
+      window.localStorage.setItem(mailboxStorageKey, activeMailboxId);
+    }
+  }
+
+  const storedMailboxId = window.localStorage.getItem(mailboxStorageKey);
+  if (!storedMailboxId) {
+    return;
+  }
+
+  const hasMailboxParam = new URL(window.location.href).searchParams.has(
+    "mailbox_id",
+  );
+  if (hasMailboxParam) {
+    return;
+  }
+
+  const targetAvatar = avatars.find(
+    (avatar) => avatar.dataset.mailboxId === storedMailboxId,
+  );
+
+  if (!targetAvatar) {
+    return;
+  }
+
+  const href = targetAvatar.getAttribute("href") ?? "";
+  if (href === "") {
+    return;
+  }
+
+  window.location.assign(href);
 };
 
 const initRecipientToggle = (): void => {

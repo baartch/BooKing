@@ -4,37 +4,52 @@
   <h3 class="title is-6">Mailbox</h3>
   <?php if (!$teamMailboxes): ?>
     <p>No mailboxes assigned.</p>
-  <?php elseif ($mailboxCount > 1): ?>
-    <form method="GET" action="<?php echo htmlspecialchars($baseEmailUrl); ?>" class="field">
-      <input type="hidden" name="tab" value="email">
-      <div class="control is-expanded">
-        <div class="select is-fullwidth">
-          <select name="mailbox_id" data-mailbox-switch>
-            <?php foreach ($teamMailboxes as $mailbox): ?>
-              <?php
-                $displayLabel = trim((string) ($mailbox['display_name'] ?? ''));
-                $nameLabel = $displayLabel !== '' ? $displayLabel : ($mailbox['name'] ?? '');
-                $label = $mailbox['user_id']
-                    ? 'Personal · ' . $nameLabel
-                    : (($mailbox['team_name'] ?? 'Team') . ' · ' . $nameLabel);
-              ?>
-              <option value="<?php echo (int) $mailbox['id']; ?>" <?php echo (int) ($selectedMailbox['id'] ?? 0) === (int) $mailbox['id'] ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($label); ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-      </div>
-    </form>
   <?php else: ?>
-    <?php
-      $singleDisplayLabel = trim((string) ($teamMailboxes[0]['display_name'] ?? ''));
-      $singleNameLabel = $singleDisplayLabel !== '' ? $singleDisplayLabel : ($teamMailboxes[0]['name'] ?? '');
-      $singleLabel = $teamMailboxes[0]['user_id']
-          ? 'Personal · ' . $singleNameLabel
-          : (($teamMailboxes[0]['team_name'] ?? 'Team') . ' · ' . $singleNameLabel);
-    ?>
-    <p><?php echo htmlspecialchars($singleLabel); ?></p>
+    <div class="email-mailbox-avatar-list">
+      <?php foreach ($teamMailboxes as $mailbox): ?>
+        <?php
+          $mailboxId = (int) ($mailbox['id'] ?? 0);
+          $displayLabel = trim((string) ($mailbox['display_name'] ?? ''));
+          $nameLabel = $displayLabel !== '' ? $displayLabel : ($mailbox['name'] ?? '');
+          $label = $mailbox['user_id']
+              ? 'Personal · ' . $nameLabel
+              : (($mailbox['team_name'] ?? 'Team') . ' · ' . $nameLabel);
+          $isActive = (int) ($selectedMailbox['id'] ?? 0) === $mailboxId;
+          $initialSource = $displayLabel !== '' ? $displayLabel : $nameLabel;
+          $initial = strtoupper(substr(trim((string) $initialSource), 0, 1));
+          if ($initial === '') {
+              $initial = 'M';
+          }
+          $indicator = $mailboxIndicators[$mailboxId] ?? ['unread_count' => 0, 'new_count' => 0];
+          $hasNew = (int) ($indicator['new_count'] ?? 0) > 0;
+          $hasUnread = (int) ($indicator['unread_count'] ?? 0) > 0;
+          $indicatorClass = '';
+          if ($hasNew) {
+              $indicatorClass = 'is-new';
+          } elseif ($hasUnread) {
+              $indicatorClass = 'is-unread';
+          }
+          $mailboxLink = $baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, [
+              'mailbox_id' => $mailboxId,
+              'page' => 1,
+              'message_id' => null
+          ]));
+        ?>
+        <a
+          href="<?php echo htmlspecialchars($mailboxLink); ?>"
+          class="email-mailbox-avatar<?php echo $isActive ? ' is-active' : ''; ?>"
+          title="<?php echo htmlspecialchars($label); ?>"
+          aria-label="<?php echo htmlspecialchars($label); ?>"
+          data-mailbox-avatar
+          data-mailbox-id="<?php echo (int) $mailboxId; ?>"
+        >
+          <span class="email-mailbox-avatar-initial"><?php echo htmlspecialchars($initial); ?></span>
+          <?php if ($indicatorClass !== ''): ?>
+            <span class="email-mailbox-avatar-indicator <?php echo htmlspecialchars($indicatorClass); ?>"></span>
+          <?php endif; ?>
+        </a>
+      <?php endforeach; ?>
+    </div>
   <?php endif; ?>
 
   <div class="block">

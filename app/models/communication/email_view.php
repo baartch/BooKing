@@ -10,6 +10,7 @@ $attachments = [];
 $folderCounts = [];
 $templates = [];
 $teamMailboxes = [];
+$mailboxIndicators = [];
 $selectedMailbox = null;
 $pdo = null;
 $userId = (int) ($currentUser['user_id'] ?? 0);
@@ -83,6 +84,40 @@ if ($pdo && $selectedMailbox) {
     } catch (Throwable $error) {
         $errors[] = 'Failed to load attachment quota.';
         logAction($userId, 'email_quota_load_error', $error->getMessage());
+    }
+}
+
+if ($pdo && $teamMailboxes) {
+    try {
+        $mailboxIds = array_values(array_filter(array_map(
+            static fn(array $mailbox): int => (int) ($mailbox['id'] ?? 0),
+            $teamMailboxes
+        ), static fn(int $id): bool => $id > 0));
+
+        if ($mailboxIds) {
+            $placeholders = implode(',', array_fill(0, count($mailboxIds), '?'));
+            $stmt = $pdo->prepare(
+                'SELECT mailbox_id,
+                        SUM(CASE WHEN folder = "inbox" AND is_read = 0 THEN 1 ELSE 0 END) AS unread_count,
+                        SUM(CASE WHEN folder = "inbox" AND is_read = 0 AND received_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR) THEN 1 ELSE 0 END) AS new_count
+                 FROM email_messages
+                 WHERE mailbox_id IN (' . $placeholders . ')
+                 GROUP BY mailbox_id'
+            );
+            $stmt->execute($mailboxIds);
+            foreach ($stmt->fetchAll() as $row) {
+                $mailboxId = (int) ($row['mailbox_id'] ?? 0);
+                if ($mailboxId <= 0) {
+                    continue;
+                }
+                $mailboxIndicators[$mailboxId] = [
+                    'unread_count' => (int) ($row['unread_count'] ?? 0),
+                    'new_count' => (int) ($row['new_count'] ?? 0)
+                ];
+            }
+        }
+    } catch (Throwable $error) {
+        logAction($userId, 'email_mailbox_indicator_error', $error->getMessage());
     }
 }
 
