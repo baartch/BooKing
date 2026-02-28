@@ -94,7 +94,8 @@ $composeValues = [
     'body' => '',
     'schedule_date' => '',
     'schedule_time' => '',
-    'start_new_conversation' => false
+    'start_new_conversation' => false,
+    'link_items' => []
 ];
 
 $prefillTo = trim((string) ($_GET['to'] ?? ''));
@@ -172,6 +173,17 @@ if ($pdo && $selectedMailbox && $selectedMessageId > 0) {
                 );
             } catch (Throwable $error) {
                 logAction($userId, 'email_links_load_error', $error->getMessage());
+            }
+
+            if ($message && ($message['folder'] ?? '') === 'drafts' && !empty($messageLinks)) {
+                $composeValues['link_items'] = array_map(
+                    static fn(array $link): array => [
+                        'type' => (string) ($link['type'] ?? ''),
+                        'id' => (int) ($link['id'] ?? 0),
+                        'label' => (string) ($link['label'] ?? '')
+                    ],
+                    $messageLinks
+                );
             }
         }
     } catch (Throwable $error) {

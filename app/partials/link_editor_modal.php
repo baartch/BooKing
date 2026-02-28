@@ -18,6 +18,8 @@ $linkEditorLinks = $linkEditorLinks ?? [];
 $linkEditorConversationId = $linkEditorConversationId ?? null;
 $linkEditorConversationLabel = $linkEditorConversationLabel ?? '';
 $linkEditorSearchTypes = $linkEditorSearchTypes ?? 'contact,venue';
+$linkEditorLocalOnly = !empty($linkEditorLocalOnly);
+$linkEditorCollectorSelector = (string) ($linkEditorCollectorSelector ?? '');
 
 $linkEditorSearchUrl = BASE_PATH . '/app/controllers/core/links_search.php';
 $linkEditorSaveUrl = BASE_PATH . '/app/controllers/core/links_save.php';
@@ -45,6 +47,8 @@ $linkEditorModalId = htmlspecialchars('link-editor-' . $linkEditorSourceType . '
         data-conversation-id="<?php echo $linkEditorConversationId !== null ? (int) $linkEditorConversationId : ''; ?>"
         data-conversation-label="<?php echo htmlspecialchars($linkEditorConversationLabel); ?>"
         data-link-editor-types="<?php echo htmlspecialchars($linkEditorSearchTypes); ?>"
+        <?php if ($linkEditorLocalOnly): ?>data-link-editor-local-only="1"<?php endif; ?>
+        <?php if ($linkEditorCollectorSelector !== ''): ?>data-link-editor-collector-selector="<?php echo htmlspecialchars($linkEditorCollectorSelector); ?>"<?php endif; ?>
       >
         <!-- Contact / Venue links -->
         <div class="field">

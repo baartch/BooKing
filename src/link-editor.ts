@@ -43,6 +43,8 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
   const sourceId = Number(editor.dataset.sourceId ?? 0);
   const mailboxId = Number(editor.dataset.mailboxId ?? 0);
   const searchTypes = editor.dataset.linkEditorTypes ?? "contact,venue";
+  const localOnly = editor.dataset.linkEditorLocalOnly === "1";
+  const collectorSelector = editor.dataset.linkEditorCollectorSelector ?? "";
 
   const tagsContainer = editor.querySelector<HTMLElement>("[data-link-editor-tags]");
   const searchInput = editor.querySelector<HTMLInputElement>("[data-link-editor-search]");
@@ -274,6 +276,46 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
     if (errorEl) errorEl.classList.add("is-hidden");
     saveButton.classList.add("is-loading");
 
+    const updateCollector = (): void => {
+      const collectorTarget = collectorSelector
+        ? document.querySelector<HTMLElement>(collectorSelector)
+        : collector;
+
+      if (!collectorTarget) {
+        return;
+      }
+
+      collectorTarget.innerHTML = "";
+      state.links.forEach((link) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "link_items[]";
+        input.value = `${link.type}:${link.id}`;
+        collectorTarget.appendChild(input);
+      });
+    };
+
+    if (localOnly) {
+      updateCollector();
+      document.dispatchEvent(
+        new CustomEvent("link-editor:local-saved", {
+          detail: {
+            collectorSelector,
+            sourceType,
+            sourceId,
+            links: state.links.map((link) => ({
+              type: link.type,
+              id: link.id,
+              label: link.label,
+            })),
+          },
+        }),
+      );
+      modal.classList.remove("is-active");
+      saveButton.classList.remove("is-loading");
+      return;
+    }
+
     const payload: Record<string, unknown> = {
       csrf_token: csrfToken,
       source_type: sourceType,
@@ -306,16 +348,7 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
         return response.json() as Promise<{ ok: boolean }>;
       })
       .then(() => {
-        if (collector) {
-          collector.innerHTML = "";
-          state.links.forEach((link) => {
-            const input = document.createElement("input");
-            input.type = "hidden";
-            input.name = "link_items[]";
-            input.value = `${link.type}:${link.id}`;
-            collector.appendChild(input);
-          });
-        }
+        updateCollector();
         modal.classList.remove("is-active");
         window.location.reload();
       })

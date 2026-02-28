@@ -136,16 +136,41 @@
     </div>
   </div>
   <div class="field">
-    <div class="control">
+    <div class="control is-flex is-align-items-center is-justify-content-space-between">
       <label class="checkbox">
         <input type="checkbox" name="start_new_conversation" value="1" <?php echo !empty($composeValues['start_new_conversation']) ? 'checked' : ''; ?>>
         Start a new conversation
       </label>
     </div>
-    <p class="is-size-7 email-link-metadata is-hidden" data-email-links>
-      Links: <span data-email-links-list></span>
-    </p>
-    <div data-email-link-inputs></div>
+    <div class="is-size-7 email-link-metadata" data-email-links>
+      Links:
+      <span class="detail-link-list" data-email-links-list>
+        <span class="has-text-grey is-size-7">No links yet</span>
+      </span>
+      <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars('link-editor-email-0'); ?>" title="Edit links">
+        <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
+      </a>
+    </div>
+    <div id="email-compose-link-collector" data-email-link-inputs data-link-editor-collector>
+      <?php if (!empty($composeValues['link_items']) && is_array($composeValues['link_items'])): ?>
+        <?php foreach ($composeValues['link_items'] as $linkItem): ?>
+          <?php
+            $linkType = (string) ($linkItem['type'] ?? '');
+            $linkId = (int) ($linkItem['id'] ?? 0);
+            $linkLabel = trim((string) ($linkItem['label'] ?? ''));
+            if ($linkType === '' || $linkId <= 0) {
+                continue;
+            }
+          ?>
+          <input
+            type="hidden"
+            name="link_items[]"
+            value="<?php echo htmlspecialchars($linkType . ':' . $linkId); ?>"
+            data-link-label="<?php echo htmlspecialchars($linkLabel !== '' ? $linkLabel : ($linkType . ' #' . $linkId)); ?>"
+          >
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
   </div>
   <div class="field">
     <label for="email_body" class="label">Body</label>
@@ -182,6 +207,36 @@
     </div>
   </div>
 </form>
+
+<?php
+  $composeLinkEditorSourceType = 'email';
+  $composeLinkEditorSourceId = 0;
+  $composeLinkEditorMailboxId = (int) ($selectedMailbox['id'] ?? 0);
+  $composeLinkEditorLinks = [];
+  if (!empty($composeValues['link_items']) && is_array($composeValues['link_items'])) {
+      foreach ($composeValues['link_items'] as $linkItem) {
+          $type = (string) ($linkItem['type'] ?? '');
+          $id = (int) ($linkItem['id'] ?? 0);
+          $label = trim((string) ($linkItem['label'] ?? ''));
+          if ($type === '' || $id <= 0) {
+              continue;
+          }
+          $composeLinkEditorLinks[] = [
+              'type' => $type,
+              'id' => $id,
+              'label' => $label !== '' ? $label : ($type . ' #' . $id)
+          ];
+      }
+  }
+  $linkEditorSourceType = $composeLinkEditorSourceType;
+  $linkEditorSourceId = $composeLinkEditorSourceId;
+  $linkEditorMailboxId = $composeLinkEditorMailboxId;
+  $linkEditorLinks = $composeLinkEditorLinks;
+  $linkEditorSearchTypes = 'contact,venue';
+  $linkEditorLocalOnly = true;
+  $linkEditorCollectorSelector = '#email-compose-link-collector';
+  require __DIR__ . '/../../partials/link_editor_modal.php';
+?>
 
 <div class="modal" data-email-schedule-modal>
   <div class="modal-background" data-email-schedule-close></div>

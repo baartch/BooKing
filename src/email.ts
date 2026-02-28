@@ -166,6 +166,13 @@ type LinkItem = {
 
 let selectedLinkItems: LinkItem[] = [];
 
+type LocalLinkEditorSavedEvent = CustomEvent<{
+  collectorSelector?: string;
+  sourceType?: string;
+  sourceId?: number;
+  links?: Array<{ type: string; id: number; label: string }>;
+}>;
+
 const renderLinkItems = (): void => {
   const container = document.querySelector<HTMLElement>("[data-email-links]");
   const list = document.querySelector<HTMLElement>("[data-email-links-list]");
@@ -176,37 +183,90 @@ const renderLinkItems = (): void => {
     return;
   }
 
+  const existing = Array.from(
+    inputs.querySelectorAll<HTMLInputElement>("input[name='link_items[]']"),
+  )
+    .map((input) => {
+      const [type, idRaw] = (input.value || "").split(":", 2);
+      const id = Number(idRaw ?? 0);
+      const label = input.dataset.linkLabel ?? "";
+      if (!type || Number.isNaN(id) || id <= 0) {
+        return null;
+      }
+      return {
+        type,
+        id,
+        label,
+      };
+    })
+    .filter(
+      (item): item is { type: string; id: number; label: string } =>
+        item !== null,
+    );
+
+  if (existing.length > 0) {
+    selectedLinkItems = existing
+      .filter(
+        (item, index, array) =>
+          array.findIndex(
+            (other) => other.type === item.type && other.id === item.id,
+          ) === index,
+      )
+      .map((item) => {
+        const match = selectedLinkItems.find(
+          (existingItem) =>
+            existingItem.type === item.type && existingItem.id === item.id,
+        );
+        return {
+          id: item.id,
+          type: item.type,
+          name: item.label || match?.name || `${item.type} #${item.id}`,
+        };
+      });
+  }
+
   list.innerHTML = "";
   inputs.innerHTML = "";
 
   if (selectedLinkItems.length === 0) {
-    container.classList.add("is-hidden");
+    const empty = document.createElement("span");
+    empty.className = "has-text-grey is-size-7";
+    empty.textContent = "No links yet";
+    list.appendChild(empty);
     return;
   }
 
-  container.classList.remove("is-hidden");
+  selectedLinkItems.forEach((item) => {
+    const chip = document.createElement("a");
+    chip.href = "#";
+    chip.className = "detail-link-pill";
 
-  selectedLinkItems.forEach((item, index) => {
-    const wrapper = document.createElement("span");
-    wrapper.className = "email-link-item";
-    wrapper.textContent = item.name;
+    const icon = document.createElement("span");
+    icon.className = "icon is-small";
+    icon.innerHTML = `<i class="fa-solid ${
+      item.type === "contact"
+        ? "fa-user"
+        : item.type === "venue"
+          ? "fa-location-dot"
+          : item.type === "email"
+            ? "fa-envelope"
+            : item.type === "task"
+              ? "fa-list-check"
+              : "fa-link"
+    }"></i>`;
 
-    const removeButton = document.createElement("button");
-    removeButton.type = "button";
-    removeButton.className = "delete is-small";
-    removeButton.dataset.index = String(index);
-    removeButton.setAttribute("aria-label", `Remove ${item.name}`);
-    wrapper.appendChild(removeButton);
+    const text = document.createElement("span");
+    text.textContent = item.name;
 
-    list.appendChild(wrapper);
-    if (index < selectedLinkItems.length - 1) {
-      list.appendChild(document.createTextNode(", "));
-    }
+    chip.appendChild(icon);
+    chip.appendChild(text);
+    list.appendChild(chip);
 
     const hidden = document.createElement("input");
     hidden.type = "hidden";
     hidden.name = "link_items[]";
     hidden.value = `${item.type}:${item.id}`;
+    hidden.dataset.linkLabel = item.name;
     inputs.appendChild(hidden);
   });
 };
@@ -226,33 +286,7 @@ const addLinkItem = (item: LinkItem): void => {
   renderLinkItems();
 };
 
-const removeLinkItem = (index: number): void => {
-  if (index < 0 || index >= selectedLinkItems.length) {
-    return;
-  }
-  selectedLinkItems = selectedLinkItems.filter(
-    (_, itemIndex) => itemIndex !== index,
-  );
-  renderLinkItems();
-};
-
 const initLinkList = (): void => {
-  const list = document.querySelector<HTMLElement>("[data-email-links-list]");
-  if (!list || list.dataset.linkListBound === "true") {
-    return;
-  }
-  list.dataset.linkListBound = "true";
-  list.addEventListener("click", (event) => {
-    const target = event.target as HTMLElement;
-    if (!target.classList.contains("delete")) {
-      return;
-    }
-    const index = Number(target.dataset.index);
-    if (Number.isNaN(index)) {
-      return;
-    }
-    removeLinkItem(index);
-  });
   renderLinkItems();
 };
 
@@ -796,6 +830,30 @@ const initRecipientLookup = (): void => {
   });
 };
 
+const initComposeLinkRefresh = (): void => {
+  if (document.body.dataset.composeLinkRefreshBound === "true") {
+    return;
+  }
+  document.body.dataset.composeLinkRefreshBound = "true";
+
+  document.addEventListener("link-editor:local-saved", (event) => {
+    const detail = (event as LocalLinkEditorSavedEvent).detail;
+    const links = detail?.links ?? [];
+
+    if (links.length > 0) {
+      selectedLinkItems = links
+        .filter((link) => link.type && Number(link.id) > 0)
+        .map((link) => ({
+          id: Number(link.id),
+          type: link.type,
+          name: link.label || `${link.type} #${link.id}`,
+        }));
+    }
+
+    renderLinkItems();
+  });
+};
+
 const bindWysiEditor = (): void => {
   initWysiEditor();
   initWysiPasteSanitizer();
@@ -803,6 +861,7 @@ const bindWysiEditor = (): void => {
   initEmailValidation();
   initRecipientLookup();
   initComposeEnterGuard();
+  initComposeLinkRefresh();
   initLinkList();
   initMailboxSwitch();
   initRecipientToggle();
@@ -815,6 +874,7 @@ const bindWysiEditor = (): void => {
     initEmailValidation();
     initRecipientLookup();
     initComposeEnterGuard();
+    initComposeLinkRefresh();
     initLinkList();
     initMailboxSwitch();
     initRecipientToggle();
@@ -860,6 +920,7 @@ document.addEventListener("htmx:afterSwap", (event) => {
     initEmailValidation();
     initRecipientLookup();
     initComposeEnterGuard();
+    initComposeLinkRefresh();
     initLinkList();
     initMailboxSwitch();
     initRecipientToggle();
