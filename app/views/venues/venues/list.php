@@ -140,32 +140,15 @@ $listRowLink = static function (array $venue) use ($venuesPage, $venuesPerPage, 
     ];
 };
 
-$listRowActions = static function (array $venue) use ($venuesPage, $venuesPerPage, $venuesQuery, $currentUser, $activeTeamId): string {
+$listRowActions = static function (array $venue) use ($currentUser, $activeTeamId): string {
     $venueId = (int) ($venue['id'] ?? 0);
-    $editParams = [
-        'edit' => $venueId,
-        'page' => $venuesPage,
-        'per_page' => $venuesPerPage
-    ];
-    if ($venuesQuery !== '') {
-        $editParams['filter'] = $venuesQuery;
-    }
-    $editLink = BASE_PATH . '/app/controllers/venues/add.php?' . http_build_query($editParams);
-    $detailLink = BASE_PATH . '/app/controllers/venues/index.php?' . http_build_query(array_filter([
-        'venue_id' => $venueId,
-        'page' => $venuesPage,
-        'per_page' => $venuesPerPage,
-        'filter' => $venuesQuery !== '' ? $venuesQuery : null,
-        'team_id' => $activeTeamId > 0 ? $activeTeamId : null
-    ], static fn($value) => $value !== null && $value !== ''));
+    $editLink = BASE_PATH . '/app/controllers/venues/add.php?edit=' . $venueId;
     ob_start();
     ?>
       <div class="buttons are-small is-justify-content-flex-end">
-        <form method="GET" action="<?php echo htmlspecialchars($editLink); ?>">
-          <button type="submit" class="button" aria-label="Edit venue" title="Edit venue">
-            <span class="icon"><i class="fa-solid fa-pen"></i></span>
-          </button>
-        </form>
+        <a href="<?php echo htmlspecialchars($editLink); ?>" class="button" aria-label="Edit venue" title="Edit venue">
+          <span class="icon"><i class="fa-solid fa-pen"></i></span>
+        </a>
         <?php if (($currentUser['role'] ?? '') === 'admin'): ?>
           <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/venues/index.php" onsubmit="return confirm('Delete this venue?');">
             <?php renderCsrfField(); ?>
