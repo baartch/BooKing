@@ -128,6 +128,13 @@ if ($pdo && $selectedMailbox && $selectedMessageId > 0) {
             }
         }
 
+        if ($message) {
+            $messageFolder = (string) ($message['folder'] ?? '');
+            if ($messageFolder !== '' && array_key_exists($messageFolder, $folderOptions)) {
+                $folder = $messageFolder;
+            }
+        }
+
         if ($message && $message['folder'] === 'drafts') {
             $composeValues['to_emails'] = (string) ($message['to_emails'] ?? '');
             $composeValues['cc_emails'] = (string) ($message['cc_emails'] ?? '');
