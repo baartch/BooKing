@@ -546,6 +546,52 @@ const initScheduleModal = (): void => {
   });
 };
 
+const initComposeEnterGuard = (): void => {
+  const forms = Array.from(
+    document.querySelectorAll<HTMLFormElement>("[data-email-compose-form]"),
+  );
+
+  forms.forEach((form) => {
+    if (form.dataset.enterGuardBound === "true") {
+      return;
+    }
+    form.dataset.enterGuardBound = "true";
+
+    form.addEventListener("keydown", (event: KeyboardEvent) => {
+      if (event.key !== "Enter") {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      if (!target) {
+        return;
+      }
+
+      if (
+        target instanceof HTMLTextAreaElement ||
+        target.isContentEditable ||
+        target.closest(".wysi-editor")
+      ) {
+        return;
+      }
+
+      if (target instanceof HTMLButtonElement) {
+        return;
+      }
+
+      if (
+        target instanceof HTMLInputElement &&
+        ["submit", "button", "file", "checkbox", "radio"].includes(target.type)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+    });
+  });
+};
+
 const initRecipientLookup = (): void => {
   const lookups = Array.from(
     document.querySelectorAll<HTMLElement>("[data-email-lookup]"),
@@ -750,6 +796,7 @@ const bindWysiEditor = (): void => {
   initQuoteToggle();
   initEmailValidation();
   initRecipientLookup();
+  initComposeEnterGuard();
   initLinkList();
   initMailboxSwitch();
   initRecipientToggle();
@@ -761,6 +808,7 @@ const bindWysiEditor = (): void => {
     initQuoteToggle();
     initEmailValidation();
     initRecipientLookup();
+    initComposeEnterGuard();
     initLinkList();
     initMailboxSwitch();
     initRecipientToggle();
@@ -805,6 +853,7 @@ document.addEventListener("htmx:afterSwap", (event) => {
     initWysiPasteSanitizer();
     initEmailValidation();
     initRecipientLookup();
+    initComposeEnterGuard();
     initLinkList();
     initMailboxSwitch();
     initRecipientToggle();
