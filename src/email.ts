@@ -38,6 +38,69 @@ const initWysiEditor = (): void => {
   });
 };
 
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const initWysiPasteSanitizer = (): void => {
+  const textarea = document.querySelector<HTMLTextAreaElement>("#email_body");
+  if (!textarea) {
+    return;
+  }
+
+  const wrapper = textarea.previousElementSibling;
+  const editor = wrapper?.querySelector<HTMLElement>(".wysi-editor") ?? null;
+  if (!editor || editor.dataset.plainPasteBound === "true") {
+    return;
+  }
+
+  editor.dataset.plainPasteBound = "true";
+  editor.addEventListener("paste", (event: ClipboardEvent) => {
+    if (!event.clipboardData || event.clipboardData.files.length > 0) {
+      return;
+    }
+
+    const plainText = event.clipboardData.getData("text/plain");
+    if (!plainText) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const normalized = plainText
+      .replace(/\r\n?/g, "\n")
+      .replace(/\u00A0/g, " ")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n");
+
+    const blocks = normalized
+      .split(/\n\n+/)
+      .map((part) => part.trim())
+      .filter((part) => part !== "");
+
+    const html = (blocks.length ? blocks : [""])
+      .map((block) => {
+        if (block === "") {
+          return "<p><br></p>";
+        }
+        const content = block
+          .split("\n")
+          .map((line) => escapeHtml(line.trim()))
+          .join("<br>");
+        return `<p>${content || "<br>"}</p>`;
+      })
+      .join("");
+
+    document.execCommand("insertHTML", false, html);
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+};
+
 const isValidEmail = (email: string): boolean => {
   if (email === "") {
     return true;
@@ -683,6 +746,7 @@ const initRecipientLookup = (): void => {
 
 const bindWysiEditor = (): void => {
   initWysiEditor();
+  initWysiPasteSanitizer();
   initQuoteToggle();
   initEmailValidation();
   initRecipientLookup();
@@ -693,6 +757,7 @@ const bindWysiEditor = (): void => {
   initScheduleModal();
   document.addEventListener("tab:activated", () => {
     initWysiEditor();
+    initWysiPasteSanitizer();
     initQuoteToggle();
     initEmailValidation();
     initRecipientLookup();
@@ -721,6 +786,7 @@ document.addEventListener("htmx:afterSwap", (event) => {
     target.querySelector("[data-email-compose-form]")
   ) {
     initWysiEditor();
+    initWysiPasteSanitizer();
     initEmailValidation();
     initRecipientLookup();
     initLinkList();
