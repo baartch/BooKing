@@ -212,37 +212,29 @@ try {
         }
     }
 
-    $stmt = $pdo->prepare(
-        'INSERT INTO email_messages
-         (mailbox_id, team_id, user_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, sent_at, created_at, conversation_id)
-         VALUES
-         (:mailbox_id, :team_id, :user_id, "sent", :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), NOW(), :conversation_id)'
+    persistSentEmailPayload(
+        $pdo,
+        [
+            'mailbox' => $mailbox,
+            'link_team_id' => $linkTeamId,
+            'link_user_id' => $linkUserId,
+            'user_id' => $userId,
+        ],
+        [
+            'conversation_id' => $conversationId,
+            'message_team_id' => $messageTeamId,
+            'message_user_id' => $messageUserId,
+            'subject' => $subject,
+            'body' => $body,
+            'from_name' => $fromName,
+            'from_email' => $fromEmail,
+            'to_emails' => $toEmails,
+            'cc_emails' => $ccEmails,
+            'bcc_emails' => $bccEmails,
+            'link_items' => $linkItems,
+        ]
     );
-    $stmt->execute([
-        ':mailbox_id' => $mailbox['id'],
-        ':team_id' => $messageTeamId,
-        ':user_id' => $messageUserId,
-        ':subject' => $subject !== '' ? $subject : null,
-        ':body' => $body !== '' ? strip_tags($body) : null,
-        ':body_html' => $body !== '' ? $body : null,
-        ':from_name' => $fromName !== '' ? $fromName : null,
-        ':from_email' => $fromEmail !== '' ? $fromEmail : null,
-        ':to_emails' => $toEmails,
-        ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
-        ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
-        ':created_by' => $userId,
-        ':conversation_id' => $conversationId
-    ]);
-    $sentId = (int) $pdo->lastInsertId();
-    if ($sentId > 0 && $linkItems) {
-        foreach ($linkItems as $linkItem) {
-            [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
-            if ($type === '') {
-                continue;
-            }
-            createObjectLink($pdo, 'email', $sentId, (string) $type, (int) $id, $linkTeamId, $linkUserId);
-        }
-    }
+
     $redirectParams['folder'] = 'sent';
     logAction($userId, 'email_sent', sprintf('Sent email via mailbox %d', $mailboxId));
     $redirectParams['notice'] = 'sent';

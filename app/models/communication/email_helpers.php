@@ -350,6 +350,84 @@ function persistDraftEmailPayload(PDO $pdo, array $context, array $payload): arr
     }
 }
 
+/**
+ * Persist sent email payload and associated object links.
+ *
+ * @param array<string,mixed> $context
+ * @param array<string,mixed> $payload
+ * @return array{sent_id:int}
+ */
+function persistSentEmailPayload(PDO $pdo, array $context, array $payload): array
+{
+    $mailbox = (array) ($context['mailbox'] ?? []);
+    $mailboxId = (int) ($mailbox['id'] ?? 0);
+    $linkTeamId = isset($context['link_team_id']) ? (int) $context['link_team_id'] : null;
+    $linkUserId = isset($context['link_user_id']) ? (int) $context['link_user_id'] : null;
+    $userId = (int) ($context['user_id'] ?? 0);
+
+    $conversationId = (int) ($payload['conversation_id'] ?? 0);
+    $messageTeamId = $payload['message_team_id'] ?? null;
+    $messageUserId = $payload['message_user_id'] ?? null;
+    $subject = trim((string) ($payload['subject'] ?? ''));
+    $body = trim((string) ($payload['body'] ?? ''));
+    $fromName = trim((string) ($payload['from_name'] ?? ''));
+    $fromEmail = trim((string) ($payload['from_email'] ?? ''));
+    $toEmails = trim((string) ($payload['to_emails'] ?? ''));
+    $ccEmails = trim((string) ($payload['cc_emails'] ?? ''));
+    $bccEmails = trim((string) ($payload['bcc_emails'] ?? ''));
+    $linkItems = isset($payload['link_items']) && is_array($payload['link_items']) ? $payload['link_items'] : [];
+
+    if ($mailboxId <= 0) {
+        throw new InvalidArgumentException('Mailbox id is required for sent email persistence.');
+    }
+
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare(
+            'INSERT INTO email_messages
+             (mailbox_id, team_id, user_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, sent_at, created_at, conversation_id)
+             VALUES
+             (:mailbox_id, :team_id, :user_id, "sent", :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), NOW(), :conversation_id)'
+        );
+        $stmt->execute([
+            ':mailbox_id' => $mailboxId,
+            ':team_id' => $messageTeamId,
+            ':user_id' => $messageUserId,
+            ':subject' => $subject !== '' ? $subject : null,
+            ':body' => $body !== '' ? strip_tags($body) : null,
+            ':body_html' => $body !== '' ? $body : null,
+            ':from_name' => $fromName !== '' ? $fromName : null,
+            ':from_email' => $fromEmail !== '' ? $fromEmail : null,
+            ':to_emails' => $toEmails,
+            ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
+            ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
+            ':created_by' => $userId > 0 ? $userId : null,
+            ':conversation_id' => $conversationId > 0 ? $conversationId : null,
+        ]);
+
+        $sentId = (int) $pdo->lastInsertId();
+
+        foreach ($linkItems as $linkItem) {
+            [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
+            if ($type === '') {
+                continue;
+            }
+            createObjectLink($pdo, 'email', $sentId, (string) $type, (int) $id, $linkTeamId, $linkUserId);
+        }
+
+        $pdo->commit();
+
+        return [
+            'sent_id' => $sentId,
+        ];
+    } catch (Throwable $error) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $error;
+    }
+}
+
 function findContactIdsByEmail(PDO $pdo, string $email, ?int $teamId = null): array
 {
     $normalized = strtolower(trim($email));
