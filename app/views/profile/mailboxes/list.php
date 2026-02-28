@@ -33,13 +33,11 @@ $listRowActions = static function (array $mailbox) use ($baseUrl, $baseQuery): s
     $editLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, ['mailbox_id' => $mailboxId, 'mode' => 'edit']));
     ob_start();
     ?>
-      <div class="buttons are-small is-justify-content-flex-end">
-        <form method="GET" action="<?php echo htmlspecialchars($editLink); ?>">
-          <button type="submit" class="button" aria-label="Edit mailbox" title="Edit mailbox">
-            <span class="icon"><i class="fa-solid fa-pen"></i></span>
-          </button>
-        </form>
-        <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/profile/index.php?tab=mailboxes" onsubmit="return confirm('Delete this mailbox?');">
+      <div class="buttons are-small is-justify-content-flex-end" data-list-ignore>
+        <a href="<?php echo htmlspecialchars($editLink); ?>" class="button" aria-label="Edit mailbox" title="Edit mailbox">
+          <span class="icon"><i class="fa-solid fa-pen"></i></span>
+        </a>
+        <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/profile/index.php?tab=mailboxes" onsubmit="return confirm('Delete this mailbox?');" data-list-ignore>
           <?php renderCsrfField(); ?>
           <input type="hidden" name="action" value="delete_mailbox">
           <input type="hidden" name="mailbox_id" value="<?php echo (int) $mailboxId; ?>">

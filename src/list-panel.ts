@@ -134,8 +134,6 @@ const initListSelection = (): void => {
 
     const ignoreElement = target.closest('[data-list-ignore]');
     if (ignoreElement) {
-      event.preventDefault();
-      event.stopPropagation();
       return;
     }
 
