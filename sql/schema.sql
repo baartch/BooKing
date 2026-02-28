@@ -17,7 +17,7 @@ CREATE TABLE `venues` (
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE INDEX idx_venues_name ON venues(name(100));
 CREATE INDEX idx_venues_city ON venues(city(100));
@@ -210,7 +210,7 @@ CREATE TABLE object_links (
     INDEX idx_object_links_user (user_id),
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE email_templates (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -246,7 +246,7 @@ CREATE TABLE team_tasks (
     INDEX idx_team_tasks_priority (team_id, priority),
     INDEX idx_team_tasks_due (team_id, due_date),
     INDEX idx_team_tasks_trigger (team_id, is_template, trigger_month, trigger_day)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE venue_ratings (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -262,7 +262,7 @@ CREATE TABLE venue_ratings (
     FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE,
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (rated_by) REFERENCES users(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE rate_limits (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -271,7 +271,7 @@ CREATE TABLE rate_limits (
     attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_identifier_action (identifier, action),
     INDEX idx_attempted_at (attempted_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE email_otps (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -287,7 +287,7 @@ CREATE TABLE email_otps (
     INDEX idx_email_otps_user (user_id),
     INDEX idx_email_otps_expires (expires_at),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE contacts (
   id INT PRIMARY KEY AUTO_INCREMENT,
@@ -309,4 +309,4 @@ CREATE TABLE contacts (
   INDEX idx_contacts_name (team_id, firstname(100), surname(100)),
   INDEX idx_contacts_email (team_id, email(100)),
   INDEX idx_contacts_city (team_id, city(100))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

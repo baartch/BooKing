@@ -37,15 +37,18 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
     $isHtml = $body !== strip_tags($body);
     $contentType = $isHtml ? 'text/html' : 'text/plain';
 
+    $safeFromName = sanitizeHeaderText($fromName);
+    $safeSubject = sanitizeHeaderText($subject);
+
     $fromHeader = $fromEmail;
-    if ($fromName !== '') {
-        $fromHeader = sprintf('%s <%s>', $fromName, $fromEmail);
+    if ($safeFromName !== '') {
+        $fromHeader = sprintf('%s <%s>', encodeHeaderWord($safeFromName), $fromEmail);
     }
 
     $headers = [
         'From: ' . $fromHeader,
         'To: ' . implode(', ', $toList),
-        'Subject: ' . $subject,
+        'Subject: ' . encodeHeaderWord($safeSubject),
         'Date: ' . date('r'),
         'MIME-Version: 1.0',
         'Content-Type: ' . $contentType . '; charset=UTF-8'
@@ -143,6 +146,32 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
     smtpClose($socket);
 
     return true;
+}
+
+function sanitizeHeaderText(string $value): string
+{
+    $value = str_replace(["\r", "\n"], ' ', $value);
+    return trim(preg_replace('/\s+/', ' ', $value) ?? '');
+}
+
+function encodeHeaderWord(string $value): string
+{
+    if ($value === '') {
+        return '';
+    }
+
+    if (!preg_match('/[^\x20-\x7E]/', $value)) {
+        return $value;
+    }
+
+    if (function_exists('mb_encode_mimeheader')) {
+        $encoded = mb_encode_mimeheader($value, 'UTF-8', 'B', "\r\n");
+        if ($encoded !== false && $encoded !== '') {
+            return $encoded;
+        }
+    }
+
+    return '=?UTF-8?B?' . base64_encode($value) . '?=';
 }
 
 function smtpOpenConnection(string $host, int $port, string $encryption): ?array
