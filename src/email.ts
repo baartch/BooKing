@@ -422,6 +422,12 @@ const initEmailValidation = (): void => {
 const mailboxStorageKey = "email:selectedMailboxId";
 
 const initMailboxSwitch = (): void => {
+  const currentUrl = new URL(window.location.href);
+  const currentTab = currentUrl.searchParams.get("tab") ?? "";
+  if (currentTab !== "email") {
+    return;
+  }
+
   const avatars = Array.from(
     document.querySelectorAll<HTMLElement>("[data-mailbox-avatar][data-mailbox-id]"),
   );
@@ -430,9 +436,7 @@ const initMailboxSwitch = (): void => {
     return;
   }
 
-  const selectedFromUrl = new URL(window.location.href).searchParams.get(
-    "mailbox_id",
-  );
+  const selectedFromUrl = currentUrl.searchParams.get("mailbox_id");
 
   if (selectedFromUrl) {
     window.localStorage.setItem(mailboxStorageKey, selectedFromUrl);
@@ -451,9 +455,7 @@ const initMailboxSwitch = (): void => {
     return;
   }
 
-  const hasMailboxParam = new URL(window.location.href).searchParams.has(
-    "mailbox_id",
-  );
+  const hasMailboxParam = currentUrl.searchParams.has("mailbox_id");
   if (hasMailboxParam) {
     return;
   }
