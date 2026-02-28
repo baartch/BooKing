@@ -774,17 +774,33 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.addEventListener("htmx:afterSwap", (event) => {
-  const target = (event as CustomEvent<{ target: HTMLElement }>).detail?.target ?? null;
+  const customEvent = event as CustomEvent<{
+    target?: HTMLElement;
+    elt?: HTMLElement;
+  }>;
+
+  const target =
+    customEvent.detail?.target ??
+    customEvent.detail?.elt ??
+    ((event.target as HTMLElement | null) ?? null);
+
   if (!target) {
     return;
   }
-  if (target.matches("[data-email-detail]") || target.querySelector("[data-email-detail]")) {
+
+  const hasEmailDetail =
+    target.matches("[data-email-detail]") ||
+    Boolean(target.querySelector("[data-email-detail]"));
+
+  const hasComposeForm =
+    target.matches("[data-email-compose-form]") ||
+    Boolean(target.querySelector("[data-email-compose-form]"));
+
+  if (hasEmailDetail) {
     initQuoteToggle();
   }
-  if (
-    target.matches("[data-email-compose-form]") ||
-    target.querySelector("[data-email-compose-form]")
-  ) {
+
+  if (hasComposeForm) {
     initWysiEditor();
     initWysiPasteSanitizer();
     initEmailValidation();
