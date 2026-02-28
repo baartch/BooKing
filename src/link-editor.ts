@@ -22,14 +22,13 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
   if (modal.dataset.linkEditorInitialized === "1") {
     return;
   }
-  const trigger = document.querySelector<HTMLElement>(`[data-link-editor-trigger][data-link-editor-modal-id="${modal.id}"]`);
-  if (!trigger) {
-    return;
-  }
 
-  trigger.addEventListener("click", (event) => {
-    event.preventDefault();
-  });
+  const triggers = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      `[data-link-editor-trigger][data-link-editor-modal-id="${modal.id}"]`,
+    ),
+  );
+
   const editor = modal.querySelector<HTMLElement>("[data-link-editor]");
   if (!editor) {
     return;
@@ -183,9 +182,11 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
     }
   };
 
-  // Event: open modal
-  trigger.addEventListener("click", (e) => {
-    e.preventDefault();
+  const openModal = (e?: Event): void => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     loadInitialState();
     renderTags();
     renderConversationTag();
@@ -193,7 +194,23 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
     if (conversationSearch) conversationSearch.value = "";
     if (errorEl) errorEl.classList.add("is-hidden");
     modal.classList.add("is-active");
+  };
+
+  (modal as HTMLElement & { __openLinkEditor?: (event?: Event) => void }).__openLinkEditor = openModal;
+
+  // Event: open modal
+  triggers.forEach((trigger) => {
+    if (trigger.dataset.linkEditorTriggerBound === "1") {
+      return;
+    }
+    trigger.dataset.linkEditorTriggerBound = "1";
+
+    trigger.addEventListener("click", openModal);
   });
+
+  if (triggers.length === 0) {
+    modal.dataset.linkEditorInitialized = "0";
+  }
 
   // Event: close modal
   modal.querySelectorAll<HTMLElement>("[data-link-editor-close]").forEach((el) => {
@@ -376,6 +393,39 @@ const initLinkEditorModals = (scope: ParentNode = document): void => {
   });
 };
 
+const openLinkEditorModalById = (modalId: string, event?: Event): void => {
+  if (!modalId) {
+    return;
+  }
+
+  const modal = document.getElementById(modalId);
+  if (!modal) {
+    return;
+  }
+
+  initLinkEditorModal(modal);
+
+  const open = (modal as HTMLElement & {
+    __openLinkEditor?: (event?: Event) => void;
+  }).__openLinkEditor;
+
+  if (typeof open === "function") {
+    open(event);
+  }
+};
+
+document.addEventListener("click", (event) => {
+  const trigger = (event.target as HTMLElement | null)?.closest<HTMLElement>(
+    "[data-link-editor-trigger][data-link-editor-modal-id]",
+  );
+  if (!trigger) {
+    return;
+  }
+
+  const modalId = trigger.dataset.linkEditorModalId ?? "";
+  openLinkEditorModalById(modalId, event);
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   initLinkEditorModals();
 });
@@ -385,7 +435,16 @@ document.addEventListener("tab:activated", () => {
 });
 
 document.addEventListener("htmx:afterSwap", (event) => {
-  const target = (event as CustomEvent<{ target: HTMLElement }>).detail?.target ?? null;
+  const customEvent = event as CustomEvent<{
+    target?: HTMLElement;
+    elt?: HTMLElement;
+  }>;
+
+  const target =
+    customEvent.detail?.target ??
+    customEvent.detail?.elt ??
+    ((event.target as HTMLElement | null) ?? null);
+
   if (target) {
     initLinkEditorModals(target);
   }
