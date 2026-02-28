@@ -93,104 +93,47 @@ try {
             exit;
         }
 
-        if ($draftId > 0) {
-            $stmt = $pdo->prepare(
-                'UPDATE email_messages
-                 SET subject = :subject,
-                     body = :body,
-                     body_html = :body_html,
-                     from_name = :from_name,
-                     from_email = :from_email,
-                     to_emails = :to_emails,
-                     cc_emails = :cc_emails,
-                     bcc_emails = :bcc_emails,
-                     conversation_id = :conversation_id,
-                     scheduled_at = :scheduled_at,
-                     start_new_conversation = :start_new_conversation,
-                     updated_at = NOW()
-                 WHERE id = :id
-                   AND mailbox_id = :mailbox_id
-                   AND folder = "drafts"'
-            );
-            $stmt->execute([
-                ':subject' => $subject !== '' ? $subject : null,
-                ':body' => $body !== '' ? strip_tags($body) : null,
-                ':body_html' => $body !== '' ? $body : null,
-                ':from_name' => $fromName !== '' ? $fromName : null,
-                ':from_email' => $fromEmail !== '' ? $fromEmail : null,
-                ':to_emails' => $toEmails !== '' ? $toEmails : null,
-                ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
-                ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
-                ':conversation_id' => $conversationId > 0 ? $conversationId : null,
-                ':scheduled_at' => $isScheduleAction ? $scheduledAt : null,
-                ':start_new_conversation' => $startNewConversation ? 1 : 0,
-                ':id' => $draftId,
-                ':mailbox_id' => $mailbox['id']
-            ]);
+        $draftResult = persistDraftEmailPayload(
+            $pdo,
+            [
+                'mailbox' => $mailbox,
+                'link_team_id' => $linkTeamId,
+                'link_user_id' => $linkUserId,
+                'user_id' => $userId,
+            ],
+            [
+                'draft_id' => $draftId,
+                'conversation_id' => $conversationId,
+                'subject' => $subject,
+                'body' => $body,
+                'from_name' => $fromName,
+                'from_email' => $fromEmail,
+                'to_emails' => $toEmails,
+                'cc_emails' => $ccEmails,
+                'bcc_emails' => $bccEmails,
+                'scheduled_at' => $scheduledAt,
+                'start_new_conversation' => $startNewConversation,
+                'is_schedule_action' => $isScheduleAction,
+                'link_items' => $linkItems,
+            ]
+        );
 
-            if ($mailbox['user_id']) {
-                $ownershipStmt = $pdo->prepare(
-                    'UPDATE email_messages
-                     SET team_id = NULL,
-                         user_id = :user_id
-                     WHERE id = :id'
-                );
-                $ownershipStmt->execute([
-                    ':user_id' => $mailbox['user_id'],
-                    ':id' => $draftId
-                ]);
-            }
-            clearObjectLinks($pdo, 'email', $draftId, $linkTeamId, $linkUserId);
-            if ($linkItems) {
-                foreach ($linkItems as $linkItem) {
-                    [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
-                    if ($type === '') {
-                        continue;
-                    }
-                    createObjectLink($pdo, 'email', $draftId, (string) $type, (int) $id, $linkTeamId, $linkUserId);
-                }
-            }
-            $logActionKey = $isScheduleAction ? 'email_scheduled_updated' : 'email_draft_updated';
-            $logActionLabel = $isScheduleAction ? 'Scheduled email updated' : 'Updated draft';
+        $draftId = (int) ($draftResult['draft_id'] ?? 0);
+        $isUpdate = !empty($draftResult['is_update']);
+
+        $logActionKey = $isScheduleAction
+            ? ($isUpdate ? 'email_scheduled_updated' : 'email_scheduled_saved')
+            : ($isUpdate ? 'email_draft_updated' : 'email_draft_saved');
+        $logActionLabel = $isScheduleAction
+            ? ($isUpdate ? 'Scheduled email updated' : 'Scheduled email saved')
+            : ($isUpdate ? 'Updated draft' : 'Saved draft');
+
+        if ($isUpdate) {
             logAction($userId, $logActionKey, sprintf('%s %d in mailbox %d', $logActionLabel, $draftId, $mailboxId));
         } else {
-            $stmt = $pdo->prepare(
-                'INSERT INTO email_messages
-                 (mailbox_id, team_id, user_id, conversation_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, created_at, scheduled_at, start_new_conversation)
-                 VALUES
-                 (:mailbox_id, :team_id, :user_id, :conversation_id, "drafts", :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), :scheduled_at, :start_new_conversation)'
-            );
-            $stmt->execute([
-                ':mailbox_id' => $mailbox['id'],
-                ':team_id' => $mailbox['team_id'] ?? null,
-                ':user_id' => $mailbox['user_id'] ?? null,
-                ':conversation_id' => $conversationId > 0 ? $conversationId : null,
-                ':subject' => $subject !== '' ? $subject : null,
-                ':body' => $body !== '' ? strip_tags($body) : null,
-                ':body_html' => $body !== '' ? $body : null,
-                ':from_name' => $fromName !== '' ? $fromName : null,
-                ':from_email' => $fromEmail !== '' ? $fromEmail : null,
-                ':to_emails' => $toEmails !== '' ? $toEmails : null,
-                ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
-                ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
-                ':created_by' => $userId,
-                ':scheduled_at' => $isScheduleAction ? $scheduledAt : null,
-                ':start_new_conversation' => $startNewConversation ? 1 : 0
-            ]);
-            $draftId = (int) $pdo->lastInsertId();
-            if ($draftId > 0 && $linkItems) {
-                foreach ($linkItems as $linkItem) {
-                    [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
-                    if ($type === '') {
-                        continue;
-                    }
-                    createObjectLink($pdo, 'email', $draftId, (string) $type, (int) $id, $linkTeamId, $linkUserId);
-                }
-            }
-            $logActionKey = $isScheduleAction ? 'email_scheduled_saved' : 'email_draft_saved';
-            $logActionLabel = $isScheduleAction ? 'Scheduled email saved' : 'Saved draft';
             logAction($userId, $logActionKey, sprintf('%s in mailbox %d', $logActionLabel, $mailboxId));
         }
+
         $redirectParams['notice'] = $isScheduleAction ? 'scheduled' : 'draft_saved';
         $redirectParams['folder'] = 'drafts';
         header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));

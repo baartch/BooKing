@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../core/database.php';
 require_once __DIR__ . '/../core/link_helpers.php';
+require_once __DIR__ . '/../core/object_links.php';
 require_once __DIR__ . '/team_helpers.php';
 
 const EMAIL_PAGE_SIZE_DEFAULT = 25;
@@ -214,6 +215,139 @@ function splitEmailList(string $value): array
 
     $parts = array_map('trim', explode(',', $normalized));
     return array_values(array_filter($parts, static fn($part) => $part !== ''));
+}
+
+/**
+ * Persist draft/scheduled email payload and associated object links.
+ *
+ * @param array<string,mixed> $context
+ * @param array<string,mixed> $payload
+ * @return array{draft_id:int,is_update:bool,is_schedule_action:bool}
+ */
+function persistDraftEmailPayload(PDO $pdo, array $context, array $payload): array
+{
+    $mailbox = (array) ($context['mailbox'] ?? []);
+    $mailboxId = (int) ($mailbox['id'] ?? 0);
+    $linkTeamId = isset($context['link_team_id']) ? (int) $context['link_team_id'] : null;
+    $linkUserId = isset($context['link_user_id']) ? (int) $context['link_user_id'] : null;
+    $userId = (int) ($context['user_id'] ?? 0);
+
+    $draftId = (int) ($payload['draft_id'] ?? 0);
+    $conversationId = (int) ($payload['conversation_id'] ?? 0);
+    $subject = trim((string) ($payload['subject'] ?? ''));
+    $body = trim((string) ($payload['body'] ?? ''));
+    $fromName = trim((string) ($payload['from_name'] ?? ''));
+    $fromEmail = trim((string) ($payload['from_email'] ?? ''));
+    $toEmails = trim((string) ($payload['to_emails'] ?? ''));
+    $ccEmails = trim((string) ($payload['cc_emails'] ?? ''));
+    $bccEmails = trim((string) ($payload['bcc_emails'] ?? ''));
+    $scheduledAt = isset($payload['scheduled_at']) ? (string) $payload['scheduled_at'] : null;
+    $startNewConversation = !empty($payload['start_new_conversation']);
+    $isScheduleAction = !empty($payload['is_schedule_action']);
+    $linkItems = isset($payload['link_items']) && is_array($payload['link_items']) ? $payload['link_items'] : [];
+
+    if ($mailboxId <= 0) {
+        throw new InvalidArgumentException('Mailbox id is required for draft persistence.');
+    }
+
+    $pdo->beginTransaction();
+    try {
+        if ($draftId > 0) {
+            $stmt = $pdo->prepare(
+                'UPDATE email_messages
+                 SET subject = :subject,
+                     body = :body,
+                     body_html = :body_html,
+                     from_name = :from_name,
+                     from_email = :from_email,
+                     to_emails = :to_emails,
+                     cc_emails = :cc_emails,
+                     bcc_emails = :bcc_emails,
+                     conversation_id = :conversation_id,
+                     scheduled_at = :scheduled_at,
+                     start_new_conversation = :start_new_conversation,
+                     updated_at = NOW()
+                 WHERE id = :id
+                   AND mailbox_id = :mailbox_id
+                   AND folder = "drafts"'
+            );
+            $stmt->execute([
+                ':subject' => $subject !== '' ? $subject : null,
+                ':body' => $body !== '' ? strip_tags($body) : null,
+                ':body_html' => $body !== '' ? $body : null,
+                ':from_name' => $fromName !== '' ? $fromName : null,
+                ':from_email' => $fromEmail !== '' ? $fromEmail : null,
+                ':to_emails' => $toEmails !== '' ? $toEmails : null,
+                ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
+                ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
+                ':conversation_id' => $conversationId > 0 ? $conversationId : null,
+                ':scheduled_at' => $isScheduleAction ? $scheduledAt : null,
+                ':start_new_conversation' => $startNewConversation ? 1 : 0,
+                ':id' => $draftId,
+                ':mailbox_id' => $mailboxId
+            ]);
+
+            if (!empty($mailbox['user_id'])) {
+                $ownershipStmt = $pdo->prepare(
+                    'UPDATE email_messages
+                     SET team_id = NULL,
+                         user_id = :user_id
+                     WHERE id = :id'
+                );
+                $ownershipStmt->execute([
+                    ':user_id' => (int) $mailbox['user_id'],
+                    ':id' => $draftId
+                ]);
+            }
+        } else {
+            $stmt = $pdo->prepare(
+                'INSERT INTO email_messages
+                 (mailbox_id, team_id, user_id, conversation_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, bcc_emails, created_by, created_at, scheduled_at, start_new_conversation)
+                 VALUES
+                 (:mailbox_id, :team_id, :user_id, :conversation_id, "drafts", :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :bcc_emails, :created_by, NOW(), :scheduled_at, :start_new_conversation)'
+            );
+            $stmt->execute([
+                ':mailbox_id' => $mailboxId,
+                ':team_id' => $mailbox['team_id'] ?? null,
+                ':user_id' => $mailbox['user_id'] ?? null,
+                ':conversation_id' => $conversationId > 0 ? $conversationId : null,
+                ':subject' => $subject !== '' ? $subject : null,
+                ':body' => $body !== '' ? strip_tags($body) : null,
+                ':body_html' => $body !== '' ? $body : null,
+                ':from_name' => $fromName !== '' ? $fromName : null,
+                ':from_email' => $fromEmail !== '' ? $fromEmail : null,
+                ':to_emails' => $toEmails !== '' ? $toEmails : null,
+                ':cc_emails' => $ccEmails !== '' ? $ccEmails : null,
+                ':bcc_emails' => $bccEmails !== '' ? $bccEmails : null,
+                ':created_by' => $userId > 0 ? $userId : null,
+                ':scheduled_at' => $isScheduleAction ? $scheduledAt : null,
+                ':start_new_conversation' => $startNewConversation ? 1 : 0
+            ]);
+            $draftId = (int) $pdo->lastInsertId();
+        }
+
+        clearObjectLinks($pdo, 'email', $draftId, $linkTeamId, $linkUserId);
+        foreach ($linkItems as $linkItem) {
+            [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
+            if ($type === '') {
+                continue;
+            }
+            createObjectLink($pdo, 'email', $draftId, (string) $type, (int) $id, $linkTeamId, $linkUserId);
+        }
+
+        $pdo->commit();
+
+        return [
+            'draft_id' => $draftId,
+            'is_update' => (int) ($payload['draft_id'] ?? 0) > 0,
+            'is_schedule_action' => $isScheduleAction,
+        ];
+    } catch (Throwable $error) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $error;
+    }
 }
 
 function findContactIdsByEmail(PDO $pdo, string $email, ?int $teamId = null): array
