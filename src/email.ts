@@ -236,10 +236,64 @@ const renderLinkItems = (): void => {
     return;
   }
 
+  const teamId = Number(list.dataset.teamId ?? 0);
+  const contactUrlBase = list.dataset.contactUrlBase ?? "";
+  const venueUrlBase = list.dataset.venueUrlBase ?? "";
+  const emailUrlBase = list.dataset.emailUrlBase ?? "";
+  const taskUrlBase = list.dataset.taskUrlBase ?? "";
+  const conversationUrlBase = list.dataset.conversationUrlBase ?? "";
+
+  const resolveLinkUrl = (type: string, id: number): string => {
+    const params = new URLSearchParams();
+
+    if (type === "contact" && contactUrlBase) {
+      params.set("tab", "contacts");
+      if (teamId > 0) {
+        params.set("team_id", String(teamId));
+      }
+      params.set("contact_id", String(id));
+      return `${contactUrlBase}?${params.toString()}`;
+    }
+
+    if (type === "venue" && venueUrlBase) {
+      params.set("venue_id", String(id));
+      return `${venueUrlBase}?${params.toString()}`;
+    }
+
+    if (type === "email" && emailUrlBase) {
+      params.set("tab", "email");
+      params.set("message_id", String(id));
+      return `${emailUrlBase}?${params.toString()}`;
+    }
+
+    if (type === "task" && taskUrlBase) {
+      params.set("tab", "tasks");
+      params.set("task_id", String(id));
+      return `${taskUrlBase}?${params.toString()}`;
+    }
+
+    if (type === "conversation" && conversationUrlBase) {
+      params.set("tab", "conversations");
+      params.set("conversation_id", String(id));
+      return `${conversationUrlBase}?${params.toString()}`;
+    }
+
+    return "";
+  };
+
   selectedLinkItems.forEach((item) => {
     const chip = document.createElement("a");
-    chip.href = "#";
     chip.className = "detail-link-pill";
+
+    const href = resolveLinkUrl(item.type, item.id);
+    if (href !== "") {
+      chip.href = href;
+    } else {
+      chip.href = "#";
+      chip.addEventListener("click", (event) => {
+        event.preventDefault();
+      });
+    }
 
     const icon = document.createElement("span");
     icon.className = "icon is-small";

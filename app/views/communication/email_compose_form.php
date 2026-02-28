@@ -144,7 +144,16 @@
     </div>
     <div class="is-size-7 email-link-metadata" data-email-links>
       Links:
-      <span class="detail-link-list" data-email-links-list>
+      <span
+        class="detail-link-list"
+        data-email-links-list
+        data-team-id="<?php echo (int) ($selectedMailbox['team_id'] ?? 0); ?>"
+        data-contact-url-base="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/communication/index.php'); ?>"
+        data-venue-url-base="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/venues/index.php'); ?>"
+        data-email-url-base="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/communication/index.php'); ?>"
+        data-task-url-base="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/team/index.php'); ?>"
+        data-conversation-url-base="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/communication/index.php'); ?>"
+      >
         <span class="has-text-grey is-size-7">No links yet</span>
       </span>
       <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars('link-editor-email-0'); ?>" title="Edit links">
