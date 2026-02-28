@@ -162,55 +162,22 @@ try {
         exit;
     }
 
-    if ($conversationId <= 0) {
-        $teamScopeId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
-        $fallbackUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
-        $conversationId = $teamScopeId
-            ? findConversationForEmail(
-                $pdo,
-                $mailbox,
-                getMailboxPrimaryEmail($mailbox),
-                $toEmails,
-                $subject,
-                date('Y-m-d H:i:s'),
-                $teamScopeId,
-                null
-            )
-            : findConversationForEmail(
-                $pdo,
-                $mailbox,
-                getMailboxPrimaryEmail($mailbox),
-                $toEmails,
-                $subject,
-                date('Y-m-d H:i:s'),
-                null,
-                $fallbackUserId
-            );
-
-        if ($conversationId <= 0 && $startNewConversation) {
-            $conversationId = ensureConversationForEmail(
-                $pdo,
-                $mailbox,
-                getMailboxPrimaryEmail($mailbox),
-                $toEmails,
-                $subject,
-                true,
-                date('Y-m-d H:i:s'),
-                $teamScopeId,
-                $fallbackUserId
-            );
-        }
-    }
-
-    $messageTeamId = $mailbox['team_id'] ?? null;
-    $messageUserId = $mailbox['user_id'] ?? null;
-
-    if ($conversationId > 0 && $messageTeamId !== null) {
-        $conversation = ensureConversationAccess($pdo, $conversationId, $userId);
-        if ($conversation) {
-            $messageTeamId = $conversation['team_id'] ?? $messageTeamId;
-        }
-    }
+    $conversationContext = resolveSendConversationContext(
+        $pdo,
+        [
+            'mailbox' => $mailbox,
+            'user_id' => $userId,
+        ],
+        [
+            'conversation_id' => $conversationId,
+            'to_emails' => $toEmails,
+            'subject' => $subject,
+            'start_new_conversation' => $startNewConversation,
+        ]
+    );
+    $conversationId = (int) ($conversationContext['conversation_id'] ?? 0);
+    $messageTeamId = $conversationContext['message_team_id'] ?? null;
+    $messageUserId = $conversationContext['message_user_id'] ?? null;
 
     persistSentEmailPayload(
         $pdo,

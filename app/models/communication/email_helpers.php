@@ -428,6 +428,81 @@ function persistSentEmailPayload(PDO $pdo, array $context, array $payload): arra
     }
 }
 
+/**
+ * Resolve target conversation id for outbound send.
+ *
+ * @param array<string,mixed> $context
+ * @param array<string,mixed> $payload
+ * @return array{conversation_id:int,message_team_id:int|null,message_user_id:int|null}
+ */
+function resolveSendConversationContext(PDO $pdo, array $context, array $payload): array
+{
+    $mailbox = (array) ($context['mailbox'] ?? []);
+    $userId = (int) ($context['user_id'] ?? 0);
+
+    $conversationId = (int) ($payload['conversation_id'] ?? 0);
+    $toEmails = trim((string) ($payload['to_emails'] ?? ''));
+    $subject = trim((string) ($payload['subject'] ?? ''));
+    $startNewConversation = !empty($payload['start_new_conversation']);
+
+    if ($conversationId <= 0) {
+        $teamScopeId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
+        $fallbackUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
+
+        $conversationId = $teamScopeId
+            ? findConversationForEmail(
+                $pdo,
+                $mailbox,
+                getMailboxPrimaryEmail($mailbox),
+                $toEmails,
+                $subject,
+                date('Y-m-d H:i:s'),
+                $teamScopeId,
+                null
+            )
+            : findConversationForEmail(
+                $pdo,
+                $mailbox,
+                getMailboxPrimaryEmail($mailbox),
+                $toEmails,
+                $subject,
+                date('Y-m-d H:i:s'),
+                null,
+                $fallbackUserId
+            );
+
+        if ($conversationId <= 0 && $startNewConversation) {
+            $conversationId = ensureConversationForEmail(
+                $pdo,
+                $mailbox,
+                getMailboxPrimaryEmail($mailbox),
+                $toEmails,
+                $subject,
+                true,
+                date('Y-m-d H:i:s'),
+                $teamScopeId,
+                $fallbackUserId
+            );
+        }
+    }
+
+    $messageTeamId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
+    $messageUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
+
+    if ($conversationId > 0 && $messageTeamId !== null) {
+        $conversation = ensureConversationAccess($pdo, $conversationId, $userId);
+        if ($conversation) {
+            $messageTeamId = !empty($conversation['team_id']) ? (int) $conversation['team_id'] : $messageTeamId;
+        }
+    }
+
+    return [
+        'conversation_id' => (int) $conversationId,
+        'message_team_id' => $messageTeamId,
+        'message_user_id' => $messageUserId,
+    ];
+}
+
 function findContactIdsByEmail(PDO $pdo, string $email, ?int $teamId = null): array
 {
     $normalized = strtolower(trim($email));
