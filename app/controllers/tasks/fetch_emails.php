@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../models/communication/mail_fetch_helpers.php';
+require_once __DIR__ . '/../../models/core/link_scope.php';
 
 function runFetchEmailsTask(PDO $pdo): void
 {
@@ -197,13 +198,23 @@ function runFetchEmailsTask(PDO $pdo): void
                     $linkUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
                     if ($linkTeamId !== null || $linkUserId !== null) {
                         $contactIds = findContactIdsByEmail($pdo, $fromCandidate, $linkTeamId);
-                        foreach ($contactIds as $contactId) {
-                            createObjectLink($pdo, 'email', $emailId, 'contact', $contactId, $linkTeamId, $linkUserId);
-                        }
-
                         $venueIds = findVenueIdsByEmail($pdo, $fromCandidate);
-                        foreach ($venueIds as $venueId) {
-                            createObjectLink($pdo, 'email', $emailId, 'venue', $venueId, $linkTeamId, $linkUserId);
+
+                        $normalizedAutoLinks = normalizeLinkItems(array_merge(
+                            array_map(static fn(int $id): array => ['type' => 'contact', 'id' => $id], $contactIds),
+                            array_map(static fn(int $id): array => ['type' => 'venue', 'id' => $id], $venueIds)
+                        ));
+
+                        foreach ($normalizedAutoLinks as $autoLink) {
+                            createObjectLink(
+                                $pdo,
+                                'email',
+                                $emailId,
+                                (string) ($autoLink['type'] ?? ''),
+                                (int) ($autoLink['id'] ?? 0),
+                                $linkTeamId,
+                                $linkUserId
+                            );
                         }
                     }
                 }

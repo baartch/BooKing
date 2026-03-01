@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../models/core/object_links.php';
+require_once __DIR__ . '/../../models/core/link_scope.php';
 
 function runVenueTaskTriggerTask(PDO $pdo): void
 {
@@ -60,7 +61,20 @@ function runVenueTaskTriggerTask(PDO $pdo): void
             ]);
             $newTaskId = (int) $pdo->lastInsertId();
 
-            createObjectLink($pdo, 'task', $newTaskId, 'venue', $venueId, $teamId, null);
+            $triggerLinks = normalizeLinkItems([
+                ['type' => 'venue', 'id' => $venueId],
+            ]);
+            foreach ($triggerLinks as $triggerLink) {
+                createObjectLink(
+                    $pdo,
+                    'task',
+                    $newTaskId,
+                    (string) ($triggerLink['type'] ?? ''),
+                    (int) ($triggerLink['id'] ?? 0),
+                    $teamId,
+                    null
+                );
+            }
 
             $updateStmt = $pdo->prepare(
                 'UPDATE team_tasks

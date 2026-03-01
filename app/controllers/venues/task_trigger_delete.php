@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../models/auth/check.php';
 require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../models/communication/team_helpers.php';
 require_once __DIR__ . '/../../models/core/object_links.php';
+require_once __DIR__ . '/../../models/core/link_scope.php';
 require_once __DIR__ . '/../../models/venues/venue_task_triggers.php';
 require_once __DIR__ . '/../../models/venues/venues_repository.php';
 
@@ -64,7 +65,20 @@ try {
 
     $pdo->beginTransaction();
 
-    clearObjectLinks($pdo, 'task', $taskId, $teamId, null);
+    $taskScope = resolveLinkSourceScopeOrThrow(
+        $pdo,
+        'task',
+        $taskId,
+        $userId,
+        [
+            'team_id' => $teamId,
+            'route' => 'venues/task_trigger_delete',
+        ]
+    );
+    $taskScopeTeamId = isset($taskScope['team_id']) ? (int) $taskScope['team_id'] : null;
+    $taskScopeUserId = isset($taskScope['user_id']) ? (int) $taskScope['user_id'] : null;
+
+    clearObjectLinks($pdo, 'task', $taskId, $taskScopeTeamId, $taskScopeUserId);
     $stmt = $pdo->prepare('DELETE FROM team_tasks WHERE id = :id AND team_id = :team_id AND is_template = 1');
     $stmt->execute([':id' => $taskId, ':team_id' => $teamId]);
 
@@ -73,6 +87,21 @@ try {
     logAction($userId, 'venue_trigger_deleted', sprintf('Deleted trigger %d for venue %d', $taskId, $venueId));
     $redirectParams['notice'] = 'trigger_deleted';
     header('Location: ' . $baseUrl . '?' . http_build_query($redirectParams));
+    exit;
+} catch (LinkScopeException $error) {
+    if (isset($pdo) && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    logAction($userId, 'venue_trigger_delete_scope_error', json_encode(array_merge([
+        'action' => 'venue_trigger_delete',
+        'source_type' => 'task',
+        'source_id' => $taskId,
+        'request_user_id' => $userId,
+        'route' => 'venues/task_trigger_delete',
+        'error_code' => $error->getErrorCode(),
+        'message' => $error->getMessage(),
+    ], $error->getContext())) ?: $error->getMessage());
+    header('Location: ' . $baseUrl . '?' . http_build_query(array_merge($redirectParams, ['notice' => 'trigger_error'])));
     exit;
 } catch (Throwable $error) {
     if (isset($pdo) && $pdo->inTransaction()) {

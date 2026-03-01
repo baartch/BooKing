@@ -111,6 +111,19 @@ function normalizeLinkItems(array $links): array
         ];
     }
 
+    usort($normalized, static function (array $left, array $right): int {
+        $leftType = (string) ($left['type'] ?? '');
+        $rightType = (string) ($right['type'] ?? '');
+        $typeComparison = strcmp($leftType, $rightType);
+        if ($typeComparison !== 0) {
+            return $typeComparison;
+        }
+
+        $leftId = (int) ($left['id'] ?? 0);
+        $rightId = (int) ($right['id'] ?? 0);
+        return $leftId <=> $rightId;
+    });
+
     return $normalized;
 }
 
