@@ -2,8 +2,8 @@
 require_once __DIR__ . '/../../models/auth/check.php';
 require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../models/core/object_links.php';
+require_once __DIR__ . '/../../models/core/link_scope.php';
 require_once __DIR__ . '/../../models/communication/email_helpers.php';
-require_once __DIR__ . '/../../models/communication/contacts_helpers.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -33,129 +33,84 @@ if (!validateCsrfToken($csrfToken)) {
     exit;
 }
 
-$sourceType = trim((string) ($input['source_type'] ?? ''));
+$sourceTypeInput = (string) ($input['source_type'] ?? '');
 $sourceId = (int) ($input['source_id'] ?? 0);
 $mailboxId = (int) ($input['mailbox_id'] ?? 0);
 $conversationId = isset($input['conversation_id']) ? (int) $input['conversation_id'] : null;
 $detachConversation = !empty($input['detach_conversation']);
-$links = (array) ($input['links'] ?? []);
-
-$allowedSourceTypes = ['email', 'contact', 'venue', 'task'];
-if (!in_array($sourceType, $allowedSourceTypes, true) || $sourceId <= 0) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid source']);
-    exit;
-}
+$links = is_array($input['links'] ?? null) ? (array) $input['links'] : [];
 
 try {
     $pdo = getDatabaseConnection();
 
-    // Determine team/user scope
-    $teamId = null;
-    $scopeUserId = null;
+    $sourceType = assertAllowedLinkType($sourceTypeInput, 'source_type');
+    $normalizedLinks = normalizeLinkItems($links);
 
-    if ($sourceType === 'email' && $mailboxId > 0) {
-        $mailbox = ensureMailboxAccess($pdo, $mailboxId, $userId);
-        if (!$mailbox) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Mailbox access denied']);
-            exit;
-        }
+    $scope = resolveLinkSourceScopeOrThrow(
+        $pdo,
+        $sourceType,
+        $sourceId,
+        $userId,
+        [
+            'mailbox_id' => $mailboxId,
+            'team_id' => isset($input['team_id']) ? (int) $input['team_id'] : null,
+            'user_id' => isset($input['user_id']) ? (int) $input['user_id'] : null,
+            'route' => 'core/links_save',
+        ]
+    );
 
-        $messageStmt = $pdo->prepare('SELECT mailbox_id, team_id, user_id FROM email_messages WHERE id = :id');
-        $messageStmt->execute([':id' => $sourceId]);
-        $messageScope = $messageStmt->fetch();
-        if (!$messageScope || (int) ($messageScope['mailbox_id'] ?? 0) !== $mailboxId) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Email not found']);
-            exit;
-        }
-
-        $teamId = !empty($mailbox['team_id'])
-            ? (int) $mailbox['team_id']
-            : (!empty($messageScope['team_id']) ? (int) $messageScope['team_id'] : null);
-        $scopeUserId = !empty($mailbox['user_id'])
-            ? (int) $mailbox['user_id']
-            : (!empty($messageScope['user_id']) ? (int) $messageScope['user_id'] : null);
-    } else {
-        if ($sourceType !== 'contact' && $sourceType !== 'task') {
-            http_response_code(400);
-            echo json_encode(['error' => 'Unsupported link scope']);
-            exit;
-        }
-
-        if ($sourceType === 'contact') {
-            $contactStmt = $pdo->prepare('SELECT team_id FROM contacts WHERE id = :id LIMIT 1');
-            $contactStmt->execute([':id' => $sourceId]);
-            $contactRow = $contactStmt->fetch();
-            $teamId = !empty($contactRow['team_id']) ? (int) $contactRow['team_id'] : null;
-
-            if ($teamId === null || !userHasTeamAccess($pdo, $userId, $teamId)) {
-                http_response_code(403);
-                echo json_encode(['error' => 'Contact access denied']);
-                exit;
-            }
-        } else {
-            $taskStmt = $pdo->prepare('SELECT team_id FROM team_tasks WHERE id = :id LIMIT 1');
-            $taskStmt->execute([':id' => $sourceId]);
-            $taskRow = $taskStmt->fetch();
-            $teamId = !empty($taskRow['team_id']) ? (int) $taskRow['team_id'] : null;
-
-            if ($teamId === null || !userHasTeamAccess($pdo, $userId, $teamId)) {
-                http_response_code(403);
-                echo json_encode(['error' => 'Task access denied']);
-                exit;
-            }
-        }
-
-        // Contact/task detail can show team-scoped and user-scoped links,
-        // so clear both scopes for the current user before re-creating links.
-        $scopeUserId = $userId > 0 ? $userId : null;
+    $teamId = isset($scope['team_id']) ? (int) $scope['team_id'] : null;
+    $scopeUserId = isset($scope['user_id']) ? (int) $scope['user_id'] : null;
+    if ($teamId !== null && $teamId <= 0) {
+        $teamId = null;
+    }
+    if ($scopeUserId !== null && $scopeUserId <= 0) {
+        $scopeUserId = null;
     }
 
     if ($teamId === null && $scopeUserId === null) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Cannot determine link scope']);
-        exit;
+        throwLinkScopeException(
+            $userId > 0 ? $userId : null,
+            'scope_unresolved',
+            'Cannot determine link scope.',
+            [
+                'action' => 'links_save',
+                'source_type' => $sourceType,
+                'source_id' => $sourceId,
+                'request_user_id' => $userId,
+                'resolved_team_id' => $teamId,
+                'resolved_user_id' => $scopeUserId,
+                'route' => 'core/links_save',
+            ],
+            422
+        );
     }
 
     $pdo->beginTransaction();
 
-    // Clear existing object links and re-create.
-    if ($sourceType === 'contact' || $sourceType === 'task') {
-        // Remove both team-scoped and user-scoped links for this object.
-        clearObjectLinks($pdo, $sourceType, $sourceId, $teamId, null);
-        if ($scopeUserId !== null) {
-            clearObjectLinks($pdo, $sourceType, $sourceId, null, $scopeUserId);
-        }
-    } elseif ($teamId === null) {
-        clearObjectLinks($pdo, $sourceType, $sourceId, null, $scopeUserId);
+    // User scope takes precedence when both scopes are present.
+    if ($scopeUserId !== null) {
+        clearObjectLinks($pdo, $sourceType, $sourceId, $teamId, $scopeUserId);
     } else {
         clearObjectLinks($pdo, $sourceType, $sourceId, $teamId, null);
     }
 
-    foreach ($links as $link) {
-        $linkType = trim((string) ($link['type'] ?? ''));
-        $linkId = (int) ($link['id'] ?? 0);
-        if ($linkType === '' || $linkId <= 0) {
+    foreach ($normalizedLinks as $link) {
+        $targetType = assertAllowedLinkType((string) ($link['type'] ?? ''), 'target_type');
+        $targetId = (int) ($link['id'] ?? 0);
+        if ($targetId <= 0) {
             continue;
         }
-        if (!in_array($linkType, ['contact', 'venue', 'email', 'task'], true)) {
-            continue;
-        }
-        $linkTeamId = $teamId;
-        $linkUserId = $scopeUserId;
 
-        if ($sourceType === 'contact' || $sourceType === 'task') {
-            // Persist as team-scoped links for shared visibility/editing.
-            $linkUserId = null;
-        } elseif ($teamId !== null) {
-            $linkUserId = null;
-        } elseif ($scopeUserId !== null) {
-            $linkTeamId = null;
-        }
-
-        createObjectLink($pdo, $sourceType, $sourceId, $linkType, $linkId, $linkTeamId, $linkUserId);
+        createObjectLink(
+            $pdo,
+            $sourceType,
+            $sourceId,
+            $targetType,
+            $targetId,
+            $teamId,
+            $scopeUserId
+        );
     }
 
     // Handle conversation assignment / detach for emails
@@ -179,13 +134,60 @@ try {
 
     $pdo->commit();
 
-    logAction($userId, 'links_saved', sprintf('Saved links for %s:%d', $sourceType, $sourceId));
+    logAction(
+        $userId,
+        'links_saved',
+        json_encode([
+            'action' => 'links_saved',
+            'source_type' => $sourceType,
+            'source_id' => $sourceId,
+            'request_user_id' => $userId,
+            'resolved_team_id' => $teamId,
+            'resolved_user_id' => $scopeUserId,
+            'route' => 'core/links_save',
+            'link_count' => count($normalizedLinks),
+        ]) ?: sprintf('Saved links for %s:%d', $sourceType, $sourceId)
+    );
+
     echo json_encode(['ok' => true]);
+} catch (LinkScopeException $error) {
+    if (isset($pdo) && $pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
+    $payload = array_merge([
+        'action' => 'links_save_failed',
+        'source_type' => $sourceTypeInput,
+        'source_id' => $sourceId,
+        'request_user_id' => $userId,
+        'route' => 'core/links_save',
+        'error_code' => $error->getErrorCode(),
+        'message' => $error->getMessage(),
+    ], $error->getContext());
+
+    logAction($userId, 'links_save_scope_error', json_encode($payload) ?: $error->getMessage());
+
+    http_response_code($error->getHttpStatus());
+    echo json_encode([
+        'error' => $error->getMessage(),
+        'error_code' => $error->getErrorCode(),
+    ]);
 } catch (Throwable $error) {
     if (isset($pdo) && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    logAction($userId, 'links_save_error', $error->getMessage());
+
+    $payload = [
+        'action' => 'links_save_failed',
+        'source_type' => $sourceTypeInput,
+        'source_id' => $sourceId,
+        'request_user_id' => $userId,
+        'route' => 'core/links_save',
+        'error_code' => 'internal_error',
+        'message' => $error->getMessage(),
+    ];
+
+    logAction($userId, 'links_save_error', json_encode($payload) ?: $error->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to save links', 'detail' => $error->getMessage()]);
+    echo json_encode(['error' => 'Failed to save links']);
 }
