@@ -425,3 +425,9 @@
 .progress.is-cooldown-step-100 {
   --cooldown-color: #209cee;
 }
+
+/* Make native date/time picker indicators readable in both light and dark themes. */
+[data-email-schedule-date],
+[data-email-schedule-time] {
+  color-scheme: light dark;
+}
