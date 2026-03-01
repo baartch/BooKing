@@ -229,14 +229,14 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                   ?>
                   <li class="mb-3">
                     <div class="is-flex is-justify-content-space-between">
-                      <a href="<?php echo htmlspecialchars($conversationLink); ?>" class="is-flex-grow-1 has-text-success <?php echo (int) $conversation['id'] === $conversationId ? 'is-active' : ''; ?>">
+                      <a href="<?php echo htmlspecialchars($conversationLink); ?>" class="is-flex-grow-1 <?php echo (int) $conversation['id'] === $conversationId ? 'is-active' : ''; ?>">
                         <div class="is-flex is-justify-content-space-between">
                           <div>
                             <div class="has-text-weight-semibold">
                               <span class="icon is-small"><i class="fa-solid <?php echo $scopeIcon; ?>"></i></span>
                               <span class="icon is-small"><i class="fa-solid <?php echo $arrowIcon; ?>"></i></span>
                               <?php echo (int) $conversation['id']; ?>: <?php echo htmlspecialchars($conversation['subject'] ?? '(No subject)'); ?>
-                              <span class="tag is-small has-background-success-dark ml-2">Closed</span>
+                              <span class="tag is-small ml-2">Closed</span>
                             </div>
                             <div class="is-size-7"><?php echo htmlspecialchars($participantLabel); ?></div>
                           </div>
