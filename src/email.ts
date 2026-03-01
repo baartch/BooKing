@@ -427,7 +427,7 @@ const mailboxStorageKey = "email:selectedMailboxId";
 const initMailboxSwitch = (): void => {
   const currentUrl = new URL(window.location.href);
   const currentTab = currentUrl.searchParams.get("tab") ?? "";
-  if (currentTab !== "email") {
+  if (currentTab !== "" && currentTab !== "email") {
     return;
   }
 
@@ -439,11 +439,58 @@ const initMailboxSwitch = (): void => {
     return;
   }
 
-  const selectedFromUrl = currentUrl.searchParams.get("mailbox_id");
+  avatars.forEach((avatar) => {
+    if (avatar.dataset.mailboxStorageBound === "true") {
+      return;
+    }
+    avatar.dataset.mailboxStorageBound = "true";
+    avatar.addEventListener("click", () => {
+      const mailboxId = avatar.dataset.mailboxId ?? "";
+      if (mailboxId !== "") {
+        window.localStorage.setItem(mailboxStorageKey, mailboxId);
+      }
+    });
+  });
 
-  if (selectedFromUrl) {
-    window.localStorage.setItem(mailboxStorageKey, selectedFromUrl);
-  } else {
+  const storedMailboxId = window.localStorage.getItem(mailboxStorageKey);
+  const selectedFromUrl = currentUrl.searchParams.get("mailbox_id");
+  const hasMailboxParam = currentUrl.searchParams.has("mailbox_id");
+  const hasExplicitTarget =
+    currentUrl.searchParams.has("message_id") ||
+    currentUrl.searchParams.has("compose") ||
+    currentUrl.searchParams.has("reply") ||
+    currentUrl.searchParams.has("forward") ||
+    currentUrl.searchParams.has("conversation_id");
+
+  if (hasMailboxParam) {
+    if (selectedFromUrl && !storedMailboxId) {
+      window.localStorage.setItem(mailboxStorageKey, selectedFromUrl);
+      return;
+    }
+
+    if (selectedFromUrl && storedMailboxId && selectedFromUrl !== storedMailboxId) {
+      if (hasExplicitTarget) {
+        window.localStorage.setItem(mailboxStorageKey, selectedFromUrl);
+        return;
+      }
+
+      const targetAvatar = avatars.find(
+        (avatar) => avatar.dataset.mailboxId === storedMailboxId,
+      );
+      const href = targetAvatar?.getAttribute("href") ?? "";
+      if (href !== "") {
+        window.location.assign(href);
+      }
+      return;
+    }
+
+    if (selectedFromUrl) {
+      window.localStorage.setItem(mailboxStorageKey, selectedFromUrl);
+    }
+    return;
+  }
+
+  if (!storedMailboxId) {
     const activeAvatar = avatars.find((avatar) =>
       avatar.classList.contains("is-active"),
     );
@@ -451,15 +498,6 @@ const initMailboxSwitch = (): void => {
     if (activeMailboxId !== "") {
       window.localStorage.setItem(mailboxStorageKey, activeMailboxId);
     }
-  }
-
-  const storedMailboxId = window.localStorage.getItem(mailboxStorageKey);
-  if (!storedMailboxId) {
-    return;
-  }
-
-  const hasMailboxParam = currentUrl.searchParams.has("mailbox_id");
-  if (hasMailboxParam) {
     return;
   }
 
