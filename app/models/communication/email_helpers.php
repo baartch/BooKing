@@ -444,10 +444,16 @@ function resolveSendConversationContext(PDO $pdo, array $context, array $payload
     $toEmails = trim((string) ($payload['to_emails'] ?? ''));
     $subject = trim((string) ($payload['subject'] ?? ''));
     $startNewConversation = !empty($payload['start_new_conversation']);
+    $existingMessageTeamId = array_key_exists('message_team_id', $payload) && $payload['message_team_id'] !== null
+        ? (int) $payload['message_team_id']
+        : null;
+    $existingMessageUserId = array_key_exists('message_user_id', $payload) && $payload['message_user_id'] !== null
+        ? (int) $payload['message_user_id']
+        : null;
 
     if ($conversationId <= 0) {
-        $teamScopeId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
-        $fallbackUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
+        $teamScopeId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : $existingMessageTeamId;
+        $fallbackUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : $existingMessageUserId;
 
         $conversationId = $teamScopeId
             ? findConversationForEmail(
@@ -486,8 +492,8 @@ function resolveSendConversationContext(PDO $pdo, array $context, array $payload
         }
     }
 
-    $messageTeamId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : null;
-    $messageUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : null;
+    $messageTeamId = !empty($mailbox['team_id']) ? (int) $mailbox['team_id'] : $existingMessageTeamId;
+    $messageUserId = !empty($mailbox['user_id']) ? (int) $mailbox['user_id'] : $existingMessageUserId;
 
     if ($conversationId > 0 && $messageTeamId !== null) {
         $conversation = ensureConversationAccess($pdo, $conversationId, $userId);

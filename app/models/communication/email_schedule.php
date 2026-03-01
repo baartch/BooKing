@@ -84,22 +84,44 @@ function runScheduledEmailTasks(PDO $pdo): void
             continue;
         }
 
-        $conversationContext = resolveSendConversationContext(
-            $pdo,
-            [
-                'mailbox' => $mailbox,
-                'user_id' => (int) ($email['created_by'] ?? 0),
-            ],
-            [
-                'conversation_id' => (int) ($email['conversation_id'] ?? 0),
-                'to_emails' => $toEmails,
-                'subject' => (string) ($payload['subject'] ?? ''),
-                'start_new_conversation' => !empty($email['start_new_conversation']),
-            ]
-        );
-        $conversationId = (int) ($conversationContext['conversation_id'] ?? 0);
+        $conversationId = null;
+        try {
+            $hasConversationId = !empty($email['conversation_id']);
+            $wantsNewConversation = !empty($email['start_new_conversation']);
+            if ($hasConversationId && $wantsNewConversation) {
+                logAction(
+                    (int) ($email['created_by'] ?? 0),
+                    'email_schedule_conversation_conflict',
+                    sprintf('Scheduled email %d has both conversation_id and start_new_conversation; preserving conversation_id', $emailId)
+                );
+            }
 
-        markScheduledEmailAsSent($pdo, $emailId, $conversationId > 0 ? $conversationId : null);
+            $conversationContext = resolveSendConversationContext(
+                $pdo,
+                [
+                    'mailbox' => $mailbox,
+                    'user_id' => (int) ($email['created_by'] ?? 0),
+                ],
+                [
+                    'conversation_id' => (int) ($email['conversation_id'] ?? 0),
+                    'to_emails' => $toEmails,
+                    'subject' => (string) ($payload['subject'] ?? ''),
+                    'start_new_conversation' => $wantsNewConversation,
+                    'message_team_id' => isset($email['team_id']) ? (int) $email['team_id'] : null,
+                    'message_user_id' => isset($email['user_id']) ? (int) $email['user_id'] : null,
+                ]
+            );
+            $resolvedConversationId = (int) ($conversationContext['conversation_id'] ?? 0);
+            $conversationId = $resolvedConversationId > 0 ? $resolvedConversationId : null;
+        } catch (Throwable $error) {
+            logAction(
+                (int) ($email['created_by'] ?? 0),
+                'email_schedule_conversation_resolve_error',
+                sprintf('Scheduled email %d conversation resolve failed: %s', $emailId, $error->getMessage())
+            );
+        }
+
+        markScheduledEmailAsSent($pdo, $emailId, $conversationId);
         logAction((int) ($email['created_by'] ?? 0), 'email_schedule_sent', sprintf('Scheduled email %d sent', $emailId));
     }
 }
