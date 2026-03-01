@@ -89,8 +89,8 @@
               value="<?php echo htmlspecialchars($composeValues['cc_emails']); ?>"
               data-email-input
             >
-            <span class="icon is-small is-left">
-              <i class="fas fa-envelope"></i>
+            <span class="icon is-small is-left" title="Cc">
+              <i class="fas fa-users"></i>
             </span>
             <span class="icon is-small is-right is-hidden" data-email-icon>
               <i class="fas fa-exclamation-triangle"></i>
@@ -116,8 +116,8 @@
               value="<?php echo htmlspecialchars($composeValues['bcc_emails']); ?>"
               data-email-input
             >
-            <span class="icon is-small is-left">
-              <i class="fas fa-envelope"></i>
+            <span class="icon is-small is-left" title="Bcc">
+              <i class="fas fa-user-secret"></i>
             </span>
             <span class="icon is-small is-right is-hidden" data-email-icon>
               <i class="fas fa-exclamation-triangle"></i>

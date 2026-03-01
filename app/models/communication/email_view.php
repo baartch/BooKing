@@ -45,6 +45,8 @@ if ($noticeKey === 'sent') {
     $notice = 'Email deleted.';
 } elseif ($noticeKey === 'send_failed') {
     $notice = 'Email could not be sent. Saved as draft.';
+} elseif ($noticeKey === 'recipient_required') {
+    $notice = 'Please fill at least one recipient field: To, Cc, or Bcc.';
 } elseif ($noticeKey === 'scheduled') {
     $notice = 'Email scheduled and saved to drafts.';
 }

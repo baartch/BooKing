@@ -89,8 +89,14 @@ try {
     $isScheduleAction = $action === 'schedule_send';
 
     if ($action === 'save_draft' || $isScheduleAction) {
-        if ($isScheduleAction && (!$scheduledAt || !$hasAnyRecipient)) {
+        if ($isScheduleAction && !$scheduledAt) {
             $redirectParams['notice'] = 'send_failed';
+            header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
+            exit;
+        }
+
+        if ($isScheduleAction && !$hasAnyRecipient) {
+            $redirectParams['notice'] = 'recipient_required';
             header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
             exit;
         }
@@ -143,7 +149,7 @@ try {
     }
 
     if (!$hasAnyRecipient) {
-        $redirectParams['notice'] = 'send_failed';
+        $redirectParams['notice'] = 'recipient_required';
         header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
         exit;
     }
