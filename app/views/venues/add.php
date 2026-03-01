@@ -227,6 +227,33 @@
                 <hr class="mt-0">
               </div>
 
+              <div class="column is-2">
+                <div class="field">
+                  <label for="country" class="label">Country</label>
+                  <div class="control">
+                    <div class="select is-fullwidth">
+                      <select id="country" name="country">
+                        <option value="">Select country</option>
+                        <?php foreach ($countryOptions as $country): ?>
+                          <option value="<?php echo htmlspecialchars($country); ?>" <?php echo $formValues['country'] === $country ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($country); ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="column is-2">
+                <div class="field">
+                  <label for="city" class="label">City *</label>
+                  <div class="control">
+                    <input type="text" id="city" name="city" class="input" required value="<?php echo htmlspecialchars($formValues['city']); ?>">
+                  </div>
+                </div>
+              </div>
+
               <div class="column is-8">
                 <div class="field">
                   <label for="address" class="label">Address</label>
@@ -244,15 +271,6 @@
                 </div>
               </div>
 
-              <div class="column is-4">
-                <div class="field">
-                  <label for="city" class="label">City *</label>
-                  <div class="control">
-                    <input type="text" id="city" name="city" class="input" required value="<?php echo htmlspecialchars($formValues['city']); ?>">
-                  </div>
-                </div>
-              </div>
-
               <div class="column is-3">
                 <div class="field">
                   <label for="postal_code" class="label">Postal Code</label>
@@ -267,24 +285,6 @@
                   <label for="state" class="label">State</label>
                   <div class="control">
                     <input type="text" id="state" name="state" class="input" value="<?php echo htmlspecialchars($formValues['state']); ?>">
-                  </div>
-                </div>
-              </div>
-
-              <div class="column is-2">
-                <div class="field">
-                  <label for="country" class="label">Country</label>
-                  <div class="control">
-                    <div class="select is-fullwidth">
-                      <select id="country" name="country">
-                        <option value="">Select country</option>
-                        <?php foreach ($countryOptions as $country): ?>
-                          <option value="<?php echo htmlspecialchars($country); ?>" <?php echo $formValues['country'] === $country ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($country); ?>
-                          </option>
-                        <?php endforeach; ?>
-                      </select>
-                    </div>
                   </div>
                 </div>
               </div>
