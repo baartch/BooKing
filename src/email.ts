@@ -501,6 +501,10 @@ const initMailboxSwitch = (): void => {
     return;
   }
 
+  if (hasExplicitTarget) {
+    return;
+  }
+
   const targetAvatar = avatars.find(
     (avatar) => avatar.dataset.mailboxId === storedMailboxId,
   );
