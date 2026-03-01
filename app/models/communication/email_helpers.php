@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../core/database.php';
 require_once __DIR__ . '/../core/link_helpers.php';
 require_once __DIR__ . '/../core/object_links.php';
+require_once __DIR__ . '/../core/link_scope.php';
 require_once __DIR__ . '/team_helpers.php';
 
 const EMAIL_PAGE_SIZE_DEFAULT = 25;
@@ -244,7 +245,16 @@ function persistDraftEmailPayload(PDO $pdo, array $context, array $payload): arr
     $scheduledAt = isset($payload['scheduled_at']) ? (string) $payload['scheduled_at'] : null;
     $startNewConversation = !empty($payload['start_new_conversation']);
     $isScheduleAction = !empty($payload['is_schedule_action']);
-    $linkItems = isset($payload['link_items']) && is_array($payload['link_items']) ? $payload['link_items'] : [];
+    $rawLinkItems = isset($payload['link_items']) && is_array($payload['link_items']) ? $payload['link_items'] : [];
+    $linkItems = [];
+    foreach ($rawLinkItems as $linkItem) {
+        [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
+        $linkItems[] = [
+            'type' => $type,
+            'id' => (int) $id,
+        ];
+    }
+    $linkItems = normalizeLinkItems($linkItems);
 
     if ($mailboxId <= 0) {
         throw new InvalidArgumentException('Mailbox id is required for draft persistence.');
@@ -327,12 +337,16 @@ function persistDraftEmailPayload(PDO $pdo, array $context, array $payload): arr
         }
 
         clearObjectLinks($pdo, 'email', $draftId, $linkTeamId, $linkUserId);
-        foreach ($linkItems as $linkItem) {
-            [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
-            if ($type === '') {
-                continue;
-            }
-            createObjectLink($pdo, 'email', $draftId, (string) $type, (int) $id, $linkTeamId, $linkUserId);
+        foreach ($linkItems as $link) {
+            createObjectLink(
+                $pdo,
+                'email',
+                $draftId,
+                (string) ($link['type'] ?? ''),
+                (int) ($link['id'] ?? 0),
+                $linkTeamId,
+                $linkUserId
+            );
         }
 
         $pdo->commit();
@@ -375,7 +389,16 @@ function persistSentEmailPayload(PDO $pdo, array $context, array $payload): arra
     $toEmails = trim((string) ($payload['to_emails'] ?? ''));
     $ccEmails = trim((string) ($payload['cc_emails'] ?? ''));
     $bccEmails = trim((string) ($payload['bcc_emails'] ?? ''));
-    $linkItems = isset($payload['link_items']) && is_array($payload['link_items']) ? $payload['link_items'] : [];
+    $rawLinkItems = isset($payload['link_items']) && is_array($payload['link_items']) ? $payload['link_items'] : [];
+    $linkItems = [];
+    foreach ($rawLinkItems as $linkItem) {
+        [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
+        $linkItems[] = [
+            'type' => $type,
+            'id' => (int) $id,
+        ];
+    }
+    $linkItems = normalizeLinkItems($linkItems);
 
     if ($mailboxId <= 0) {
         throw new InvalidArgumentException('Mailbox id is required for sent email persistence.');
@@ -407,12 +430,16 @@ function persistSentEmailPayload(PDO $pdo, array $context, array $payload): arra
 
         $sentId = (int) $pdo->lastInsertId();
 
-        foreach ($linkItems as $linkItem) {
-            [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
-            if ($type === '') {
-                continue;
-            }
-            createObjectLink($pdo, 'email', $sentId, (string) $type, (int) $id, $linkTeamId, $linkUserId);
+        foreach ($linkItems as $link) {
+            createObjectLink(
+                $pdo,
+                'email',
+                $sentId,
+                (string) ($link['type'] ?? ''),
+                (int) ($link['id'] ?? 0),
+                $linkTeamId,
+                $linkUserId
+            );
         }
 
         $pdo->commit();

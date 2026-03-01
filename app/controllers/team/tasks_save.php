@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../models/core/form_helpers.php';
 require_once __DIR__ . '/../../models/communication/team_helpers.php';
 require_once __DIR__ . '/../../models/team/tasks_helpers.php';
 require_once __DIR__ . '/../../models/core/object_links.php';
+require_once __DIR__ . '/../../models/core/link_scope.php';
 require_once __DIR__ . '/../../models/communication/email_helpers.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -78,7 +79,16 @@ try {
     }
 
     $dueDate = $payload['due_date'] !== '' ? $payload['due_date'] : null;
-    $linkItems = array_filter(array_map('trim', $payload['links']));
+    $rawLinkItems = array_filter(array_map('trim', $payload['links']));
+    $normalizedLinkInput = [];
+    foreach ($rawLinkItems as $linkItem) {
+        [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
+        $normalizedLinkInput[] = [
+            'type' => $type,
+            'id' => (int) $id,
+        ];
+    }
+    $normalizedLinks = normalizeLinkItems($normalizedLinkInput);
 
     if ($action === 'create_task') {
         $pdo->beginTransaction();
@@ -99,15 +109,17 @@ try {
         ]);
 
         $newId = (int) $pdo->lastInsertId();
-        if ($linkItems) {
-            clearObjectLinks($pdo, 'task', $newId, $teamId, null);
-            foreach ($linkItems as $linkItem) {
-                [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
-                if ($type === '' || (int) $id <= 0) {
-                    continue;
-                }
-                createObjectLink($pdo, 'task', $newId, (string) $type, (int) $id, $teamId, null);
-            }
+        clearObjectLinks($pdo, 'task', $newId, $teamId, null);
+        foreach ($normalizedLinks as $link) {
+            createObjectLink(
+                $pdo,
+                'task',
+                $newId,
+                (string) ($link['type'] ?? ''),
+                (int) ($link['id'] ?? 0),
+                $teamId,
+                null
+            );
         }
 
         $pdo->commit();
@@ -152,14 +164,16 @@ try {
         ]);
 
         clearObjectLinks($pdo, 'task', (int) $existing['id'], $teamId, null);
-        if ($linkItems) {
-            foreach ($linkItems as $linkItem) {
-                [$type, $id] = array_pad(explode(':', (string) $linkItem, 2), 2, '');
-                if ($type === '' || (int) $id <= 0) {
-                    continue;
-                }
-                createObjectLink($pdo, 'task', (int) $existing['id'], (string) $type, (int) $id, $teamId, null);
-            }
+        foreach ($normalizedLinks as $link) {
+            createObjectLink(
+                $pdo,
+                'task',
+                (int) $existing['id'],
+                (string) ($link['type'] ?? ''),
+                (int) ($link['id'] ?? 0),
+                $teamId,
+                null
+            );
         }
 
         $pdo->commit();

@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../models/core/form_helpers.php';
 require_once __DIR__ . '/../../models/communication/team_helpers.php';
 require_once __DIR__ . '/../../models/core/object_links.php';
+require_once __DIR__ . '/../../models/core/link_scope.php';
 require_once __DIR__ . '/../../models/venues/venues_repository.php';
 require_once __DIR__ . '/../../models/venues/venue_task_triggers.php';
 
@@ -108,7 +109,20 @@ try {
         ]);
         $newId = (int) $pdo->lastInsertId();
 
-        createObjectLink($pdo, 'task', $newId, 'venue', $venueId, $teamId, null);
+        $triggerLinks = normalizeLinkItems([
+            ['type' => 'venue', 'id' => $venueId],
+        ]);
+        foreach ($triggerLinks as $triggerLink) {
+            createObjectLink(
+                $pdo,
+                'task',
+                $newId,
+                (string) ($triggerLink['type'] ?? ''),
+                (int) ($triggerLink['id'] ?? 0),
+                $teamId,
+                null
+            );
+        }
 
         $pdo->commit();
 
