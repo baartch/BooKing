@@ -103,58 +103,6 @@
               </div>
             </form>
 
-            <form method="GET" action="" class="columns is-multiline is-vcentered">
-              <input type="hidden" name="page" value="<?php echo (int) $listPage; ?>">
-              <?php if ($listPerPage > 0): ?>
-                <input type="hidden" name="per_page" value="<?php echo (int) $listPerPage; ?>">
-              <?php endif; ?>
-              <?php if ($listFilter !== ''): ?>
-                <input type="hidden" name="filter" value="<?php echo htmlspecialchars($listFilter); ?>">
-              <?php endif; ?>
-              <div class="column is-5">
-                <label for="mapbox_address_input" class="label">Address</label>
-                <div class="control">
-                  <input type="text" id="mapbox_address_input" name="mapbox_address" class="input" placeholder="Street address" value="<?php echo htmlspecialchars($mapboxSearchAddress !== '' ? $mapboxSearchAddress : $formValues['address']); ?>">
-                </div>
-              </div>
-              <div class="column is-3">
-                <label for="mapbox_city_input" class="label">City</label>
-                <div class="control">
-                  <input type="text" id="mapbox_city_input" name="mapbox_city" class="input" placeholder="City" value="<?php echo htmlspecialchars($mapboxSearchCity !== '' ? $mapboxSearchCity : $formValues['city']); ?>">
-                </div>
-              </div>
-              <div class="column is-2">
-                <label for="mapbox_country_input" class="label">Country</label>
-                <div class="control">
-                  <div class="select is-fullwidth">
-                    <select id="mapbox_country_input" name="mapbox_country">
-                      <?php foreach ($countryOptions as $country): ?>
-                        <option value="<?php echo htmlspecialchars($country); ?>" <?php echo $mapboxSearchCountry === $country ? 'selected' : ''; ?>>
-                          <?php echo htmlspecialchars($country); ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              <div class="column is-2">
-                <label class="label">&nbsp;</label>
-                <div class="control">
-                  <button type="submit" class="button" name="mapbox_search" value="1">
-                    <span class="icon"><i class="fa-solid fa-location-crosshairs"></i></span>
-                    <span>Mapbox</span>
-                  </button>
-                </div>
-              </div>
-              <?php if ($editVenue): ?>
-                <input type="hidden" name="edit" value="<?php echo (int) $editVenue['id']; ?>">
-              <?php endif; ?>
-              <?php foreach ($fields as $field): ?>
-                <?php if (!in_array($field, ['address', 'city', 'country'], true)): ?>
-                  <input type="hidden" name="<?php echo htmlspecialchars($field); ?>" value="<?php echo htmlspecialchars($formValues[$field]); ?>">
-                <?php endif; ?>
-              <?php endforeach; ?>
-            </form>
           </div>
 
           <div class="box">
