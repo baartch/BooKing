@@ -46,6 +46,9 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
         <input type="hidden" name="page" value="1">
         <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortKey); ?>">
         <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+        <input type="hidden" name="to" value="<?php echo htmlspecialchars((string) ($composeValues['to_emails'] ?? '')); ?>">
+        <input type="hidden" name="cc" value="<?php echo htmlspecialchars((string) ($composeValues['cc_emails'] ?? '')); ?>">
+        <input type="hidden" name="bcc" value="<?php echo htmlspecialchars((string) ($composeValues['bcc_emails'] ?? '')); ?>">
         <div class="control is-expanded">
           <div class="select is-fullwidth">
             <select name="template_id">

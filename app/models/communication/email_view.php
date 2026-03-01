@@ -138,6 +138,9 @@ $composeValues = [
 ];
 
 $prefillTo = trim((string) ($_GET['to'] ?? ''));
+$prefillCc = trim((string) ($_GET['cc'] ?? ''));
+$prefillBcc = trim((string) ($_GET['bcc'] ?? ''));
+
 if ($prefillTo !== '') {
     $composeValues['to_emails'] = normalizeEmailList($prefillTo);
 
@@ -512,6 +515,18 @@ if ($pdo && $selectedMailbox) {
     } catch (Throwable $error) {
         $errors[] = 'Failed to load templates.';
         logAction($userId, 'email_template_load_error', $error->getMessage());
+    }
+}
+
+if ($composeMode) {
+    if ($prefillTo !== '') {
+        $composeValues['to_emails'] = normalizeEmailList($prefillTo);
+    }
+    if ($prefillCc !== '') {
+        $composeValues['cc_emails'] = normalizeEmailList($prefillCc);
+    }
+    if ($prefillBcc !== '') {
+        $composeValues['bcc_emails'] = normalizeEmailList($prefillBcc);
     }
 }
 
