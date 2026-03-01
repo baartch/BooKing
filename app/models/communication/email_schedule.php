@@ -69,14 +69,17 @@ function runScheduledEmailTasks(PDO $pdo): void
         ];
 
         $toEmails = normalizeEmailList($payload['to_emails']);
-        if ($toEmails === '') {
-            logAction((int) ($email['created_by'] ?? 0), 'email_schedule_missing_recipient', sprintf('Scheduled email %d has no recipients', $emailId));
-            continue;
-        }
-
         $payload['to_emails'] = $toEmails;
         $payload['cc_emails'] = normalizeEmailList($payload['cc_emails'] ?? '');
         $payload['bcc_emails'] = normalizeEmailList($payload['bcc_emails'] ?? '');
+
+        $hasAnyRecipient = ($payload['to_emails'] ?? '') !== ''
+            || ($payload['cc_emails'] ?? '') !== ''
+            || ($payload['bcc_emails'] ?? '') !== '';
+        if (!$hasAnyRecipient) {
+            logAction((int) ($email['created_by'] ?? 0), 'email_schedule_missing_recipient', sprintf('Scheduled email %d has no recipients', $emailId));
+            continue;
+        }
 
         $sent = sendEmailViaMailbox($pdo, $mailbox, $payload);
         if (!$sent) {
@@ -104,7 +107,11 @@ function runScheduledEmailTasks(PDO $pdo): void
                 ],
                 [
                     'conversation_id' => (int) ($email['conversation_id'] ?? 0),
-                    'to_emails' => $toEmails,
+                    'to_emails' => normalizeEmailList(implode(',', array_filter([
+                        (string) ($payload['to_emails'] ?? ''),
+                        (string) ($payload['cc_emails'] ?? ''),
+                        (string) ($payload['bcc_emails'] ?? '')
+                    ], static fn ($value) => trim($value) !== ''))),
                     'subject' => (string) ($payload['subject'] ?? ''),
                     'start_new_conversation' => $wantsNewConversation,
                     'message_team_id' => isset($email['team_id']) ? (int) $email['team_id'] : null,

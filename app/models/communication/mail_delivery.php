@@ -28,11 +28,10 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
     $subject = (string) ($payload['subject'] ?? '');
     $body = (string) ($payload['body'] ?? '');
 
-    if (!$toList) {
+    $recipients = array_values(array_unique(array_merge($toList, $ccList, $bccList)));
+    if (!$recipients) {
         return false;
     }
-
-    $recipients = array_values(array_unique(array_merge($toList, $ccList, $bccList)));
 
     $isHtml = $body !== strip_tags($body);
     $contentType = $isHtml ? 'text/html' : 'text/plain';
@@ -47,12 +46,15 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
 
     $headers = [
         'From: ' . $fromHeader,
-        'To: ' . implode(', ', $toList),
         'Subject: ' . encodeHeaderWord($safeSubject),
         'Date: ' . date('r'),
         'MIME-Version: 1.0',
         'Content-Type: ' . $contentType . '; charset=UTF-8'
     ];
+
+    if ($toList) {
+        $headers[] = 'To: ' . implode(', ', $toList);
+    }
 
     if ($ccList) {
         $headers[] = 'Cc: ' . implode(', ', $ccList);

@@ -55,7 +55,6 @@
               name="to_emails"
               placeholder="To"
               value="<?php echo htmlspecialchars($composeValues['to_emails']); ?>"
-              required
               data-email-input
             >
             <button type="button" class="button is-small email-recipient-toggle" data-email-recipient-toggle-button aria-expanded="false" aria-controls="email-recipient-extra">

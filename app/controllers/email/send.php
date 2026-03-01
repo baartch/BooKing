@@ -28,6 +28,8 @@ $scheduleDate = trim((string) ($_POST['schedule_date'] ?? ''));
 $scheduleTime = trim((string) ($_POST['schedule_time'] ?? ''));
 $linkItems = $_POST['link_items'] ?? [];
 $linkItems = is_array($linkItems) ? $linkItems : [];
+$hasAnyRecipient = $toEmails !== '' || $ccEmails !== '' || $bccEmails !== '';
+$conversationRecipientEmails = normalizeEmailList(implode(',', array_filter([$toEmails, $ccEmails, $bccEmails], static fn ($value) => $value !== '')));
 
 $parseScheduledAt = static function (string $date, string $time): ?string {
     if ($date === '' || $time === '') {
@@ -87,7 +89,7 @@ try {
     $isScheduleAction = $action === 'schedule_send';
 
     if ($action === 'save_draft' || $isScheduleAction) {
-        if ($isScheduleAction && (!$scheduledAt || $toEmails === '')) {
+        if ($isScheduleAction && (!$scheduledAt || !$hasAnyRecipient)) {
             $redirectParams['notice'] = 'send_failed';
             header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
             exit;
@@ -140,7 +142,7 @@ try {
         exit;
     }
 
-    if ($toEmails === '') {
+    if (!$hasAnyRecipient) {
         $redirectParams['notice'] = 'send_failed';
         header('Location: ' . BASE_PATH . '/app/controllers/communication/index.php?' . http_build_query($redirectParams));
         exit;
@@ -170,7 +172,7 @@ try {
         ],
         [
             'conversation_id' => $conversationId,
-            'to_emails' => $toEmails,
+            'to_emails' => $conversationRecipientEmails,
             'subject' => $subject,
             'start_new_conversation' => $startNewConversation,
         ]
