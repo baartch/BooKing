@@ -6,7 +6,6 @@ require_once __DIR__ . '/../../models/communication/team_helpers.php';
 require_once __DIR__ . '/../../models/team/tasks_helpers.php';
 require_once __DIR__ . '/../../models/core/object_links.php';
 require_once __DIR__ . '/../../models/core/link_scope.php';
-require_once __DIR__ . '/../../models/communication/email_helpers.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
