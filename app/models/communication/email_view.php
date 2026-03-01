@@ -140,6 +140,107 @@ $composeValues = [
 $prefillTo = trim((string) ($_GET['to'] ?? ''));
 if ($prefillTo !== '') {
     $composeValues['to_emails'] = normalizeEmailList($prefillTo);
+
+    if ($pdo) {
+        try {
+            $teamScopeId = !empty($selectedMailbox['team_id']) ? (int) $selectedMailbox['team_id'] : null;
+            $recipientEmails = preg_split('/[;,]+/', $composeValues['to_emails']) ?: [];
+            $recipientEmails = array_values(array_unique(array_filter(array_map(
+                static fn(string $email): string => strtolower(trim($email)),
+                $recipientEmails
+            ), static fn(string $email): bool => $email !== '')));
+
+            $linkItemsByKey = [];
+
+            $contactIds = [];
+            $venueIds = [];
+
+            foreach ($recipientEmails as $recipientEmail) {
+                $contactIds = array_merge($contactIds, findContactIdsByEmail($pdo, $recipientEmail, $teamScopeId));
+                $venueIds = array_merge($venueIds, findVenueIdsByEmail($pdo, $recipientEmail));
+            }
+
+            foreach (array_values(array_unique(array_map('intval', $contactIds))) as $contactId) {
+                if ($contactId <= 0) {
+                    continue;
+                }
+                $key = 'contact:' . $contactId;
+                $linkItemsByKey[$key] = [
+                    'type' => 'contact',
+                    'id' => $contactId,
+                    'label' => 'Contact #' . $contactId
+                ];
+            }
+
+            foreach (array_values(array_unique(array_map('intval', $venueIds))) as $venueId) {
+                if ($venueId <= 0) {
+                    continue;
+                }
+                $key = 'venue:' . $venueId;
+                $linkItemsByKey[$key] = [
+                    'type' => 'venue',
+                    'id' => $venueId,
+                    'label' => 'Venue #' . $venueId
+                ];
+            }
+
+            if (!empty($linkItemsByKey)) {
+                $labelsByKey = [];
+
+                $uniqueContactIds = array_values(array_unique(array_map('intval', $contactIds)));
+                if (!empty($uniqueContactIds)) {
+                    $placeholders = implode(',', array_fill(0, count($uniqueContactIds), '?'));
+                    $sql = 'SELECT id, firstname, surname, email FROM contacts WHERE id IN (' . $placeholders . ')';
+                    $params = $uniqueContactIds;
+                    if ($teamScopeId !== null) {
+                        $sql .= ' AND team_id = ?';
+                        $params[] = $teamScopeId;
+                    }
+                    $contactStmt = $pdo->prepare($sql);
+                    $contactStmt->execute($params);
+                    foreach ($contactStmt->fetchAll() as $contactRow) {
+                        $name = trim((string) ($contactRow['firstname'] ?? '') . ' ' . (string) ($contactRow['surname'] ?? ''));
+                        $email = trim((string) ($contactRow['email'] ?? ''));
+                        $label = $name !== '' ? $name : $email;
+                        if ($label === '') {
+                            $label = 'Contact #' . (int) ($contactRow['id'] ?? 0);
+                        }
+                        $labelsByKey['contact:' . (int) ($contactRow['id'] ?? 0)] = $label;
+                    }
+                }
+
+                $uniqueVenueIds = array_values(array_unique(array_map('intval', $venueIds)));
+                if (!empty($uniqueVenueIds)) {
+                    $placeholders = implode(',', array_fill(0, count($uniqueVenueIds), '?'));
+                    $venueStmt = $pdo->prepare(
+                        'SELECT id, name, contact_email FROM venues WHERE id IN (' . $placeholders . ')'
+                    );
+                    $venueStmt->execute($uniqueVenueIds);
+                    foreach ($venueStmt->fetchAll() as $venueRow) {
+                        $name = trim((string) ($venueRow['name'] ?? ''));
+                        $email = trim((string) ($venueRow['contact_email'] ?? ''));
+                        $label = $name !== '' ? $name : $email;
+                        if ($label === '') {
+                            $label = 'Venue #' . (int) ($venueRow['id'] ?? 0);
+                        }
+                        $labelsByKey['venue:' . (int) ($venueRow['id'] ?? 0)] = $label;
+                    }
+                }
+
+                $composeValues['link_items'] = array_map(
+                    static fn(array $link): array => [
+                        'type' => (string) ($link['type'] ?? ''),
+                        'id' => (int) ($link['id'] ?? 0),
+                        'label' => (string) ($labelsByKey[(string) ($link['type'] ?? '') . ':' . (int) ($link['id'] ?? 0)] ?? ($link['label'] ?? ''))
+                    ],
+                    array_values($linkItemsByKey)
+                );
+            }
+        } catch (Throwable $error) {
+            logAction($userId, 'email_prefill_links_resolve_error', $error->getMessage());
+        }
+    }
+
     $composeMode = true;
 }
 
