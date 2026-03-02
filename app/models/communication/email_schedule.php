@@ -129,6 +129,9 @@ function runScheduledEmailTasks(PDO $pdo): void
         }
 
         markScheduledEmailAsSent($pdo, $emailId, $conversationId);
+        if ($conversationId !== null && $conversationId > 0) {
+            touchConversationActivity($pdo, (int) $conversationId, date('Y-m-d H:i:s'));
+        }
         logAction((int) ($email['created_by'] ?? 0), 'email_schedule_sent', sprintf('Scheduled email %d sent', $emailId));
     }
 }

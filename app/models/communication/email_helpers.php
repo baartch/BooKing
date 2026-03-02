@@ -442,6 +442,10 @@ function persistSentEmailPayload(PDO $pdo, array $context, array $payload): arra
             );
         }
 
+        if ($conversationId > 0) {
+            touchConversationActivity($pdo, $conversationId, date('Y-m-d H:i:s'));
+        }
+
         $pdo->commit();
 
         return [
@@ -534,6 +538,25 @@ function resolveSendConversationContext(PDO $pdo, array $context, array $payload
         'message_team_id' => $messageTeamId,
         'message_user_id' => $messageUserId,
     ];
+}
+
+function touchConversationActivity(PDO $pdo, int $conversationId, ?string $activityAt = null): void
+{
+    if ($conversationId <= 0) {
+        return;
+    }
+
+    $activityAt = $activityAt ?: date('Y-m-d H:i:s');
+
+    $stmt = $pdo->prepare(
+        'UPDATE email_conversations
+         SET last_activity_at = :last_activity_at
+         WHERE id = :id'
+    );
+    $stmt->execute([
+        ':last_activity_at' => $activityAt,
+        ':id' => $conversationId,
+    ]);
 }
 
 function findContactIdsByEmail(PDO $pdo, string $email, ?int $teamId = null): array
@@ -815,15 +838,7 @@ function findConversationForEmail(
     $stmt->execute($openParams);
     $conversationId = (int) $stmt->fetchColumn();
     if ($conversationId > 0) {
-        $updateStmt = $pdo->prepare(
-            'UPDATE email_conversations
-             SET last_activity_at = :last_activity_at
-             WHERE id = :id'
-        );
-        $updateStmt->execute([
-            ':last_activity_at' => $activityAt,
-            ':id' => $conversationId
-        ]);
+        touchConversationActivity($pdo, $conversationId, $activityAt);
         return $conversationId;
     }
 
