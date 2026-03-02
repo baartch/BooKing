@@ -114,26 +114,46 @@ const normalizeEmailList = (value: string): string => {
     return "";
   }
 
-  const parts = trimmed.split(/[;,]+/).map((item) => item.trim());
-  const cleaned = parts.filter((part) => part !== "");
-  return cleaned.join(", ");
+  const parts = trimmed
+    .split(/[;,\n]+/)
+    .map((item) => item.trim())
+    .filter((part) => part !== "");
+
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  parts.forEach((part) => {
+    const key = part.toLowerCase();
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    unique.push(part);
+  });
+
+  return unique.join(", ");
 };
 
 const getLastEmailToken = (value: string): string => {
-  const parts = value.split(/[;,]/);
+  const parts = value.split(/[;,\n]/);
   return (parts[parts.length - 1] ?? "").trim();
 };
 
 const replaceLastEmailToken = (value: string, email: string): string => {
-  const parts = value.split(/[;,]/).map((item) => item.trim());
+  const parts = value.split(/[;,\n]/).map((item) => item.trim());
   const prefix = parts.slice(0, -1).filter((part) => part !== "");
   return [...prefix, email].join(", ");
 };
 
 const validateEmailInput = (input: HTMLInputElement): boolean => {
   const raw = input.value.trim();
-  const parts = raw === "" ? [] : raw.split(/[;,]+/).map((item) => item.trim());
-  const invalid = parts.some((part) => part !== "" && !isValidEmail(part));
+  const parts =
+    raw === ""
+      ? []
+      : raw
+          .split(/[;,\n]+/)
+          .map((item) => item.trim())
+          .filter((part) => part !== "");
+  const invalid = parts.some((part) => !isValidEmail(part));
   input.classList.toggle("is-danger", invalid);
 
   const field = input.closest(".field");
@@ -871,6 +891,8 @@ const initRecipientLookup = (): void => {
     };
 
     input.addEventListener("input", () => {
+      validateEmailInput(input);
+
       if (debounceId) {
         window.clearTimeout(debounceId);
       }
@@ -880,7 +902,29 @@ const initRecipientLookup = (): void => {
       }, 250);
     });
 
+    input.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== "Tab") {
+        return;
+      }
+
+      if (currentItems.length > 0) {
+        return;
+      }
+
+      const normalized = normalizeEmailList(input.value);
+      if (normalized !== input.value) {
+        input.value = normalized;
+      }
+      validateEmailInput(input);
+    });
+
     input.addEventListener("blur", () => {
+      const normalized = normalizeEmailList(input.value);
+      if (normalized !== input.value) {
+        input.value = normalized;
+      }
+      validateEmailInput(input);
+
       window.setTimeout(() => {
         clearResults();
       }, 150);
