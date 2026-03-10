@@ -206,7 +206,13 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
 
         <?php if ($closedConversations): ?>
           <div class="mt-4">
-            <h3 class="title is-6">Closed</h3>
+            <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
+              <h3 class="title is-6 mb-0">Closed</h3>
+              <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation_delete_all_closed.php" onsubmit="return confirm('Delete all closed conversations?');">
+                <?php renderCsrfField(); ?>
+                <button type="submit" class="button is-small" title="Delete all closed conversations">Delete all</button>
+              </form>
+            </div>
             <div class="menu">
               <ul class="menu-list">
                 <?php foreach ($closedConversations as $conversation): ?>
