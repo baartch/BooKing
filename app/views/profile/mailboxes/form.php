@@ -21,7 +21,7 @@ $useSameCredentials = !empty($formValues['imap_username'])
     </div>
   </div>
 
-  <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/profile/mailbox_form.php">
+  <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/profile/index.php?tab=mailboxes" data-list-ignore>
     <?php renderCsrfField(); ?>
     <input type="hidden" name="action" value="<?php echo $isEdit ? 'update_mailbox' : 'create_mailbox'; ?>">
     <?php if ($isEdit && $editMailbox): ?>
@@ -102,6 +102,14 @@ $useSameCredentials = !empty($formValues['imap_username'])
               </div>
             </td>
           </tr>
+          <?php if ($isEdit && $editMailbox): ?>
+          <tr>
+            <th>IMAP Test</th>
+            <td>
+              <button type="submit" class="button" name="action" value="test_imap">Test IMAP</button>
+            </td>
+          </tr>
+          <?php endif; ?>
           <tr>
             <th>Delete After Retrieve</th>
             <td>
@@ -192,6 +200,22 @@ $useSameCredentials = !empty($formValues['imap_username'])
               </div>
             </td>
           </tr>
+          <?php if ($isEdit && $editMailbox): ?>
+          <tr>
+            <th>SMTP Test Recipient</th>
+            <td>
+              <div class="control">
+                <input type="email" id="smtp_test_recipient" name="smtp_test_recipient" class="input" placeholder="name@example.com" value="<?php echo htmlspecialchars((string) ($_POST['smtp_test_recipient'] ?? '')); ?>">
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <th>SMTP Test</th>
+            <td>
+              <button type="submit" class="button" name="action" value="test_smtp">Send test</button>
+            </td>
+          </tr>
+          <?php endif; ?>
         </tbody>
       </table>
     </div>

@@ -100,6 +100,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 logAction($currentUser['user_id'] ?? null, 'team_mailbox_delete_error', $error->getMessage());
             }
         }
+    } elseif (in_array($action, ['create_mailbox', 'update_mailbox', 'test_imap', 'test_smtp'], true)) {
+        $activeTab = 'mailboxes';
+        $allowedEncryptions = ['ssl', 'tls', 'none'];
+        $defaultImapPort = 993;
+        $defaultSmtpPort = 587;
+
+        $mailboxId = (int) ($_POST['mailbox_id'] ?? 0);
+        $isCreate = $action === 'create_mailbox';
+
+        if ($action === 'test_imap' || $action === 'test_smtp') {
+            if ($mailboxId <= 0) {
+                $errors['mailboxes'][] = 'Save mailbox first before testing.';
+            } else {
+                try {
+                    $existingMailbox = fetchTeamMailbox($pdo, $mailboxId, (int) ($currentUser['user_id'] ?? 0));
+                    if (!$existingMailbox) {
+                        $errors['mailboxes'][] = 'Mailbox not found for test.';
+                    } elseif ($action === 'test_imap') {
+                        $imapPasswordOverride = trim((string) ($_POST['imap_password'] ?? ''));
+                        $imapResult = testImapConnection($existingMailbox, $imapPasswordOverride !== '' ? $imapPasswordOverride : null);
+                        if (!empty($imapResult['ok'])) {
+                            $notice['mailboxes'] = (string) ($imapResult['message'] ?? 'IMAP connection successful.');
+                        } else {
+                            $errors['mailboxes'][] = (string) ($imapResult['message'] ?? 'IMAP connection failed.');
+                        }
+                    } else {
+                        $smtpPasswordOverride = trim((string) ($_POST['smtp_password'] ?? ''));
+                        $smtpRecipient = trim((string) ($_POST['smtp_test_recipient'] ?? ''));
+                        $smtpResult = sendSmtpTestEmail($pdo, $existingMailbox, $smtpRecipient, $smtpPasswordOverride !== '' ? $smtpPasswordOverride : null);
+                        if (!empty($smtpResult['ok'])) {
+                            $notice['mailboxes'] = (string) ($smtpResult['message'] ?? 'SMTP test email sent successfully.');
+                        } else {
+                            $errors['mailboxes'][] = (string) ($smtpResult['message'] ?? 'SMTP test email failed.');
+                        }
+                    }
+                } catch (Throwable $error) {
+                    $errors['mailboxes'][] = 'Mailbox test failed.';
+                    logAction($currentUser['user_id'] ?? null, 'team_mailbox_test_error', $error->getMessage());
+                }
+            }
+        }
+
+        if ($action === 'create_mailbox' || $action === 'update_mailbox') {
+            $formResult = buildMailboxFormInput($_POST, [
+                'allowed_encryptions' => $allowedEncryptions,
+                'default_imap_port' => $defaultImapPort,
+                'default_smtp_port' => $defaultSmtpPort,
+                'require_team' => true,
+                'team_ids' => $teamIds,
+                'default_team_id' => count($teamIds) === 1 ? (int) $teamIds[0] : 0,
+                'is_create' => $isCreate,
+            ]);
+
+            if (!empty($formResult['errors'])) {
+                $errors['mailboxes'] = array_merge($errors['mailboxes'], $formResult['errors']);
+            } else {
+                try {
+                    if ($isCreate) {
+                        persistMailbox($pdo, $formResult['values'], $formResult['imap_password'], $formResult['smtp_password']);
+                        $notice['mailboxes'] = 'Mailbox created successfully.';
+                    } else {
+                        $existingMailbox = fetchTeamMailbox($pdo, $mailboxId, (int) ($currentUser['user_id'] ?? 0));
+                        if (!$existingMailbox) {
+                            $errors['mailboxes'][] = 'Mailbox not found.';
+                        } else {
+                            $formValues = $formResult['values'];
+                            $formValues['team_id'] = (int) ($existingMailbox['team_id'] ?? 0);
+                            persistMailbox($pdo, $formValues, $formResult['imap_password'], $formResult['smtp_password'], $existingMailbox);
+                            $notice['mailboxes'] = 'Mailbox updated successfully.';
+                        }
+                    }
+                } catch (Throwable $error) {
+                    $errors['mailboxes'][] = 'Failed to save mailbox.';
+                    logAction($currentUser['user_id'] ?? null, 'team_mailbox_save_error', $error->getMessage());
+                }
+            }
+        }
     } elseif ($action === 'delete_template') {
         $templateId = (int) ($_POST['template_id'] ?? 0);
         if ($templateId <= 0) {

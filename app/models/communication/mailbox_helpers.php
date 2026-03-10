@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../core/database.php';
 require_once __DIR__ . '/../core/form_helpers.php';
+require_once __DIR__ . '/mail_delivery.php';
 
 function mailboxFormDefaults(int $defaultImapPort = 993, int $defaultSmtpPort = 587): array
 {
@@ -291,6 +292,74 @@ function fetchUserMailbox(PDO $pdo, int $mailboxId, int $userId): ?array
     $mailbox = $stmt->fetch();
 
     return $mailbox ?: null;
+}
+
+function testImapConnection(array $mailbox, ?string $imapPasswordOverride = null): array
+{
+    $host = trim((string) ($mailbox['imap_host'] ?? ''));
+    $port = (int) ($mailbox['imap_port'] ?? 0);
+    $username = trim((string) ($mailbox['imap_username'] ?? ''));
+    $password = $imapPasswordOverride !== null && trim($imapPasswordOverride) !== ''
+        ? trim($imapPasswordOverride)
+        : decryptSettingValue((string) ($mailbox['imap_password'] ?? ''));
+    $encryption = trim((string) ($mailbox['imap_encryption'] ?? 'ssl'));
+
+    if ($host === '' || $port <= 0 || $username === '' || $password === '') {
+        return ['ok' => false, 'message' => 'IMAP credentials are incomplete.'];
+    }
+
+    $imapFlags = '/imap';
+    if ($encryption === 'ssl') {
+        $imapFlags .= '/ssl';
+    } elseif ($encryption === 'tls') {
+        $imapFlags .= '/tls';
+    } else {
+        $imapFlags .= '/notls';
+    }
+
+    $mailboxString = sprintf('{%s:%d%s}INBOX', $host, $port, $imapFlags);
+    $imap = @imap_open($mailboxString, $username, $password);
+    if (!$imap) {
+        $fallbackString = sprintf('{%s:%d%s/novalidate-cert}INBOX', $host, $port, $imapFlags);
+        $imap = @imap_open($fallbackString, $username, $password);
+    }
+
+    if (!$imap) {
+        $lastError = imap_last_error();
+        return [
+            'ok' => false,
+            'message' => 'IMAP connection failed' . ($lastError ? ': ' . $lastError : '.')
+        ];
+    }
+
+    imap_close($imap);
+    return ['ok' => true, 'message' => 'IMAP connection successful.'];
+}
+
+function sendSmtpTestEmail(PDO $pdo, array $mailbox, string $recipient, ?string $smtpPasswordOverride = null): array
+{
+    $recipient = strtolower(trim($recipient));
+    if ($recipient === '' || !filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+        return ['ok' => false, 'message' => 'Please provide a valid test recipient email address.'];
+    }
+
+    if ($smtpPasswordOverride !== null && trim($smtpPasswordOverride) !== '') {
+        $mailbox['smtp_password'] = encryptSettingValue(trim($smtpPasswordOverride)) ?? '';
+    }
+
+    $sent = sendEmailViaMailbox($pdo, $mailbox, [
+        'to_emails' => $recipient,
+        'subject' => 'SMTP test from BooKing',
+        'body' => 'This is a test email sent from mailbox configuration test.',
+        'from_email' => (string) ($mailbox['smtp_username'] ?? ''),
+        'from_name' => (string) ($mailbox['display_name'] ?? ($mailbox['name'] ?? 'BooKing')),
+    ]);
+
+    if (!$sent) {
+        return ['ok' => false, 'message' => 'SMTP test email failed.'];
+    }
+
+    return ['ok' => true, 'message' => 'SMTP test email sent successfully.'];
 }
 
 function fetchUserMailboxes(PDO $pdo, int $userId): array

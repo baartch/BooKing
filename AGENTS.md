@@ -21,12 +21,11 @@ PHP + TypeScript app for venue mapping with MariaDB-backed authentication, sessi
 │   ├── views/               # Server-rendered views (admin, auth, communication, map, etc.)
 │   ├── partials/            # Shared PHP view fragments
 │   │   └── tables/          # Table partials
-│   ├── public/              # Public static assets
-│   │   ├── assets/          # Icons and imagery
-│   │   ├── css/             # Compiled and vendor CSS
-│   │   ├── js/              # Compiled JavaScript output
-│   │   └── vendor/          # Third-party vendor assets
-│   └── scripts/             # CLI/cron scripts (cleanup, mailbox fetch)
+│   └── public/              # Public static assets
+│       ├── assets/          # Icons and imagery
+│       ├── css/             # Compiled and vendor CSS
+│       ├── js/              # Compiled JavaScript output
+│       └── vendor/          # Third-party vendor assets
 ├── config/                  # Runtime configuration (config.php)
 ├── dev_helpers/             # Development helper scripts and notes
 ├── scripts/                 # Project-level scripts (deployment, diagnostics)
@@ -41,23 +40,6 @@ PHP + TypeScript app for venue mapping with MariaDB-backed authentication, sessi
 ## Database
 
 The database schema is in `sql/schema.sql` and includes the following tables:
-
-- `venues`: Venue details (name, address, coordinates, capacity, etc.)
-- `users`: User accounts (username/email, password hash, role, UI preferences)
-- `sessions`: Active user sessions for authentication
-- `logs`: Application logs (user actions, errors, timestamps)
-- `settings`: Key/value application settings
-- `teams`: Teams for grouping users/mailboxes
-- `team_members`: Many-to-many mapping of users to teams (with per-team role)
-- `mailboxes`: Team/user mailboxes with IMAP/SMTP credentials + fetch settings
-- `email_conversations`: Conversation threads per mailbox (team/user scoped)
-- `email_messages`: Email records (inbox/drafts/sent/trash) with optional conversation
-- `email_attachments`: Attachment metadata + file path, linked to `email_messages`
-- `object_links`: Generic link table for relating objects (e.g. email ↔ contact/venue)
-- `email_templates`: Saved email templates per team
-- `rate_limits`: Rate limiting tracking for brute force protection
-- `email_otps`: One-time passcodes for email-based login/verification
-- `contacts`: Address book entries used by the communication/email UI
 
 ## Typescript/Javascript
 
