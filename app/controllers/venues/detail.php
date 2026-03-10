@@ -33,6 +33,10 @@ try {
     $page = max(1, (int) ($_GET['page'] ?? 1));
     $pageSize = max(25, (int) ($_GET['per_page'] ?? 25));
     $filter = trim((string) ($_GET['filter'] ?? ''));
+    $source = (string) ($_GET['source'] ?? 'map');
+    $lat = trim((string) ($_GET['lat'] ?? ''));
+    $lng = trim((string) ($_GET['lng'] ?? ''));
+    $zoom = trim((string) ($_GET['zoom'] ?? ''));
 
     $detailActionsHtml = null;
     $detailRows = [];
@@ -58,6 +62,17 @@ try {
     if ($activeTeamId > 0) {
         $selectedVenueRating = fetchVenueRatingForTeam($pdo, $venueId, $activeTeamId);
         $venueTaskTriggers = fetchVenueTaskTriggers($pdo, $venueId, $activeTeamId);
+    }
+
+    $_GET['source'] = $source;
+    if ($lat !== '') {
+        $_GET['lat'] = $lat;
+    }
+    if ($lng !== '') {
+        $_GET['lng'] = $lng;
+    }
+    if ($zoom !== '') {
+        $_GET['zoom'] = $zoom;
     }
 
     ob_start();

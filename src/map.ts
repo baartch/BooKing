@@ -86,6 +86,7 @@ const MIN_FETCH_ZOOM = 9;
 const URL_LAT_PARAM = 'lat';
 const URL_LNG_PARAM = 'lng';
 const URL_ZOOM_PARAM = 'zoom';
+const URL_VENUE_ID_PARAM = 'venue_id';
 const ZOOM_HINT_ID = 'map-zoom-hint';
 const MAP_VIEW_STORAGE_KEY = 'mapView';
 
@@ -223,6 +224,19 @@ const clearWaypoints = (): void => {
 const getVenueDetailContainer = (): HTMLElement | null =>
   document.querySelector<HTMLElement>("[data-map-venue-detail]");
 
+const updateMapVenueUrlParam = (venueId: number | null): void => {
+  const params = new URLSearchParams(window.location.search);
+
+  if (venueId && venueId > 0) {
+    params.set(URL_VENUE_ID_PARAM, String(venueId));
+  } else {
+    params.delete(URL_VENUE_ID_PARAM);
+  }
+
+  const newUrl = `${window.location.pathname}?${params.toString()}`;
+  window.history.replaceState({}, '', newUrl);
+};
+
 const hideVenueDetail = (): void => {
   const container = getVenueDetailContainer();
   if (!container) {
@@ -230,6 +244,7 @@ const hideVenueDetail = (): void => {
   }
   container.classList.add("is-hidden");
   container.innerHTML = "";
+  updateMapVenueUrlParam(null);
 };
 
 const showVenueDetail = (html: string): void => {
@@ -246,9 +261,21 @@ const fetchVenueDetail = async (venueId: number): Promise<void> => {
   if (!container || venueId <= 0) {
     return;
   }
-  const params = new URLSearchParams({ venue_id: String(venueId) });
+
+  updateMapVenueUrlParam(venueId);
+  const params = new URLSearchParams({
+    venue_id: String(venueId),
+    source: 'map'
+  });
   if (MAP_TEAM_ID) {
     params.set("team_id", MAP_TEAM_ID);
+  }
+
+  if (map && (map as { _loaded?: boolean })._loaded) {
+    const center = map.getCenter();
+    params.set('lat', center.lat.toFixed(6));
+    params.set('lng', center.lng.toFixed(6));
+    params.set('zoom', String(map.getZoom()));
   }
 
   try {
@@ -662,6 +689,12 @@ async function initializeMap(): Promise<void> {
     storeMapView();
     void parseWaypoints();
   });
+
+  const params = new URLSearchParams(window.location.search);
+  const selectedVenueId = Number.parseInt(params.get(URL_VENUE_ID_PARAM) ?? '', 10);
+  if (!Number.isNaN(selectedVenueId) && selectedVenueId > 0) {
+    void fetchVenueDetail(selectedVenueId);
+  }
 
   initializeSearch();
 }

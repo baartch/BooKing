@@ -17,15 +17,34 @@ $venueId = (int) ($_POST['venue_id'] ?? 0);
 $teamId = (int) ($_POST['team_id'] ?? 0);
 $rating = trim((string) ($_POST['rating'] ?? ''));
 
+$source = (string) ($_POST['source'] ?? 'list');
+$isMapSource = $source === 'map';
+$lat = trim((string) ($_POST['lat'] ?? ''));
+$lng = trim((string) ($_POST['lng'] ?? ''));
+$zoom = trim((string) ($_POST['zoom'] ?? ''));
+
 $redirectParams = [
     'venue_id' => $venueId,
-    'page' => (int) ($_POST['page'] ?? 1),
-    'per_page' => (int) ($_POST['per_page'] ?? 25),
     'team_id' => $teamId
 ];
-$filter = trim((string) ($_POST['filter'] ?? ''));
-if ($filter !== '') {
-    $redirectParams['filter'] = $filter;
+
+if ($isMapSource) {
+    if ($lat !== '') {
+        $redirectParams['lat'] = $lat;
+    }
+    if ($lng !== '') {
+        $redirectParams['lng'] = $lng;
+    }
+    if ($zoom !== '') {
+        $redirectParams['zoom'] = $zoom;
+    }
+} else {
+    $redirectParams['page'] = (int) ($_POST['page'] ?? 1);
+    $redirectParams['per_page'] = (int) ($_POST['per_page'] ?? 25);
+    $filter = trim((string) ($_POST['filter'] ?? ''));
+    if ($filter !== '') {
+        $redirectParams['filter'] = $filter;
+    }
 }
 
 try {
@@ -33,7 +52,7 @@ try {
     $activeTeamId = resolveActiveTeamId($pdo, $userId, $teamId);
     if ($activeTeamId <= 0 || $activeTeamId !== $teamId) {
         logAction($userId, 'venue_rating_team_denied', sprintf('Denied rating team_id=%d venue_id=%d', $teamId, $venueId));
-        header('Location: ' . BASE_PATH . '/app/controllers/venues/index.php?' . http_build_query($redirectParams));
+        header('Location: ' . BASE_PATH . ($isMapSource ? '/app/controllers/map/index.php?' : '/app/controllers/venues/index.php?') . http_build_query($redirectParams));
         exit;
     }
 
@@ -47,5 +66,5 @@ try {
     logAction($userId, 'venue_rating_exception', $error->getMessage());
 }
 
-header('Location: ' . BASE_PATH . '/app/controllers/venues/index.php?' . http_build_query($redirectParams));
+header('Location: ' . BASE_PATH . ($isMapSource ? '/app/controllers/map/index.php?' : '/app/controllers/venues/index.php?') . http_build_query($redirectParams));
 exit;

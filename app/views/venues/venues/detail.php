@@ -13,6 +13,10 @@ $pageSize = $pageSize ?? 25;
 $filter = $filter ?? '';
 $venueTaskTriggers = $venueTaskTriggers ?? [];
 $triggerNotice = $triggerNotice ?? '';
+$ratingSource = (string) ($_GET['source'] ?? 'list');
+$ratingMapLat = trim((string) ($_GET['lat'] ?? ''));
+$ratingMapLng = trim((string) ($_GET['lng'] ?? ''));
+$ratingMapZoom = trim((string) ($_GET['zoom'] ?? ''));
 
 $detailTitle = null;
 $detailSubtitle = null;
@@ -92,6 +96,12 @@ if ($activeVenue) {
           <input type="hidden" name="per_page" value="<?php echo (int) $currentPageSize; ?>">
           <?php if (!empty($filter)): ?>
             <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+          <?php endif; ?>
+          <input type="hidden" name="source" value="<?php echo htmlspecialchars($ratingSource); ?>">
+          <?php if ($ratingSource === 'map'): ?>
+            <?php if ($ratingMapLat !== ''): ?><input type="hidden" name="lat" value="<?php echo htmlspecialchars($ratingMapLat); ?>"><?php endif; ?>
+            <?php if ($ratingMapLng !== ''): ?><input type="hidden" name="lng" value="<?php echo htmlspecialchars($ratingMapLng); ?>"><?php endif; ?>
+            <?php if ($ratingMapZoom !== ''): ?><input type="hidden" name="zoom" value="<?php echo htmlspecialchars($ratingMapZoom); ?>"><?php endif; ?>
           <?php endif; ?>
           <div class="field has-addons">
             <div class="control">
