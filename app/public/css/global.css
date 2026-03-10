@@ -184,3 +184,9 @@
   max-height: none;
   height: 100%;
 }
+
+/* Remove Bulma container side padding inside sections while keeping section padding itself. */
+.section > .container.is-fluid {
+  padding-left: 0;
+  padding-right: 0;
+}
