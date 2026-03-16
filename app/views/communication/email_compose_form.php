@@ -195,6 +195,11 @@
     <div class="control">
       <textarea id="email_body" name="body" class="textarea" rows="10"><?php echo htmlspecialchars($composeValues['body']); ?></textarea>
     </div>
+    <div class="email-detail-quote-toggle is-hidden" data-email-compose-quote-toggle-wrapper>
+      <button type="button" class="button is-small is-light" data-email-compose-quote-toggle data-email-compose-quote-state="collapsed">
+        <span class="icon is-small"><i class="fa-solid fa-quote-left"></i></span>
+      </button>
+    </div>
   </div>
   <div class="field">
     <div class="control">

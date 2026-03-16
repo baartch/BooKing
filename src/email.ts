@@ -1,5 +1,20 @@
 import { getStoredTheme } from "./appearance.js";
 
+const sanitizeWysiInitialHtml = (value: string): string => {
+  if (!value.includes("<") || !value.includes(">")) {
+    return value;
+  }
+
+  const template = document.createElement("template");
+  template.innerHTML = value;
+
+  template.content.querySelectorAll<HTMLElement>("[align]").forEach((node) => {
+    node.removeAttribute("align");
+  });
+
+  return template.innerHTML;
+};
+
 const initWysiEditor = (): void => {
   const textarea = document.querySelector<HTMLTextAreaElement>("#email_body");
 
@@ -18,6 +33,8 @@ const initWysiEditor = (): void => {
   if (typeof wysi.Wysi !== "function") {
     return;
   }
+
+  textarea.value = sanitizeWysiInitialHtml(textarea.value);
 
   const storedTheme = getStoredTheme();
   const darkModeMql =
@@ -371,9 +388,6 @@ const initQuoteToggle = (): void => {
   const detailBlocks = document.querySelectorAll<HTMLElement>(
     "[data-email-detail]",
   );
-  if (!detailBlocks.length) {
-    return;
-  }
 
   detailBlocks.forEach((detailBlock) => {
     const body = detailBlock.querySelector<HTMLElement>(
@@ -415,6 +429,56 @@ const initQuoteToggle = (): void => {
       const collapsed = body.classList.toggle("is-quotes-collapsed");
       updateLabel(collapsed);
     });
+  });
+
+  const composeWrapper = document.querySelector<HTMLElement>(".wysi-wrapper");
+  const composeEditor = composeWrapper?.querySelector<HTMLElement>(".wysi-editor") ?? null;
+  const composeToggle = document.querySelector<HTMLButtonElement>(
+    "[data-email-compose-quote-toggle]",
+  );
+  const composeToggleWrapper = document.querySelector<HTMLElement>(
+    "[data-email-compose-quote-toggle-wrapper]",
+  );
+
+  if (!composeEditor || !composeToggle || !composeToggleWrapper) {
+    return;
+  }
+
+  const hasNestedQuotes = Boolean(
+    composeEditor.querySelector(
+      "blockquote[type=\"cite\"] blockquote[type=\"cite\"]",
+    ),
+  );
+
+  if (!hasNestedQuotes) {
+    composeToggleWrapper.classList.add("is-hidden");
+    composeEditor.classList.remove("is-compose-quotes-collapsed");
+    return;
+  }
+
+  const updateComposeLabel = (isCollapsed: boolean): void => {
+    composeToggle.innerHTML = isCollapsed
+      ? '<span class="icon is-small"><i class="fa-solid fa-quote-left"></i></span>'
+      : '<span class="icon is-small"><i class="fa-solid fa-quote-right"></i></span>';
+    composeToggle.dataset.emailComposeQuoteState = isCollapsed
+      ? "collapsed"
+      : "expanded";
+  };
+
+  composeToggleWrapper.classList.remove("is-hidden");
+  composeEditor.classList.add("is-compose-quotes-collapsed");
+  updateComposeLabel(true);
+
+  if (composeToggle.dataset.quoteToggleBound === "true") {
+    return;
+  }
+  composeToggle.dataset.quoteToggleBound = "true";
+
+  composeToggle.addEventListener("click", () => {
+    const collapsed = composeEditor.classList.toggle(
+      "is-compose-quotes-collapsed",
+    );
+    updateComposeLabel(collapsed);
   });
 };
 

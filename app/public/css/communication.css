@@ -302,6 +302,10 @@
   font-style: normal;
 }
 
+.wysi-editor.is-compose-quotes-collapsed blockquote[type="cite"] blockquote[type="cite"] {
+  display: none;
+}
+
 /* Attachments bar */
 .email-detail-attachments {
   border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
