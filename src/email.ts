@@ -388,6 +388,9 @@ const initQuoteToggle = (): void => {
   const detailBlocks = document.querySelectorAll<HTMLElement>(
     "[data-email-detail]",
   );
+  if (!detailBlocks.length) {
+    return;
+  }
 
   detailBlocks.forEach((detailBlock) => {
     const body = detailBlock.querySelector<HTMLElement>(
@@ -429,56 +432,6 @@ const initQuoteToggle = (): void => {
       const collapsed = body.classList.toggle("is-quotes-collapsed");
       updateLabel(collapsed);
     });
-  });
-
-  const composeWrapper = document.querySelector<HTMLElement>(".wysi-wrapper");
-  const composeEditor = composeWrapper?.querySelector<HTMLElement>(".wysi-editor") ?? null;
-  const composeToggle = document.querySelector<HTMLButtonElement>(
-    "[data-email-compose-quote-toggle]",
-  );
-  const composeToggleWrapper = document.querySelector<HTMLElement>(
-    "[data-email-compose-quote-toggle-wrapper]",
-  );
-
-  if (!composeEditor || !composeToggle || !composeToggleWrapper) {
-    return;
-  }
-
-  const hasNestedQuotes = Boolean(
-    composeEditor.querySelector(
-      "blockquote[type=\"cite\"] blockquote[type=\"cite\"]",
-    ),
-  );
-
-  if (!hasNestedQuotes) {
-    composeToggleWrapper.classList.add("is-hidden");
-    composeEditor.classList.remove("is-compose-quotes-collapsed");
-    return;
-  }
-
-  const updateComposeLabel = (isCollapsed: boolean): void => {
-    composeToggle.innerHTML = isCollapsed
-      ? '<span class="icon is-small"><i class="fa-solid fa-quote-left"></i></span>'
-      : '<span class="icon is-small"><i class="fa-solid fa-quote-right"></i></span>';
-    composeToggle.dataset.emailComposeQuoteState = isCollapsed
-      ? "collapsed"
-      : "expanded";
-  };
-
-  composeToggleWrapper.classList.remove("is-hidden");
-  composeEditor.classList.add("is-compose-quotes-collapsed");
-  updateComposeLabel(true);
-
-  if (composeToggle.dataset.quoteToggleBound === "true") {
-    return;
-  }
-  composeToggle.dataset.quoteToggleBound = "true";
-
-  composeToggle.addEventListener("click", () => {
-    const collapsed = composeEditor.classList.toggle(
-      "is-compose-quotes-collapsed",
-    );
-    updateComposeLabel(collapsed);
   });
 };
 
