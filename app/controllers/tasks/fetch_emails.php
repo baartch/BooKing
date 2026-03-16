@@ -169,17 +169,32 @@ function runFetchEmailsTask(PDO $pdo): void
                 }
 
                 $fromCandidate = $fromEmail !== '' ? strtolower(trim((string) $fromEmail)) : '';
+                $mailboxIdentityEmails = [];
+                $smtpIdentity = strtolower(trim((string) ($mailbox['smtp_username'] ?? '')));
+                $imapIdentity = strtolower(trim((string) ($mailbox['imap_username'] ?? '')));
+                if ($smtpIdentity !== '' && filter_var($smtpIdentity, FILTER_VALIDATE_EMAIL)) {
+                    $mailboxIdentityEmails[] = $smtpIdentity;
+                }
+                if ($imapIdentity !== '' && filter_var($imapIdentity, FILTER_VALIDATE_EMAIL)) {
+                    $mailboxIdentityEmails[] = $imapIdentity;
+                }
+                $mailboxIdentityEmails = array_values(array_unique($mailboxIdentityEmails));
+
+                $isSentMessage = $fromCandidate !== '' && in_array($fromCandidate, $mailboxIdentityEmails, true);
+                $messageFolder = $isSentMessage ? 'sent' : 'inbox';
+                $messageTimestamp = $date !== '' ? date('Y-m-d H:i:s', strtotime($date)) : null;
 
                 $stmt = $pdo->prepare(
                     'INSERT INTO email_messages
-                     (mailbox_id, team_id, user_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, message_id, received_at, conversation_id)
+                     (mailbox_id, team_id, user_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, message_id, is_read, received_at, sent_at, conversation_id)
                      VALUES
-                     (:mailbox_id, :team_id, :user_id, "inbox", :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :message_id, :received_at, :conversation_id)'
+                     (:mailbox_id, :team_id, :user_id, :folder, :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :message_id, :is_read, :received_at, :sent_at, :conversation_id)'
                 );
                 $stmt->execute([
                     ':mailbox_id' => $mailboxId,
                     ':team_id' => $mailbox['team_id'] ?? null,
                     ':user_id' => $mailbox['user_id'] ?? null,
+                    ':folder' => $messageFolder,
                     ':subject' => $subject !== '' ? $subject : null,
                     ':body' => $bodyText !== '' ? $bodyText : null,
                     ':body_html' => $bodyHtml !== '' ? $bodyHtml : null,
@@ -188,7 +203,9 @@ function runFetchEmailsTask(PDO $pdo): void
                     ':to_emails' => $toEmails !== '' ? $toEmails : null,
                     ':cc_emails' => $ccRaw !== '' ? parseEmailAddressList($ccRaw) : null,
                     ':message_id' => $messageId !== '' ? $messageId : null,
-                    ':received_at' => $date !== '' ? date('Y-m-d H:i:s', strtotime($date)) : null,
+                    ':is_read' => $isSentMessage ? 1 : 0,
+                    ':received_at' => $isSentMessage ? null : $messageTimestamp,
+                    ':sent_at' => $isSentMessage ? $messageTimestamp : null,
                     ':conversation_id' => $conversationId
                 ]);
                 $emailId = (int) $pdo->lastInsertId();
