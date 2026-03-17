@@ -25,7 +25,9 @@ function fetchTeamMailboxes(PDO $pdo, int $userId): array
 function fetchAccessibleMailboxes(PDO $pdo, int $userId): array
 {
     $stmt = $pdo->prepare(
-        'SELECT m.id, m.name, m.display_name, m.team_id, m.user_id, t.name AS team_name, m.attachment_quota_bytes
+        'SELECT m.id, m.name, m.display_name, m.team_id, m.user_id,
+                m.imap_username, m.smtp_username,
+                t.name AS team_name, m.attachment_quota_bytes
          FROM mailboxes m
          LEFT JOIN team_members tm ON tm.team_id = m.team_id AND tm.user_id = :team_user_id
          LEFT JOIN teams t ON t.id = m.team_id

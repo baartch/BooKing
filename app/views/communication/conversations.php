@@ -107,6 +107,14 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
             }
         }
 
+        $trimConversationSubject = static function (?string $subject, int $limit = 30): string {
+            $subject = formatConversationSubject($subject);
+            if (mb_strlen($subject) <= $limit) {
+                return $subject;
+            }
+            return rtrim(mb_substr($subject, 0, $limit - 1)) . '…';
+        };
+
         $incomingConversations = [];
         $outgoingConversations = [];
 
@@ -118,6 +126,38 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                 $outgoingConversations[] = $conversation;
             }
         }
+
+        $mailboxIdentityList = [];
+        if ($pdo) {
+            try {
+                $mailboxes = fetchAccessibleMailboxes($pdo, $userId);
+                foreach ($mailboxes as $mailbox) {
+                    $identity = strtolower(trim(getMailboxPrimaryEmail($mailbox)));
+                    if ($identity !== '') {
+                        $mailboxIdentityList[] = $identity;
+                    }
+                }
+                $mailboxIdentityList = array_values(array_unique($mailboxIdentityList));
+            } catch (Throwable $error) {
+                logAction($userId, 'conversation_mailbox_identity_error', $error->getMessage());
+            }
+        }
+
+        $resolveParticipantLabel = static function (string $participantKey, array $mailboxIdentityList): string {
+            $participantKey = trim($participantKey);
+            if ($participantKey === '' || $participantKey === 'unknown') {
+                return 'Unknown participants';
+            }
+
+            $participants = array_map('trim', explode('|', $participantKey));
+            $participants = array_values(array_filter($participants, static fn(string $value): bool => $value !== '' && !in_array(strtolower($value), $mailboxIdentityList, true)));
+
+            if (!$participants) {
+                return 'Unknown participants';
+            }
+
+            return implode(' · ', $participants);
+        };
 
         $sortByHeat = static function (array $left, array $right): int {
             $leftActivity = $left['last_activity_at'] ?? $left['created_at'] ?? null;
@@ -156,45 +196,45 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                   $colorStep = (int) round($cooldownPercent / 5) * 5;
                   $colorStep = max(0, min(100, $colorStep));
 
-                  $participantLabel = $conversation['participant_key'] === 'unknown'
-                      ? 'Unknown participants'
-                      : str_replace('|', ' · ', $conversation['participant_key']);
+                  $participantLabel = $resolveParticipantLabel((string) ($conversation['participant_key'] ?? ''), $mailboxIdentityList);
                   $ageDays = $lastActivityTime ? (int) floor((time() - $lastActivityTime) / 86400) : null;
                   $activityLabel = $ageDays !== null ? ($ageDays . 'd') : '—';
                   $messageCount = (int) ($conversation['message_count'] ?? 0);
-                  $messageLabel = $messageCount === 1 ? 'mail' : 'mails';
                   $lastFolder = (string) ($conversation['last_message_folder'] ?? '');
                   $arrowIcon = $lastFolder === 'inbox' ? 'fa-arrow-right' : 'fa-arrow-left';
                   $scopeIcon = !empty($conversation['team_id']) ? 'fa-users' : 'fa-user';
+                  $trimmedSubject = $trimConversationSubject((string) ($conversation['subject'] ?? ''));
                 ?>
-                <li class="mb-3">
+                <li class="mb-2">
                   <div class="is-flex is-justify-content-space-between">
                     <a href="<?php echo htmlspecialchars($conversationLink); ?>" class="is-flex-grow-1 <?php echo (int) $conversation['id'] === $conversationId ? 'is-active' : ''; ?>">
-                      <div class="is-flex is-justify-content-space-between">
-                        <div>
-                          <div class="has-text-weight-semibold">
-                            <span class="icon is-small"><i class="fa-solid <?php echo $scopeIcon; ?>"></i></span>
-                            <span class="icon is-small"><i class="fa-solid <?php echo $arrowIcon; ?>"></i></span>
-                            <?php echo (int) $conversation['id']; ?>: <?php echo htmlspecialchars($conversation['subject'] ?? '(No subject)'); ?>
-                          </div>
-                          <div class="is-size-7"><?php echo htmlspecialchars($participantLabel); ?></div>
+                      <div class="conversation-row">
+                        <div class="conversation-row-main">
+                          <span class="icon is-small mr-1"><i class="fa-solid <?php echo $scopeIcon; ?>"></i></span>
+                          <span class="icon is-small mr-1"><i class="fa-solid <?php echo $arrowIcon; ?>"></i></span>
+                          <span class="has-text-weight-semibold mr-1"><?php echo (int) $conversation['id']; ?>:</span>
+                          <span class="is-size-7 mr-1 conversation-participant"><?php echo htmlspecialchars($participantLabel); ?></span>
+                          <span class="has-text-weight-semibold conversation-subject" title="<?php echo htmlspecialchars(formatConversationSubject((string) ($conversation['subject'] ?? ''))); ?>">
+                            <?php echo htmlspecialchars(formatConversationSubject((string) ($conversation['subject'] ?? ''))); ?>
+                          </span>
                         </div>
-                        <div class="is-flex is-flex-direction-column is-align-items-flex-end is-size-7">
-                          <div><?php echo htmlspecialchars($activityLabel); ?></div>
-                          <div class="is-flex is-align-items-center mt-1">
-                            <span class="tag is-small"><?php echo $messageCount; ?> <?php echo $messageLabel; ?></span>
-                            <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation_close.php" class="ml-2 is-flex is-align-items-center">
-                              <?php renderCsrfField(); ?>
-                              <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
-                              <button type="submit" class="button is-small" aria-label="Close conversation" title="Close conversation">
-                                <span class="icon"><i class="fa-solid fa-circle-xmark"></i></span>
-                              </button>
-                            </form>
+                        <div class="conversation-row-progress">
+                          <div class="conversation-progress">
+                            <progress class="progress is-small is-cooldown-step-<?php echo $colorStep; ?>" value="<?php echo $heatPercent; ?>" max="100"></progress>
                           </div>
                         </div>
-                      </div>
-                      <div class="mt-2">
-                        <progress class="progress is-small is-cooldown-step-<?php echo $colorStep; ?>" value="<?php echo $heatPercent; ?>" max="100"></progress>
+                        <div class="conversation-row-meta is-size-7">
+                          <div>
+                            <?php echo htmlspecialchars($activityLabel); ?>/<?php echo (int) $messageCount; ?>
+                          </div>
+                          <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation_close.php" class="is-flex is-align-items-center" data-list-ignore>
+                            <?php renderCsrfField(); ?>
+                            <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
+                            <button type="submit" class="button is-small" aria-label="Close conversation" title="Close conversation">
+                              <span class="icon"><i class="fa-solid fa-circle-xmark"></i></span>
+                            </button>
+                          </form>
+                        </div>
                       </div>
                     </a>
                   </div>
@@ -222,49 +262,52 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                     ]));
                     $lastActivity = $conversation['last_activity_at'] ?? $conversation['created_at'] ?? null;
                     $lastActivityTime = $lastActivity ? strtotime((string) $lastActivity) : null;
-                    $participantLabel = $conversation['participant_key'] === 'unknown'
-                        ? 'Unknown participants'
-                        : str_replace('|', ' · ', $conversation['participant_key']);
+                    $participantLabel = $resolveParticipantLabel((string) ($conversation['participant_key'] ?? ''), $mailboxIdentityList);
                     $ageDays = $lastActivityTime ? (int) floor((time() - $lastActivityTime) / 86400) : null;
                     $activityLabel = $ageDays !== null ? ($ageDays . 'd') : '—';
                     $messageCount = (int) ($conversation['message_count'] ?? 0);
-                    $messageLabel = $messageCount === 1 ? 'mail' : 'mails';
                     $lastFolder = (string) ($conversation['last_message_folder'] ?? '');
                     $arrowIcon = $lastFolder === 'inbox' ? 'fa-arrow-right' : 'fa-arrow-left';
                     $scopeIcon = !empty($conversation['team_id']) ? 'fa-users' : 'fa-user';
+                    $trimmedSubject = $trimConversationSubject((string) ($conversation['subject'] ?? ''));
                   ?>
-                  <li class="mb-3">
+                  <li class="mb-2">
                     <div class="is-flex is-justify-content-space-between">
                       <a href="<?php echo htmlspecialchars($conversationLink); ?>" class="is-flex-grow-1 <?php echo (int) $conversation['id'] === $conversationId ? 'is-active' : ''; ?>">
-                        <div class="is-flex is-justify-content-space-between">
-                          <div>
-                            <div class="has-text-weight-semibold">
-                              <span class="icon is-small"><i class="fa-solid <?php echo $scopeIcon; ?>"></i></span>
-                              <span class="icon is-small"><i class="fa-solid <?php echo $arrowIcon; ?>"></i></span>
-                              <?php echo (int) $conversation['id']; ?>: <?php echo htmlspecialchars($conversation['subject'] ?? '(No subject)'); ?>
-                              <span class="tag is-small ml-2">Closed</span>
-                            </div>
-                            <div class="is-size-7"><?php echo htmlspecialchars($participantLabel); ?></div>
+                        <div class="conversation-row">
+                          <div class="conversation-row-main">
+                            <span class="icon is-small mr-1"><i class="fa-solid <?php echo $scopeIcon; ?>"></i></span>
+                            <span class="icon is-small mr-1"><i class="fa-solid <?php echo $arrowIcon; ?>"></i></span>
+                            <span class="has-text-weight-semibold mr-1"><?php echo (int) $conversation['id']; ?>:</span>
+                            <span class="is-size-7 mr-1 conversation-participant"><?php echo htmlspecialchars($participantLabel); ?></span>
+                            <span class="has-text-weight-semibold conversation-subject" title="<?php echo htmlspecialchars(formatConversationSubject((string) ($conversation['subject'] ?? ''))); ?>">
+                              <?php echo htmlspecialchars(formatConversationSubject((string) ($conversation['subject'] ?? ''))); ?>
+                            </span>
+                            <span class="tag is-small ml-2">Closed</span>
                           </div>
-                          <div class="is-flex is-flex-direction-column is-align-items-flex-end is-size-7">
-                            <div><?php echo htmlspecialchars($activityLabel); ?></div>
-                            <div class="is-flex is-align-items-center mt-1">
-                              <span class="tag is-small"><?php echo $messageCount; ?> <?php echo $messageLabel; ?></span>
-                              <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation_reopen.php" class="ml-2 is-flex is-align-items-center">
-                                <?php renderCsrfField(); ?>
-                                <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
-                                <button type="submit" class="button is-small" aria-label="Reopen conversation" title="Reopen conversation">
-                                  <span class="icon"><i class="fa-solid fa-rotate-left"></i></span>
-                                </button>
-                              </form>
-                              <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation_delete.php" class="ml-2 is-flex is-align-items-center" onsubmit="return confirm('Delete this conversation?');">
-                                <?php renderCsrfField(); ?>
-                                <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
-                                <button type="submit" class="button is-small" aria-label="Delete conversation" title="Delete conversation">
-                                  <span class="icon"><i class="fa-solid fa-trash"></i></span>
-                                </button>
-                              </form>
+                          <div class="conversation-row-progress">
+                            <div class="conversation-progress">
+                              <progress class="progress is-small is-cooldown-step-<?php echo $colorStep; ?>" value="<?php echo $heatPercent; ?>" max="100"></progress>
                             </div>
+                          </div>
+                          <div class="conversation-row-meta is-size-7">
+                            <div>
+                              <?php echo htmlspecialchars($activityLabel); ?>/<?php echo (int) $messageCount; ?>
+                            </div>
+                            <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation_reopen.php" class="is-flex is-align-items-center" data-list-ignore>
+                              <?php renderCsrfField(); ?>
+                              <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
+                              <button type="submit" class="button is-small" aria-label="Reopen conversation" title="Reopen conversation">
+                                <span class="icon"><i class="fa-solid fa-rotate-left"></i></span>
+                              </button>
+                            </form>
+                            <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation_delete.php" class="is-flex is-align-items-center" onsubmit="return confirm('Delete this conversation?');" data-list-ignore>
+                              <?php renderCsrfField(); ?>
+                              <input type="hidden" name="conversation_id" value="<?php echo (int) $conversation['id']; ?>">
+                              <button type="submit" class="button is-small" aria-label="Delete conversation" title="Delete conversation">
+                                <span class="icon"><i class="fa-solid fa-trash"></i></span>
+                              </button>
+                            </form>
                           </div>
                         </div>
                       </a>

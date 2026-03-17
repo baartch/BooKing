@@ -118,7 +118,10 @@
   color: inherit;
   background: color-mix(in srgb, currentColor 10%, transparent);
   border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
-  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    border-color 0.1s ease;
 }
 
 .email-mailbox-avatar:hover {
@@ -128,7 +131,8 @@
 
 .email-mailbox-avatar.is-active {
   border-color: var(--bulma-link, #3273dc);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--bulma-link, #3273dc) 25%, transparent);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--bulma-link, #3273dc) 25%, transparent);
 }
 
 .email-mailbox-avatar-initial {
@@ -252,6 +256,51 @@
   display: none;
 }
 
+.conversation-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.conversation-row-main {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.conversation-participant {
+  white-space: nowrap;
+}
+
+.conversation-subject {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conversation-row-progress {
+  flex: 0 0 100px;
+}
+
+.conversation-progress {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.conversation-progress .progress {
+  width: 100%;
+}
+
+.conversation-row-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 1 auto;
+}
+
 .email-detail-quote-toggle {
   display: flex;
   justify-content: center;
@@ -292,7 +341,6 @@
   font-size: 1.05rem;
 }
 
-
 .email-detail-body blockquote[type="cite"],
 .wysi-editor blockquote[type="cite"] {
   margin: 0 0 0.75rem;
@@ -302,7 +350,9 @@
   font-style: normal;
 }
 
-.wysi-editor.is-compose-quotes-collapsed blockquote[type="cite"] blockquote[type="cite"] {
+.wysi-editor.is-compose-quotes-collapsed
+  blockquote[type="cite"]
+  blockquote[type="cite"] {
   display: none;
 }
 
