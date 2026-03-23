@@ -283,12 +283,6 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                             <span class="has-text-weight-semibold conversation-subject" title="<?php echo htmlspecialchars(formatConversationSubject((string) ($conversation['subject'] ?? ''))); ?>">
                               <?php echo htmlspecialchars(formatConversationSubject((string) ($conversation['subject'] ?? ''))); ?>
                             </span>
-                            <span class="tag is-small ml-2">Closed</span>
-                          </div>
-                          <div class="conversation-row-progress">
-                            <div class="conversation-progress">
-                              <progress class="progress is-small is-cooldown-step-<?php echo $colorStep; ?>" value="<?php echo $heatPercent; ?>" max="100"></progress>
-                            </div>
                           </div>
                           <div class="conversation-row-meta is-size-7">
                             <div>
