@@ -101,8 +101,8 @@ function handleVenueImport(array $currentUser, array $countryOptions, string $im
                 }
             }
 
-            $address = normalizeOptionalString((string) ($entry['street'] ?? $entry['address'] ?? ''));
-            $postalCode = normalizeOptionalString((string) ($entry['postalCode'] ?? $entry['postal_code'] ?? ''));
+            $address = normalizeOptionalString((string) ($entry['street'] ?? ''));
+            $postalCode = normalizeOptionalString((string) ($entry['postalCode'] ?? ''));
             $city = normalizeOptionalString((string) ($entry['city'] ?? ''));
             $website = normalizeOptionalString((string) ($entry['url'] ?? $entry['website'] ?? ''));
 

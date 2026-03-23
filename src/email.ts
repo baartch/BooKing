@@ -596,6 +596,87 @@ const initRecipientToggle = (): void => {
   });
 };
 
+const resolvePlainText = (value: string): string =>
+  value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\u00A0/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const resolveSendConfirmMessage = (
+  subjectEmpty: boolean,
+  bodyEmpty: boolean,
+): string => {
+  if (subjectEmpty && bodyEmpty) {
+    return "Subject and body are empty. Send anyway?";
+  }
+  if (subjectEmpty) {
+    return "Subject is empty. Send anyway?";
+  }
+  return "Body is empty. Send anyway?";
+};
+
+const resolveSubmitAction = (
+  event: SubmitEvent,
+  form: HTMLFormElement,
+): string => {
+  const submitter = event.submitter as
+    | HTMLButtonElement
+    | HTMLInputElement
+    | null;
+
+  if (submitter && submitter.name === "action") {
+    return submitter.value;
+  }
+
+  const actionField = form.querySelector<HTMLInputElement>("input[name=\"action\"]");
+  return actionField?.value ?? "";
+};
+
+const confirmEmptySend = (form: HTMLFormElement): boolean => {
+  const subjectField = form.querySelector<HTMLInputElement>("#email_subject");
+  const bodyField = form.querySelector<HTMLTextAreaElement>("#email_body");
+  const subject = subjectField?.value?.trim() ?? "";
+  const bodyValue = bodyField?.value ?? "";
+  const bodyText = resolvePlainText(bodyValue);
+
+  const subjectEmpty = subject === "";
+  const bodyEmpty = bodyText === "";
+
+  if (!subjectEmpty && !bodyEmpty) {
+    return true;
+  }
+
+  return window.confirm(resolveSendConfirmMessage(subjectEmpty, bodyEmpty));
+};
+
+const initSendConfirmation = (): void => {
+  const form = document.querySelector<HTMLFormElement>(
+    "[data-email-compose-form]",
+  );
+  if (!form) {
+    return;
+  }
+
+  if (form.dataset.sendConfirmBound === "true") {
+    return;
+  }
+  form.dataset.sendConfirmBound = "true";
+
+  form.addEventListener("submit", (event: SubmitEvent) => {
+    const action = resolveSubmitAction(event, form);
+    if (!action || (action !== "send_email" && action !== "schedule_send")) {
+      return;
+    }
+
+    if (!confirmEmptySend(form)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
+};
+
 const initSendMenu = (): void => {
   const dropdown = document.querySelector<HTMLElement>("[data-email-send-menu]");
   const trigger = dropdown?.querySelector<HTMLElement>(
@@ -748,7 +829,17 @@ const initScheduleModal = (): void => {
     actionField.name = "action";
     actionField.value = "schedule_send";
     state.form.appendChild(actionField);
-    state.form.submit();
+
+    if (!confirmEmptySend(state.form)) {
+      actionField.remove();
+      return;
+    }
+
+    if (typeof state.form.requestSubmit === "function") {
+      state.form.requestSubmit();
+    } else {
+      state.form.submit();
+    }
     actionField.remove();
   });
 };
@@ -1100,6 +1191,7 @@ const bindWysiEditor = (): void => {
   initMailboxSwitch();
   initRecipientToggle();
   initSendMenu();
+  initSendConfirmation();
   initScheduleModal();
   document.addEventListener("tab:activated", () => {
     initWysiEditor();
@@ -1113,6 +1205,7 @@ const bindWysiEditor = (): void => {
     initMailboxSwitch();
     initRecipientToggle();
     initSendMenu();
+    initSendConfirmation();
     initScheduleModal();
   });
 };
@@ -1159,6 +1252,7 @@ document.addEventListener("htmx:afterSwap", (event) => {
     initMailboxSwitch();
     initRecipientToggle();
     initSendMenu();
+    initSendConfirmation();
     initScheduleModal();
   }
 });

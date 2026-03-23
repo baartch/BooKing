@@ -23,8 +23,8 @@
               <pre class="venue-import-example"><code>[
   {
     "name": "Example Venue",
-    "address": "Street 1",
-    "postal_code": "8000",
+    "street": "Street 1",
+    "postalCode": "8000",
     "city": "Zurich",
     "state": "ZH",
     "country": "CH",
