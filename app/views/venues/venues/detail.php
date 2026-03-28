@@ -4,6 +4,7 @@
  * - ?array $activeVenue
  */
 require_once __DIR__ . '/../../../models/core/list_helpers.php';
+require_once __DIR__ . '/../../../models/core/link_helpers.php';
 
 $baseUrl = BASE_PATH . '/app/controllers/venues/index.php';
 $activeTeamId = (int) ($activeTeamId ?? 0);
@@ -13,6 +14,10 @@ $pageSize = $pageSize ?? 25;
 $filter = $filter ?? '';
 $venueTaskTriggers = $venueTaskTriggers ?? [];
 $triggerNotice = $triggerNotice ?? '';
+$venueLinks = $venueLinks ?? [];
+$linkItems = [];
+$linkEditorLinks = [];
+$linkIcons = getLinkIcons();
 $ratingSource = (string) ($_GET['source'] ?? 'list');
 $ratingMapLat = trim((string) ($_GET['lat'] ?? ''));
 $ratingMapLng = trim((string) ($_GET['lng'] ?? ''));
@@ -161,7 +166,55 @@ if ($activeVenue) {
         . ' <button type="button" class="button is-small ml-2" hx-get="' . htmlspecialchars($triggerUrl) . '" hx-target="#venues-detail-panel" hx-swap="innerHTML" hx-push-url="true" aria-label="' . ($showTriggers ? 'Hide task triggers' : 'Edit task triggers') . '" title="' . ($showTriggers ? 'Hide task triggers' : 'Edit task triggers') . '">'
         . '<span class="icon"><i class="fa-solid fa-pen"></i></span></button>';
 
+    if (!empty($venueLinks)) {
+        foreach ($venueLinks as $link) {
+            if ($link['type'] === 'contact') {
+                $url = BASE_PATH . '/app/controllers/communication/index.php?tab=contacts&contact_id=' . (int) $link['id'];
+                $linkItems[] = ['type' => 'contact', 'label' => $link['label'], 'url' => $url];
+            } elseif ($link['type'] === 'venue') {
+                $url = BASE_PATH . '/app/controllers/venues/index.php?venue_id=' . (int) $link['id'];
+                $linkItems[] = ['type' => 'venue', 'label' => $link['label'], 'url' => $url];
+            } elseif ($link['type'] === 'email') {
+                $url = BASE_PATH . '/app/controllers/communication/index.php?tab=email&message_id=' . (int) $link['id'];
+                $linkItems[] = ['type' => 'email', 'label' => $link['label'], 'url' => $url];
+            } elseif ($link['type'] === 'task') {
+                $url = BASE_PATH . '/app/controllers/team/index.php?tab=tasks&task_id=' . (int) $link['id'];
+                $linkItems[] = ['type' => 'task', 'label' => $link['label'], 'url' => $url];
+            }
+
+            $linkEditorLinks[] = [
+                'type' => $link['type'],
+                'id' => (int) $link['id'],
+                'label' => $link['label']
+            ];
+        }
+    }
+
+    $linksRow = '<div class="detail-meta-row">'
+        . '<span class="detail-meta-label">Links:</span>'
+        . '<span class="detail-meta-value detail-link-list">';
+
+    if (!$linkItems) {
+        $linksRow .= '<span class="has-text-grey is-size-7">No links yet</span>';
+    } else {
+        foreach ($linkItems as $linkItem) {
+            $linksRow .= '<a href="' . htmlspecialchars($linkItem['url']) . '" class="detail-link-pill">'
+                . '<span class="icon is-small"><i class="fa-solid ' . htmlspecialchars($linkIcons[$linkItem['type']] ?? 'fa-link') . '"></i></span>'
+                . '<span>' . htmlspecialchars($linkItem['label']) . '</span>'
+                . '</a>';
+        }
+    }
+
+    $linksRow .= '<a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="'
+        . htmlspecialchars('link-editor-venue-' . (int) $activeVenue['id'])
+        . '" title="Edit links">'
+        . '<span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>'
+        . '</a>'
+        . '</span>'
+        . '</div>';
+
     $detailRows = [
+        buildDetailRow('Links', $linksRow, true),
         buildDetailRow('Address', (string) ($activeVenue['address'] ?? '')),
         buildDetailRow('City', (string) ($activeVenue['city'] ?? '')),
         buildDetailRow('State', (string) ($activeVenue['state'] ?? '')),
@@ -180,6 +233,17 @@ if ($activeVenue) {
 ?>
 
 <?php require __DIR__ . '/../../../partials/tables/detail.php'; ?>
+
+<?php
+  if ($activeVenue) {
+      $linkEditorSourceType = 'venue';
+      $linkEditorSourceId = (int) $activeVenue['id'];
+      $linkEditorMailboxId = 0;
+      $linkEditorSearchTypes = 'contact,venue,email,task';
+      $linkEditorLinks = $linkEditorLinks ?? [];
+      require __DIR__ . '/../../../partials/link_editor_modal.php';
+  }
+?>
 
 <?php if ($activeVenue && $activeTeamId > 0 && isset($_GET['show_triggers'])): ?>
   <?php require __DIR__ . '/task_triggers.php'; ?>

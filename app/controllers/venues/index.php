@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../models/venues/venues_repository.php';
 require_once __DIR__ . '/../../models/venues/venue_ratings.php';
 require_once __DIR__ . '/../../models/venues/venue_task_triggers.php';
 require_once __DIR__ . '/../../models/communication/team_helpers.php';
+require_once __DIR__ . '/../../models/core/link_helpers.php';
 
 $errors = [];
 $notice = '';
@@ -33,6 +34,7 @@ $userTeams = [];
 $teamRatings = [];
 $selectedVenueRating = null;
 $venueTaskTriggers = [];
+$venueLinks = [];
 
 $noticeKey = (string) ($_GET['notice'] ?? '');
 if ($noticeKey === 'trigger_created') {
@@ -119,6 +121,7 @@ try {
         } elseif ($activeTeamId > 0) {
             $selectedVenueRating = fetchVenueRatingForTeam($pdo, $selectedVenueId, $activeTeamId);
             $venueTaskTriggers = fetchVenueTaskTriggers($pdo, $selectedVenueId, $activeTeamId);
+            $venueLinks = fetchLinkedObjects($pdo, 'venue', $selectedVenueId, $activeTeamId, null);
         }
     }
 } catch (Throwable $error) {
