@@ -36,6 +36,10 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
     $isHtml = $body !== strip_tags($body);
     $contentType = $isHtml ? 'text/html' : 'text/plain';
 
+    if (function_exists('quoted_printable_encode')) {
+        $body = quoted_printable_encode($body);
+    }
+
     $safeFromName = sanitizeHeaderText($fromName);
     $safeSubject = sanitizeHeaderText($subject);
 
@@ -49,7 +53,8 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
         'Subject: ' . encodeHeaderWord($safeSubject),
         'Date: ' . date('r'),
         'MIME-Version: 1.0',
-        'Content-Type: ' . $contentType . '; charset=UTF-8'
+        'Content-Type: ' . $contentType . '; charset=UTF-8',
+        'Content-Transfer-Encoding: quoted-printable'
     ];
 
     if ($toList) {
