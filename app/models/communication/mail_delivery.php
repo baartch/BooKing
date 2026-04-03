@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../core/database.php';
 require_once __DIR__ . '/email_helpers.php';
+require_once __DIR__ . '/Html2Text.php';
 
 function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
 {
@@ -34,10 +35,14 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
     }
 
     $isHtml = $body !== strip_tags($body);
-    $contentType = $isHtml ? 'text/html' : 'text/plain';
 
-    if (function_exists('quoted_printable_encode')) {
-        $body = quoted_printable_encode($body);
+    $plainBody = $body;
+    if ($isHtml) {
+        try {
+            $plainBody = \Soundasleep\Html2Text::convert($body, ['ignore_errors' => true]);
+        } catch (Throwable $error) {
+            $plainBody = strip_tags($body);
+        }
     }
 
     $safeFromName = sanitizeHeaderText($fromName);
@@ -52,9 +57,7 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
         'From: ' . $fromHeader,
         'Subject: ' . encodeHeaderWord($safeSubject),
         'Date: ' . date('r'),
-        'MIME-Version: 1.0',
-        'Content-Type: ' . $contentType . '; charset=UTF-8',
-        'Content-Transfer-Encoding: quoted-printable'
+        'MIME-Version: 1.0'
     ];
 
     if ($toList) {
@@ -65,7 +68,32 @@ function sendEmailViaMailbox(PDO $pdo, array $mailbox, array $payload): bool
         $headers[] = 'Cc: ' . implode(', ', $ccList);
     }
 
-    $message = implode("\r\n", $headers) . "\r\n\r\n" . $body;
+    if (function_exists('quoted_printable_encode')) {
+        $plainBody = quoted_printable_encode($plainBody);
+        $body = quoted_printable_encode($body);
+    }
+
+    if ($isHtml) {
+        $boundary = 'bnd_' . bin2hex(random_bytes(8));
+        $headers[] = 'Content-Type: multipart/alternative; boundary="' . $boundary . '"';
+
+        $message = implode("\r\n", $headers)
+            . "\r\n\r\n"
+            . "--{$boundary}\r\n"
+            . "Content-Type: text/plain; charset=UTF-8\r\n"
+            . "Content-Transfer-Encoding: quoted-printable\r\n\r\n"
+            . $plainBody . "\r\n"
+            . "--{$boundary}\r\n"
+            . "Content-Type: text/html; charset=UTF-8\r\n"
+            . "Content-Transfer-Encoding: quoted-printable\r\n\r\n"
+            . $body . "\r\n"
+            . "--{$boundary}--";
+    } else {
+        $headers[] = 'Content-Type: text/plain; charset=UTF-8';
+        $headers[] = 'Content-Transfer-Encoding: quoted-printable';
+        $message = implode("\r\n", $headers) . "\r\n\r\n" . $plainBody;
+    }
+
     $message = preg_replace("/\r\n\. /", "\r\n..", $message);
 
     $connection = smtpOpenConnection($host, $port, $encryption);
