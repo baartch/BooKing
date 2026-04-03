@@ -11,6 +11,65 @@ function getLinkIcons(): array
     ];
 }
 
+function buildLinkUrl(array $link, array $options = []): string
+{
+    $type = (string) ($link['type'] ?? '');
+    $id = (int) ($link['id'] ?? 0);
+    $label = trim((string) ($link['label'] ?? ''));
+
+    if ($type === '' || $id <= 0) {
+        return '#';
+    }
+
+    $basePath = rtrim((string) ($options['basePath'] ?? (defined('BASE_PATH') ? BASE_PATH : '')), '/');
+    $contactBase = (string) ($options['contactBase'] ?? ($basePath . '/app/controllers/communication/index.php'));
+    $venueBase = (string) ($options['venueBase'] ?? ($basePath . '/app/controllers/venues/index.php'));
+    $emailBase = (string) ($options['emailBase'] ?? ($basePath . '/app/controllers/communication/index.php'));
+    $taskBase = (string) ($options['taskBase'] ?? ($basePath . '/app/controllers/team/index.php'));
+    $conversationBase = (string) ($options['conversationBase'] ?? ($basePath . '/app/controllers/communication/index.php'));
+
+    if ($type === 'contact') {
+        return $contactBase . '?' . http_build_query([
+            'tab' => 'contacts',
+            'contact_id' => $id
+        ]);
+    }
+
+    if ($type === 'venue') {
+        $params = [];
+        if ($id > 0) {
+            $params['venue_id'] = $id;
+        }
+        if ($label !== '') {
+            $params['filter'] = $label;
+        }
+        return $venueBase . '?' . http_build_query(array_filter($params, static fn($value) => $value !== null && $value !== ''));
+    }
+
+    if ($type === 'email') {
+        return $emailBase . '?' . http_build_query([
+            'tab' => 'email',
+            'message_id' => $id
+        ]);
+    }
+
+    if ($type === 'task') {
+        return $taskBase . '?' . http_build_query([
+            'tab' => 'tasks',
+            'task_id' => $id
+        ]);
+    }
+
+    if ($type === 'conversation') {
+        return $conversationBase . '?' . http_build_query([
+            'tab' => 'conversations',
+            'conversation_id' => $id
+        ]);
+    }
+
+    return '#';
+}
+
 function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int $userId): array
 {
     $type = trim($type);

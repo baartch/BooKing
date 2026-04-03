@@ -87,24 +87,11 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
       $linkEditorLinks = [];
       if (!empty($messageLinks)) {
           foreach ($messageLinks as $link) {
-              if ($link['type'] === 'contact') {
-                  $url = BASE_PATH . '/app/controllers/communication/index.php?tab=contacts&q=' . urlencode($link['label']);
-                  $linkItems[] = ['type' => 'contact', 'label' => $link['label'], 'url' => $url];
-              } elseif ($link['type'] === 'venue') {
-                  $url = BASE_PATH . '/app/controllers/venues/index.php?' . http_build_query(array_filter([
-                      'venue_id' => !empty($link['id']) ? (int) $link['id'] : null,
-                      'filter' => trim((string) ($link['label'] ?? '')) !== '' ? (string) $link['label'] : null
-                  ], static fn($value) => $value !== null && $value !== ''));
-                  $linkItems[] = ['type' => 'venue', 'label' => $link['label'], 'url' => $url];
-              } elseif ($link['type'] === 'email') {
-                  $url = $baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, [
-                      'message_id' => $link['id']
-                  ]));
-                  $linkItems[] = ['type' => 'email', 'label' => $link['label'], 'url' => $url];
-              } elseif ($link['type'] === 'task') {
-                  $url = BASE_PATH . '/app/controllers/team/index.php?tab=tasks&task_id=' . (int) $link['id'];
-                  $linkItems[] = ['type' => 'task', 'label' => $link['label'], 'url' => $url];
-              }
+              $linkItems[] = [
+                  'type' => $link['type'],
+                  'label' => $link['label'],
+                  'url' => buildLinkUrl($link)
+              ];
               $linkEditorLinks[] = [
                   'type' => $link['type'],
                   'id' => (int) $link['id'],

@@ -168,19 +168,11 @@ if ($activeVenue) {
 
     if (!empty($venueLinks)) {
         foreach ($venueLinks as $link) {
-            if ($link['type'] === 'contact') {
-                $url = BASE_PATH . '/app/controllers/communication/index.php?tab=contacts&contact_id=' . (int) $link['id'];
-                $linkItems[] = ['type' => 'contact', 'label' => $link['label'], 'url' => $url];
-            } elseif ($link['type'] === 'venue') {
-                $url = BASE_PATH . '/app/controllers/venues/index.php?venue_id=' . (int) $link['id'];
-                $linkItems[] = ['type' => 'venue', 'label' => $link['label'], 'url' => $url];
-            } elseif ($link['type'] === 'email') {
-                $url = BASE_PATH . '/app/controllers/communication/index.php?tab=email&message_id=' . (int) $link['id'];
-                $linkItems[] = ['type' => 'email', 'label' => $link['label'], 'url' => $url];
-            } elseif ($link['type'] === 'task') {
-                $url = BASE_PATH . '/app/controllers/team/index.php?tab=tasks&task_id=' . (int) $link['id'];
-                $linkItems[] = ['type' => 'task', 'label' => $link['label'], 'url' => $url];
-            }
+            $linkItems[] = [
+                'type' => $link['type'],
+                'label' => $link['label'],
+                'url' => buildLinkUrl($link)
+            ];
 
             $linkEditorLinks[] = [
                 'type' => $link['type'],
