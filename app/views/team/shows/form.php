@@ -1,0 +1,126 @@
+<?php
+$cancelUrl = $cancelUrl ?? (BASE_PATH . '/app/controllers/team/index.php?tab=shows');
+$searchQuery = $searchQuery ?? '';
+$showLinks = $showLinks ?? [];
+
+$linkEditorLinks = [];
+foreach ($showLinks as $link) {
+    $linkEditorLinks[] = [
+        'type' => (string) ($link['type'] ?? ''),
+        'id' => (int) ($link['id'] ?? 0),
+        'label' => (string) ($link['label'] ?? ''),
+    ];
+}
+
+$localModalId = 'link-editor-show-0';
+if ($isEdit && $editShow) {
+    $localModalId = 'link-editor-show-' . (int) $editShow['id'];
+}
+?>
+<div class="box">
+  <div class="level mb-3">
+    <div class="level-left">
+      <h2 class="title is-5"><?php echo $isEdit ? 'Update Show' : 'Add Show'; ?></h2>
+    </div>
+  </div>
+
+  <form method="POST" action="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/team/shows_save.php'); ?>">
+    <?php renderCsrfField(); ?>
+    <input type="hidden" name="action" value="<?php echo $isEdit ? 'update_show' : 'create_show'; ?>">
+    <input type="hidden" name="q" value="<?php echo htmlspecialchars($searchQuery); ?>">
+    <input type="hidden" name="team_id" value="<?php echo isset($activeTeamId) ? (int) $activeTeamId : 0; ?>">
+    <?php if ($isEdit && $editShow): ?>
+      <input type="hidden" name="show_id" value="<?php echo (int) $editShow['id']; ?>">
+    <?php endif; ?>
+
+    <div class="detail-meta mb-4">
+      <div class="detail-meta-info">
+        <div class="detail-meta-row">
+          <span class="detail-meta-label">Links:</span>
+          <span class="detail-meta-value detail-link-list">
+            <?php if (empty($showLinks)): ?>
+              <span class="has-text-grey is-size-7">No links yet</span>
+            <?php else: ?>
+              <?php foreach ($showLinks as $link): ?>
+                <span class="detail-link-pill">
+                  <span><?php echo htmlspecialchars((string) ($link['label'] ?? '')); ?></span>
+                </span>
+              <?php endforeach; ?>
+            <?php endif; ?>
+            <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars($localModalId); ?>" title="Edit links">
+              <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
+            </a>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div data-link-editor-collector id="show-link-collector">
+      <?php foreach ($showLinks as $link): ?>
+        <input type="hidden" name="link_items[]" value="<?php echo htmlspecialchars((string) ($link['type'] ?? '') . ':' . (int) ($link['id'] ?? 0)); ?>">
+      <?php endforeach; ?>
+    </div>
+
+    <div class="table-container">
+      <table class="table is-fullwidth">
+        <tbody>
+          <tr>
+            <th>Name</th>
+            <td><input type="text" id="show_name" name="name" class="input" value="<?php echo htmlspecialchars((string) ($formValues['name'] ?? '')); ?>"></td>
+          </tr>
+          <tr>
+            <th>Date *</th>
+            <td><input type="date" id="show_date" name="show_date" class="input" required value="<?php echo htmlspecialchars((string) ($formValues['show_date'] ?? '')); ?>"></td>
+          </tr>
+          <tr>
+            <th>Time</th>
+            <td><input type="time" id="show_time" name="show_time" class="input" value="<?php echo htmlspecialchars((string) ($formValues['show_time'] ?? '')); ?>"></td>
+          </tr>
+          <tr>
+            <th>Venue *</th>
+            <td>
+              <div class="select is-fullwidth">
+                <select id="show_venue_id" name="venue_id" required>
+                  <option value="">Select venue</option>
+                  <?php foreach (($showVenueOptions ?? []) as $venue): ?>
+                    <?php $venueId = (int) ($venue['id'] ?? 0); ?>
+                    <option value="<?php echo $venueId; ?>" <?php echo $venueId === (int) ($formValues['venue_id'] ?? 0) ? 'selected' : ''; ?>>
+                      <?php echo htmlspecialchars((string) ($venue['name'] ?? ('Venue #' . $venueId))); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <th>Artist Fee</th>
+            <td><input type="number" min="0" step="0.01" id="show_artist_fee" name="artist_fee" class="input" value="<?php echo htmlspecialchars((string) ($formValues['artist_fee'] ?? '')); ?>"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="field">
+      <label for="show_notes" class="label">Notes</label>
+      <div class="control">
+        <textarea id="show_notes" name="notes" class="textarea" rows="5"><?php echo htmlspecialchars((string) ($formValues['notes'] ?? '')); ?></textarea>
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button type="submit" class="button is-primary"><?php echo $isEdit ? 'Update Show' : 'Add Show'; ?></button>
+      <a href="<?php echo htmlspecialchars($cancelUrl); ?>" class="button">Cancel</a>
+    </div>
+  </form>
+
+  <?php
+    $linkEditorSourceType = 'show';
+    $linkEditorSourceId = $isEdit && $editShow ? (int) $editShow['id'] : 0;
+    $linkEditorMailboxId = 0;
+    $linkEditorSearchTypes = 'contact,venue,email,task,show';
+    $linkEditorLinks = $linkEditorLinks;
+    $linkEditorLocalOnly = true;
+    $linkEditorCollectorSelector = '#show-link-collector';
+    require __DIR__ . '/../../../partials/link_editor_modal.php';
+  ?>
+</div>

@@ -45,7 +45,7 @@ class LinkScopeException extends RuntimeException
  */
 function getAllowedLinkTypes(): array
 {
-    return ['email', 'contact', 'task', 'venue'];
+    return ['email', 'contact', 'task', 'venue', 'show'];
 }
 
 function normalizeLinkType(string $type): string
@@ -160,6 +160,8 @@ function resolveLinkSourceScopeOrThrow(PDO $pdo, string $sourceType, int $source
             return resolveTaskLinkScopeOrThrow($pdo, $sourceId, $requestUserId);
         case 'venue':
             return resolveVenueLinkScopeOrThrow($pdo, $sourceId, $requestUserId, $context);
+        case 'show':
+            return resolveShowLinkScopeOrThrow($pdo, $sourceId, $requestUserId);
     }
 
     throwLinkScopeException(
@@ -507,6 +509,76 @@ function resolveVenueLinkScopeOrThrow(PDO $pdo, int $sourceId, int $requestUserI
         'source_id' => $sourceId,
         'team_id' => $teamId,
         'user_id' => $userId,
+        'mailbox_id' => null,
+    ];
+}
+
+/**
+ * @return array{source_type:string,source_id:int,team_id:int|null,user_id:int|null,mailbox_id:int|null}
+ */
+function resolveShowLinkScopeOrThrow(PDO $pdo, int $sourceId, int $requestUserId): array
+{
+    $showStmt = $pdo->prepare(
+        'SELECT id, team_id
+         FROM team_shows
+         WHERE id = :id
+         LIMIT 1'
+    );
+    $showStmt->execute([':id' => $sourceId]);
+    $show = $showStmt->fetch();
+
+    if (!$show) {
+        throwLinkScopeException(
+            $requestUserId > 0 ? $requestUserId : null,
+            'source_not_found',
+            sprintf('Show source %d not found.', $sourceId),
+            [
+                'action' => 'resolve_link_scope',
+                'source_type' => 'show',
+                'source_id' => $sourceId,
+                'request_user_id' => $requestUserId,
+            ],
+            404
+        );
+    }
+
+    $teamId = !empty($show['team_id']) ? (int) $show['team_id'] : null;
+    if ($teamId === null) {
+        throwLinkScopeException(
+            $requestUserId > 0 ? $requestUserId : null,
+            'scope_unresolved',
+            sprintf('Unable to resolve scope for show source %d.', $sourceId),
+            [
+                'action' => 'resolve_link_scope',
+                'source_type' => 'show',
+                'source_id' => $sourceId,
+                'request_user_id' => $requestUserId,
+            ],
+            422
+        );
+    }
+
+    if (!hasTeamAccess($pdo, $requestUserId, $teamId)) {
+        throwLinkScopeException(
+            $requestUserId > 0 ? $requestUserId : null,
+            'source_access_denied',
+            sprintf('Show access denied for source %d.', $sourceId),
+            [
+                'action' => 'resolve_link_scope',
+                'source_type' => 'show',
+                'source_id' => $sourceId,
+                'request_user_id' => $requestUserId,
+                'resolved_team_id' => $teamId,
+            ],
+            403
+        );
+    }
+
+    return [
+        'source_type' => 'show',
+        'source_id' => $sourceId,
+        'team_id' => $teamId,
+        'user_id' => null,
         'mailbox_id' => null,
     ];
 }

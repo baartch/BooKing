@@ -8,29 +8,35 @@ require_once __DIR__ . '/../../models/communication/email_templates_helpers.php'
 require_once __DIR__ . '/../../models/communication/email_helpers.php';
 require_once __DIR__ . '/../../models/communication/team_helpers.php';
 require_once __DIR__ . '/../../models/team/tasks_helpers.php';
+require_once __DIR__ . '/../../models/team/shows.php';
 require_once __DIR__ . '/../../models/core/link_helpers.php';
 
 $isTeamAdmin = (bool) ($currentUser['is_team_admin'] ?? false);
 $activeTab = $_GET['tab'] ?? 'tasks';
 $validTabs = $isTeamAdmin
-    ? ['tasks', 'members', 'mailboxes', 'templates']
-    : ['tasks', 'members'];
+    ? ['tasks', 'shows', 'members', 'mailboxes', 'templates']
+    : ['tasks', 'shows', 'members'];
 if (!in_array($activeTab, $validTabs, true)) {
     $activeTab = 'tasks';
 }
 
 $errors = [
     'tasks' => [],
+    'shows' => [],
     'mailboxes' => [],
     'templates' => []
 ];
 $notice = [
     'tasks' => '',
+    'shows' => '',
     'mailboxes' => '',
     'templates' => ''
 ];
 
 $tasks = [];
+$shows = [];
+$showVenueOptions = [];
+$showLinks = [];
 $mailboxes = [];
 $templates = [];
 $teams = [];
@@ -45,6 +51,12 @@ if ($noticeKey === 'task_created') {
     $notice['tasks'] = 'Task deleted successfully.';
 } elseif ($noticeKey === 'task_error') {
     $notice['tasks'] = 'Failed to save task.';
+} elseif ($noticeKey === 'show_created') {
+    $notice['shows'] = 'Show created successfully.';
+} elseif ($noticeKey === 'show_updated') {
+    $notice['shows'] = 'Show updated successfully.';
+} elseif ($noticeKey === 'show_error') {
+    $notice['shows'] = 'Failed to save show.';
 } elseif ($noticeKey === 'mailbox_created') {
     $notice['mailboxes'] = 'Mailbox created successfully.';
 } elseif ($noticeKey === 'mailbox_updated') {
@@ -204,7 +216,9 @@ $activeTeamId = 0;
 $userTeams = [];
 $searchQuery = trim((string) ($_GET['q'] ?? ''));
 $selectedTaskId = (int) ($_GET['task_id'] ?? 0);
+$selectedShowId = (int) ($_GET['show_id'] ?? 0);
 $taskLinks = [];
+$showLinks = [];
 
 if ($pdo) {
     try {
@@ -215,15 +229,23 @@ if ($pdo) {
 
         if ($activeTeamId > 0) {
             $tasks = fetchTeamTasks($pdo, $activeTeamId, $searchQuery);
+            $shows = fetchTeamShows($pdo, $activeTeamId, $searchQuery);
+            $showVenueOptions = fetchShowVenueOptions($pdo);
         } else {
             $errors['tasks'][] = 'No team access available.';
+            $errors['shows'][] = 'No team access available.';
         }
 
         if ($activeTeamId > 0 && $selectedTaskId > 0) {
             $taskLinks = fetchLinkedObjects($pdo, 'task', $selectedTaskId, $activeTeamId, null);
         }
+
+        if ($activeTeamId > 0 && $selectedShowId > 0) {
+            $showLinks = fetchLinkedObjects($pdo, 'show', $selectedShowId, $activeTeamId, null);
+        }
     } catch (Throwable $error) {
         $errors['tasks'][] = 'Failed to load tasks.';
+        $errors['shows'][] = 'Failed to load shows.';
         logAction($currentUser['user_id'] ?? null, 'team_task_list_error', $error->getMessage());
     }
 }
@@ -258,6 +280,12 @@ if ($pdo && $isTeamAdmin) {
 if (HTMX::isRequest() && $activeTab === 'tasks') {
     HTMX::pushUrl($_SERVER['REQUEST_URI']);
     require __DIR__ . '/../../views/team/tasks/tasks.php';
+    return;
+}
+
+if (HTMX::isRequest() && $activeTab === 'shows') {
+    HTMX::pushUrl($_SERVER['REQUEST_URI']);
+    require __DIR__ . '/../../views/team/shows/shows.php';
     return;
 }
 

@@ -17,9 +17,9 @@
 
 **Purpose**: Prepare feature scaffolding and documentation alignment
 
-- [ ] T001 Create Team Shows view directory scaffold in `app/views/team/shows/`
-- [ ] T002 Create Team Shows controller file scaffold in `app/controllers/team/shows.php`
-- [ ] T003 Create Team Shows model helper scaffold in `app/models/team/shows.php`
+- [X] T001 Create Team Shows view directory scaffold in `app/views/team/shows/`
+- [X] T002 Create Team Shows controller file scaffold in `app/controllers/team/shows.php`
+- [X] T003 Create Team Shows model helper scaffold in `app/models/team/shows.php`
 
 ---
 
@@ -29,12 +29,12 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Update show and show-link schema structures in `sql/schema.sql`
-- [ ] T005 [P] Add shared show data-access helpers (CRUD + venue validation) in `app/models/team/shows.php`
-- [ ] T006 [P] Add shared show-link association helpers in `app/models/team/shows.php`
-- [ ] T007 Add team-scope authorization and CSRF checks for show endpoints in `app/controllers/team/shows.php`
-- [ ] T008 Add show action audit logging (`logAction`) hooks in `app/controllers/team/shows.php`
-- [ ] T009 Wire Team Shows routes into team routing entrypoints in `app/controllers/team/teams.php`
+- [X] T004 Update show and show-link schema structures in `sql/schema.sql`
+- [X] T005 [P] Add shared show data-access helpers (CRUD + venue validation) in `app/models/team/shows.php`
+- [X] T006 [P] Add shared show-link association helpers in `app/models/team/shows.php`
+- [X] T007 Add team-scope authorization and CSRF checks for show endpoints in `app/controllers/team/shows.php`
+- [X] T008 Add show action audit logging (`logAction`) hooks in `app/controllers/team/shows.php`
+- [X] T009 Wire Team Shows routes into team routing entrypoints in `app/controllers/team/teams.php`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -48,13 +48,13 @@
 
 ### Implementation for User Story 1
 
-- [ ] T010 [P] [US1] Implement Shows tab container view in `app/views/team/shows/shows.php`
-- [ ] T011 [P] [US1] Implement show table list wrapper (date, venue columns via shared table partial) in `app/views/team/shows/list.php`
-- [ ] T012 [P] [US1] Implement show detail wrapper using shared detail partial in `app/views/team/shows/detail.php`
-- [ ] T013 [US1] Implement create/edit form view with required/optional field semantics and DB venue selector in `app/views/team/shows/form.php`
-- [ ] T014 [US1] Implement show create endpoint with validation and save logic in `app/controllers/team/shows.php`
-- [ ] T015 [US1] Implement HTMX list/detail/form responses for create flow in `app/controllers/team/shows.php`
-- [ ] T016 [US1] Integrate Shows tab into Team UI navigation in `app/views/team/index.php`
+- [X] T010 [P] [US1] Implement Shows tab container view in `app/views/team/shows/shows.php`
+- [X] T011 [P] [US1] Implement show table list wrapper (date, venue columns via shared table partial) in `app/views/team/shows/list.php`
+- [X] T012 [P] [US1] Implement show detail wrapper using shared detail partial in `app/views/team/shows/detail.php`
+- [X] T013 [US1] Implement create/edit form view with required/optional field semantics and DB venue selector in `app/views/team/shows/form.php`
+- [X] T014 [US1] Implement show create endpoint with validation and save logic in `app/controllers/team/shows.php`
+- [X] T015 [US1] Implement HTMX list/detail/form responses for create flow in `app/controllers/team/shows.php`
+- [X] T016 [US1] Integrate Shows tab into Team UI navigation in `app/views/team/index.php`
 
 **Checkpoint**: User Story 1 is independently functional and demoable as MVP
 
@@ -68,11 +68,11 @@
 
 ### Implementation for User Story 2
 
-- [ ] T017 [US2] Implement show update endpoint with required/optional field validation in `app/controllers/team/shows.php`
-- [ ] T018 [US2] Implement edit-mode loading and submit handling in `app/views/team/shows/form.php`
-- [ ] T019 [US2] Implement HTMX refresh behavior for list/detail after update in `app/controllers/team/shows.php`
-- [ ] T020 [US2] Add optional artist_fee/time validation handling for update scenarios in `app/models/team/shows.php`
-- [ ] T021 [US2] Add edge-case feedback handling for invalid date/venue/time/fee combinations in `app/views/team/shows/detail.php`
+- [X] T017 [US2] Implement show update endpoint with required/optional field validation in `app/controllers/team/shows.php`
+- [X] T018 [US2] Implement edit-mode loading and submit handling in `app/views/team/shows/form.php`
+- [X] T019 [US2] Implement HTMX refresh behavior for list/detail after update in `app/controllers/team/shows.php`
+- [X] T020 [US2] Add optional artist_fee/time validation handling for update scenarios in `app/models/team/shows.php`
+- [X] T021 [US2] Add edge-case feedback handling for invalid date/venue/time/fee combinations in `app/views/team/shows/detail.php`
 
 **Checkpoint**: User Stories 1 and 2 both work independently
 
@@ -86,11 +86,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Implement link add/remove endpoint handlers for show lifecycle actions in `app/controllers/team/shows.php`
-- [ ] T023 [US3] Implement create-flow link capture and persistence in `app/views/team/shows/form.php`
-- [ ] T024 [US3] Implement update-flow link management UI and persistence in `app/views/team/shows/form.php`
-- [ ] T025 [US3] Render linked-object list in show detail wrapper in `app/views/team/shows/detail.php`
-- [ ] T026 [US3] Enforce duplicate-link prevention and target existence checks in `app/models/team/shows.php`
+- [X] T022 [US3] Implement link add/remove endpoint handlers for show lifecycle actions in `app/controllers/team/shows.php`
+- [X] T023 [US3] Implement create-flow link capture and persistence in `app/views/team/shows/form.php`
+- [X] T024 [US3] Implement update-flow link management UI and persistence in `app/views/team/shows/form.php`
+- [X] T025 [US3] Render linked-object list in show detail wrapper in `app/views/team/shows/detail.php`
+- [X] T026 [US3] Enforce duplicate-link prevention and target existence checks in `app/models/team/shows.php`
 
 **Checkpoint**: All user stories are independently functional
 
@@ -102,7 +102,7 @@
 
 - [ ] T027 [P] Update feature documentation notes for Team Shows usage in `specs/001-team-shows/quickstart.md`
 - [ ] T028 Run end-to-end quickstart verification scenarios from `specs/001-team-shows/quickstart.md`
-- [ ] T029 Validate HTMX full-page fallback behavior for Team Shows tab in `app/controllers/team/shows.php`
+- [X] T029 Validate HTMX full-page fallback behavior for Team Shows tab in `app/controllers/team/shows.php`
 - [ ] T030 Validate logging output for create/update/link actions (no sensitive data) in `app/models/core/database.php`
 - [ ] T031 If TypeScript sources change, run `bun run build` and verify compiled output in `app/public/js/`
 
