@@ -3,6 +3,17 @@ require_once __DIR__ . '/../../../models/core/list_helpers.php';
 
 $listColumns = [
     buildListColumn('Date', 'show_date'),
+    buildListColumn('Venue', null, static function (array $show): string {
+        $venue = trim((string) ($show['venue_text'] ?? ''));
+        return $venue !== '' ? $venue : '—';
+    }),
+    buildListColumn('Fee', null, static function (array $show): string {
+        $fee = $show['artist_fee'] ?? null;
+        if ($fee === null || $fee === '') {
+            return '—';
+        }
+        return (string) $fee;
+    }),
 ];
 
 $listRows = $shows;
@@ -31,11 +42,9 @@ $listRowActions = static function (array $show) use ($baseUrl, $baseQuery, $acti
     ob_start();
     ?>
     <div class="buttons are-small is-justify-content-flex-end">
-      <form method="GET" action="<?php echo htmlspecialchars($editLink); ?>" data-list-ignore>
-        <button type="submit" class="button" aria-label="Edit show" title="Edit show">
-          <span class="icon"><i class="fa-solid fa-pen"></i></span>
-        </button>
-      </form>
+      <a href="<?php echo htmlspecialchars($editLink); ?>" class="button" aria-label="Edit show" title="Edit show" data-list-ignore>
+        <span class="icon"><i class="fa-solid fa-pen"></i></span>
+      </a>
       <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/team/shows_delete.php" onsubmit="return confirm('Delete this show?');" data-list-ignore>
         <?php renderCsrfField(); ?>
         <input type="hidden" name="show_id" value="<?php echo (int) $showId; ?>">

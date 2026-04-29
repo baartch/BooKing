@@ -37,7 +37,7 @@ if ($isEdit && $editShow) {
       <div class="detail-meta-info">
         <div class="detail-meta-row">
           <span class="detail-meta-label">Links:</span>
-          <span class="detail-meta-value detail-link-list">
+          <span class="detail-meta-value detail-link-list" id="show-link-pills">
             <?php if (empty($showLinks)): ?>
               <span class="has-text-grey is-size-7">No links yet</span>
             <?php else: ?>
@@ -47,10 +47,10 @@ if ($isEdit && $editShow) {
                 </span>
               <?php endforeach; ?>
             <?php endif; ?>
-            <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars($localModalId); ?>" title="Edit links">
-              <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
-            </a>
           </span>
+          <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars($localModalId); ?>" title="Edit links">
+            <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
+          </a>
         </div>
       </div>
     </div>
@@ -124,15 +124,29 @@ if ($isEdit && $editShow) {
       const venueLink = links.find(function (link) { return link && link.type === 'venue'; });
       const typeInput = document.getElementById('show_fallback_link_type');
       const idInput = document.getElementById('show_fallback_link_id');
-      if (!typeInput || !idInput) {
-        return;
+      if (typeInput && idInput) {
+        if (venueLink && venueLink.id) {
+          typeInput.value = 'venue';
+          idInput.value = String(venueLink.id);
+        } else {
+          typeInput.value = '';
+          idInput.value = '';
+        }
       }
-      if (venueLink && venueLink.id) {
-        typeInput.value = 'venue';
-        idInput.value = String(venueLink.id);
-      } else {
-        typeInput.value = '';
-        idInput.value = '';
+
+      const pills = document.getElementById('show-link-pills');
+      if (pills) {
+        if (!links.length) {
+          pills.innerHTML = '<span class="has-text-grey is-size-7">No links yet</span>';
+        } else {
+          pills.innerHTML = links.map(function (link) {
+            const label = link && link.label ? String(link.label) : ('#' + String(link.id || ''));
+            const safe = label.replace(/[&<>"']/g, function (ch) {
+              return ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'})[ch];
+            });
+            return '<span class="detail-link-pill"><span>' + safe + '</span></span>';
+          }).join('');
+        }
       }
     });
   </script>
