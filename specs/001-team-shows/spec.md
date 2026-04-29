@@ -12,6 +12,8 @@
 - Q: Is show name required? → A: No, show name is optional.
 - Q: Is artist name required on a show? → A: No, artist name is not required because each team represents one artist.
 - Q: Which show fields are required vs optional? → A: Required: date and venue (selected from existing venue records). Optional: time, artist fee, and notes.
+- Q: Should venue remain a direct show property? → A: No. Venue is not a direct show property; venue association is handled through the existing linking feature.
+- Q: How should venue be captured on a show? → A: Venue is a simple text property on the show; when a venue link is added and the text is empty, the venue text is auto-filled with the linked venue name.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -25,7 +27,7 @@ As a team member, I want to create a show with all core details so that my team 
 
 **Acceptance Scenarios**:
 
-1. **Given** I am viewing a team where I can manage content, **When** I create a show with required date and venue (and optionally show name, time, artist fee, and notes), **Then** the show is saved and appears in that team’s show list.
+1. **Given** I am viewing a team where I can manage content, **When** I create a show with required date (and optionally show name, time, venue text, artist fee, notes, and links), **Then** the show is saved and appears in that team’s show list.
 2. **Given** I submit a show missing required fields, **When** I attempt to save, **Then** I receive clear validation feedback and the show is not created.
 3. **Given** I leave optional fields blank during creation, **When** the show is saved, **Then** the show is created successfully with only required fields.
 4. **Given** I add optional notes during creation, **When** the show is saved, **Then** the notes are stored and shown in the show details.
@@ -42,7 +44,7 @@ As a team member, I want to edit existing show details so that schedule, venue, 
 
 **Acceptance Scenarios**:
 
-1. **Given** a show already exists in my team, **When** I update its date, time, venue, notes, or fee, **Then** the updated values are saved and displayed.
+1. **Given** a show already exists in my team, **When** I update its date, time, venue text, notes, or fee, **Then** the updated values are saved and displayed.
 2. **Given** an invalid fee or invalid date/time format is entered, **When** I save changes, **Then** the system blocks the update and highlights the invalid fields.
 
 ---
@@ -63,10 +65,11 @@ As a team member, I want to connect a show to other relevant records so that all
 ### Edge Cases
 
 - A user attempts to create or edit a show in a team they do not belong to.
-- Two shows in the same team use the same date, time, and venue combination while both omit show name.
-- A linked object is deleted or becomes inaccessible after being linked to a show.
+- Two shows in the same team use the same date and time combination while both omit show name.
+- A linked venue is deleted or becomes inaccessible after being linked to a show that has auto-filled venue text.
+- Venue text is empty and a venue link is added.
 - Artist fee is entered as zero, negative, or with unsupported currency formatting when fee is provided.
-- A user tries to save a show without a date or without selecting an existing venue.
+- A user tries to save a show without a required date.
 - Show date/time is in the past at time of creation.
 
 ## Requirements *(mandatory)*
@@ -74,26 +77,28 @@ As a team member, I want to connect a show to other relevant records so that all
 ### Functional Requirements
 
 - **FR-001**: System MUST allow authorized team members to create a show within a specific team.
-- **FR-002**: System MUST require each show to include date and venue at creation.
-- **FR-003**: System MUST require venue to be selected from existing venue records.
-- **FR-004**: System MUST allow each show to include an optional show name.
+- **FR-002**: System MUST require each show to include date at creation.
+- **FR-003**: System MUST allow each show to include an optional show name.
+- **FR-004**: System MUST allow each show to include an optional venue text field.
 - **FR-005**: System MUST allow time and artist fee to be omitted at creation or update.
 - **FR-006**: System MUST allow notes to be omitted, and when provided, recorded as optional free-form text for each show.
 - **FR-007**: System MUST validate required fields and reject show creation or updates when required data is missing or invalid.
 - **FR-008**: System MUST allow authorized team members to view all shows within their team scope.
-- **FR-009**: System MUST allow authorized team members to edit show name, date, time, venue, notes, and fee.
+- **FR-009**: System MUST allow authorized team members to edit show name, date, time, venue text, notes, and fee.
 - **FR-010**: System MUST keep each show scoped to exactly one team and prevent cross-team visibility by unauthorized users.
 - **FR-011**: System MUST treat the owning team as the artist context and MUST NOT require a separate artist name field on the show record.
 - **FR-012**: System MUST allow a show to have zero, one, or many links to other existing objects in the system.
 - **FR-013**: System MUST allow authorized team members to add and remove links between a show and other objects during both create and update flows.
-- **FR-014**: System MUST preserve existing show data and links when unrelated show fields are updated.
-- **FR-015**: System MUST provide clear user-facing feedback when show creation, update, or link operations succeed or fail.
-- **FR-016**: System MUST present Shows as a dedicated tab within each Team context.
-- **FR-017**: System MUST render the Team Shows list as a table that includes date and venue columns.
+- **FR-014**: System MUST allow linking a show to venue objects and MUST auto-fill venue text with the linked venue name when venue text is empty at link time.
+- **FR-015**: System MUST preserve existing show data and links when unrelated show fields are updated.
+- **FR-016**: System MUST provide clear user-facing feedback when show creation, update, or link operations succeed or fail.
+- **FR-017**: System MUST present Shows as a dedicated tab within each Team context.
+- **FR-018**: System MUST render the Team Shows list as a table that includes at least the show date column.
 
 ### Key Entities *(include if feature involves data)*
 
-- **Show**: A scheduled performance within a team, containing required date and venue (from existing venue records), plus optional show name, time, notes, and artist fee.
+- **Show**: A scheduled performance within a team, containing required date, plus optional show name, time, venue text, notes, and artist fee.
+- **Venue Link**: A show-to-venue association represented through the existing generic linking model; can be used to auto-fill venue text when it is blank.
 - **Team**: Organizational scope that owns shows and governs who can create, view, edit, and link show records.
 - **Show Link**: Association between a show and another existing object, enabling contextual cross-reference.
 
@@ -111,8 +116,8 @@ As a team member, I want to connect a show to other relevant records so that all
 - Only users with existing team-level management permissions can create or edit shows.
 - Each team represents a single artist context, so show records do not require a separate artist-name field.
 - Show name is optional and may be omitted without blocking creation or editing.
-- Date and venue are required; time, artist fee, and notes are optional.
-- Venue selection uses existing venue records.
+- Date is required; show name, time, venue text, artist fee, and notes are optional.
+- Venue association is optional and handled through existing object linking; linking a venue may populate venue text when currently blank.
 - Artist fee is stored as a monetary amount in the project’s existing default currency unless broader multi-currency behavior is specified later.
 - Links connect shows only to objects that already exist; link creation does not create new target objects.
 - Existing team, permissions, and object-access behaviors are reused for show visibility and editing rights.
