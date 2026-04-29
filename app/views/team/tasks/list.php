@@ -41,12 +41,10 @@ $listRowActions = static function (array $task) use ($baseUrl, $baseQuery, $acti
     ob_start();
     ?>
       <div class="buttons are-small is-justify-content-flex-end">
-        <form method="GET" action="<?php echo htmlspecialchars($editLink); ?>">
-          <button type="submit" class="button" aria-label="Edit task" title="Edit task">
-            <span class="icon"><i class="fa-solid fa-pen"></i></span>
-          </button>
-        </form>
-        <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/team/tasks_delete.php" onsubmit="return confirm('Delete this task?');">
+        <a href="<?php echo htmlspecialchars($editLink); ?>" class="button" aria-label="Edit task" title="Edit task" data-list-ignore>
+          <span class="icon"><i class="fa-solid fa-pen"></i></span>
+        </a>
+        <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/team/tasks_delete.php" onsubmit="return confirm('Delete this task?');" data-list-ignore>
           <?php renderCsrfField(); ?>
           <input type="hidden" name="task_id" value="<?php echo (int) $taskId; ?>">
           <input type="hidden" name="team_id" value="<?php echo (int) $activeTeamId; ?>">

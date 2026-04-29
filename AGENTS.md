@@ -88,6 +88,14 @@ bun run build
 Build tables with the partials in `app/partials/tables`.
 
 <!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+Current implementation plan: `specs/001-team-shows/plan.md`
 <!-- SPECKIT END -->
+
+## Active Technologies
+- PHP 8.0+, TypeScript (existing frontend pipeline) + HTMX request/response helpers, Bulma UI patterns, existing table/detail partials (001-team-shows)
+- MariaDB/MySQL (schema updates in `sql/schema.sql`) (001-team-shows)
+- PHP 8.0+, TypeScript (existing frontend pipeline) + HTMX helpers, Bulma patterns, shared table/detail partials, existing link editor flow (001-team-shows)
+- MariaDB/MySQL (`sql/schema.sql`) (001-team-shows)
+
+## Recent Changes
+- 001-team-shows: Added PHP 8.0+, TypeScript (existing frontend pipeline) + HTMX request/response helpers, Bulma UI patterns, existing table/detail partials

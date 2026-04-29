@@ -294,9 +294,10 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
     saveButton.classList.add("is-loading");
 
     const updateCollector = (): void => {
-      const collectorTarget = collectorSelector
+      const selectorTarget = collectorSelector
         ? document.querySelector<HTMLElement>(collectorSelector)
-        : collector;
+        : null;
+      const collectorTarget = selectorTarget ?? collector;
 
       if (!collectorTarget) {
         return;
@@ -314,6 +315,19 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
 
     if (localOnly) {
       updateCollector();
+
+      // Show form convenience: if venue text is empty and a venue link exists,
+      // prefill venue text with the linked venue label.
+      if (collectorSelector === "#show-link-collector") {
+        const venueInput = document.querySelector<HTMLInputElement>("#show_venue_text");
+        if (venueInput && venueInput.value.trim() === "") {
+          const venueLink = state.links.find((link) => link.type === "venue" && link.label.trim() !== "");
+          if (venueLink) {
+            venueInput.value = venueLink.label;
+          }
+        }
+      }
+
       document.dispatchEvent(
         new CustomEvent("link-editor:local-saved", {
           detail: {

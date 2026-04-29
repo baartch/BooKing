@@ -249,6 +249,24 @@ CREATE TABLE team_tasks (
     INDEX idx_team_tasks_trigger (team_id, is_template, trigger_month, trigger_day)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE team_shows (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    team_id INT NOT NULL,
+    name VARCHAR(255) DEFAULT NULL,
+    show_date DATE NOT NULL,
+    show_time TIME DEFAULT NULL,
+    venue_text VARCHAR(255) DEFAULT NULL,
+    artist_fee DECIMAL(10,2) DEFAULT NULL,
+    notes TEXT DEFAULT NULL,
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_team_shows_team (team_id),
+    INDEX idx_team_shows_team_date (team_id, show_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE venue_ratings (
     id INT PRIMARY KEY AUTO_INCREMENT,
     venue_id INT NOT NULL,

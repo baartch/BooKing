@@ -116,6 +116,39 @@ function searchLinkTargets(PDO $pdo, int $userId, string $query, array $types, i
         }
     }
 
+    if (in_array('show', $types, true)) {
+        $stmt = $pdo->prepare(
+            'SELECT ts.id, ts.name, ts.show_date, ts.venue_text
+             FROM team_shows ts
+             JOIN team_members tm ON tm.team_id = ts.team_id
+             WHERE tm.user_id = :user_id
+               AND (ts.name LIKE :term_name OR ts.notes LIKE :term_notes OR ts.venue_text LIKE :term_venue)
+             ORDER BY ts.show_date DESC, ts.id DESC
+             LIMIT 8'
+        );
+        $stmt->execute([
+            ':user_id' => $userId,
+            ':term_name' => $term,
+            ':term_notes' => $term,
+            ':term_venue' => $term
+        ]);
+        foreach ($stmt->fetchAll() as $row) {
+            $label = trim((string) ($row['name'] ?? ''));
+            if ($label === '') {
+                $label = 'Show #' . $row['id'];
+            }
+            $date = trim((string) ($row['show_date'] ?? ''));
+            $venue = trim((string) ($row['venue_text'] ?? ''));
+            $detail = trim($date . ' ' . ($venue !== '' ? '· ' . $venue : ''));
+            $items[] = [
+                'id' => (int) $row['id'],
+                'type' => 'show',
+                'label' => $label,
+                'detail' => $detail
+            ];
+        }
+    }
+
     if (in_array('conversation', $types, true) && $scopeMailboxId > 0) {
         $mailbox = ensureMailboxAccess($pdo, $scopeMailboxId, $userId);
         if ($mailbox) {

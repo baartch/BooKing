@@ -7,6 +7,7 @@ function getLinkIcons(): array
         'venue' => 'fa-location-dot',
         'email' => 'fa-envelope',
         'task' => 'fa-list-check',
+        'show' => 'fa-music',
         'conversation' => 'fa-comments'
     ];
 }
@@ -67,6 +68,13 @@ function buildLinkUrl(array $link, array $options = []): string
         ]);
     }
 
+    if ($type === 'show') {
+        return $taskBase . '?' . http_build_query([
+            'tab' => 'shows',
+            'show_id' => $id
+        ]);
+    }
+
     return '#';
 }
 
@@ -119,7 +127,8 @@ function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int 
         'contact' => [],
         'venue' => [],
         'email' => [],
-        'task' => []
+        'task' => [],
+        'show' => []
     ];
 
     foreach ($rows as $row) {
@@ -212,6 +221,24 @@ function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int 
             $title = trim((string) ($row['title'] ?? ''));
             $label = $title !== '' ? $title : 'Task #' . (int) $row['id'];
             $labels['task:' . (int) $row['id']] = $label;
+        }
+    }
+
+    if ($idsByType['show']) {
+        $showIds = array_values(array_unique($idsByType['show']));
+        $placeholders = implode(',', array_fill(0, count($showIds), '?'));
+        $stmt = $pdo->prepare(
+            'SELECT ts.id, ts.name, ts.show_date, ts.venue_text
+             FROM team_shows ts
+             WHERE ts.id IN (' . $placeholders . ')'
+        );
+        $stmt->execute($showIds);
+        foreach ($stmt->fetchAll() as $row) {
+            $name = trim((string) ($row['name'] ?? ''));
+            $date = trim((string) ($row['show_date'] ?? ''));
+            $venue = trim((string) ($row['venue_text'] ?? ''));
+            $label = $name !== '' ? $name : (($date !== '' || $venue !== '') ? trim($date . ' · ' . $venue) : 'Show #' . (int) $row['id']);
+            $labels['show:' . (int) $row['id']] = $label;
         }
     }
 
