@@ -5,7 +5,7 @@
 
 ## Summary
 
-Add a dedicated **Shows** tab under each Team where authorized team members can create, view, and edit team-scoped shows, render show listings via the existing shared table/detail partials, and manage object links during both create and update flows. The solution follows existing BooKing patterns (MVC boundaries, HTMX dynamic partial loads, security/logging baseline, and existing venue records as selectable references).
+Add a dedicated **Shows** tab under each Team (FR-016) where authorized team members can create, view, and edit team-scoped shows, render show listings as a table with date and venue columns via the existing shared table/detail partials (FR-017), and manage object links during both create and update flows (FR-013). The solution follows existing BooKing patterns (MVC boundaries, HTMX dynamic partial loads, security/logging baseline, and existing venue records as selectable references).
 
 ## Technical Context
 

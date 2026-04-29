@@ -77,17 +77,19 @@ As a team member, I want to connect a show to other relevant records so that all
 - **FR-002**: System MUST require each show to include date and venue at creation.
 - **FR-003**: System MUST require venue to be selected from existing venue records.
 - **FR-004**: System MUST allow each show to include an optional show name.
-- **FR-005**: System MUST allow time, artist fee, and notes to be omitted at creation or update.
-- **FR-006**: System MUST allow notes to be recorded as optional free-form text for each show.
+- **FR-005**: System MUST allow time and artist fee to be omitted at creation or update.
+- **FR-006**: System MUST allow notes to be omitted, and when provided, recorded as optional free-form text for each show.
 - **FR-007**: System MUST validate required fields and reject show creation or updates when required data is missing or invalid.
 - **FR-008**: System MUST allow authorized team members to view all shows within their team scope.
 - **FR-009**: System MUST allow authorized team members to edit show name, date, time, venue, notes, and fee.
 - **FR-010**: System MUST keep each show scoped to exactly one team and prevent cross-team visibility by unauthorized users.
 - **FR-011**: System MUST treat the owning team as the artist context and MUST NOT require a separate artist name field on the show record.
 - **FR-012**: System MUST allow a show to have zero, one, or many links to other existing objects in the system.
-- **FR-013**: System MUST allow authorized team members to add and remove links between a show and other objects.
+- **FR-013**: System MUST allow authorized team members to add and remove links between a show and other objects during both create and update flows.
 - **FR-014**: System MUST preserve existing show data and links when unrelated show fields are updated.
 - **FR-015**: System MUST provide clear user-facing feedback when show creation, update, or link operations succeed or fail.
+- **FR-016**: System MUST present Shows as a dedicated tab within each Team context.
+- **FR-017**: System MUST render the Team Shows list as a table that includes date and venue columns.
 
 ### Key Entities *(include if feature involves data)*
 
