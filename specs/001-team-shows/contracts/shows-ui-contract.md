@@ -1,43 +1,27 @@
 # UI Contract — Team Shows
 
-## Purpose
-Define the user-visible interaction contract for Team Shows, including tab behavior, table/detail rendering, and create/update/link flows.
-
-## Team Navigation Contract
+## Team Navigation
 - Teams view exposes a dedicated **Shows** tab.
-- Selecting Shows loads show content using existing HTMX dynamic load patterns.
-- Non-HTMX fallback renders full-page equivalent content.
+- Shows tab uses existing HTMX dynamic load patterns with full-page fallback.
 
 ## List Contract
-- Shows list is presented as a table using existing shared table partial.
-- Required visible columns:
-  - **Date**
-  - **Venue**
-- Row selection loads show detail using the shared detail partial wrapper pattern.
+- Shows are listed in shared table partial format.
+- Table includes at least **Date** column.
+
+## Show Form Contract (Create/Update)
+- Required: date.
+- Optional: show name, time, venue text, artist fee, notes.
+- Links to objects can be managed during create and update.
+
+## Venue Link Auto-fill Contract
+- If user adds a link to a venue and venue text is currently empty, system auto-fills venue text with linked venue name.
+- If venue text is already populated, linking a venue must not overwrite existing venue text.
 
 ## Detail Contract
-- Selecting a show displays show details and available actions.
-- Detail view supports transition to edit mode.
+- Show detail displays core fields and linked objects.
+- Linked object list remains navigable.
 
-## Create Contract
-- Create form supports fields:
-  - Required: date, venue (venue chosen from existing DB records)
-  - Optional: show name, time, artist fee, notes
-- Linking to other objects is available in the create flow.
-- On validation failure, user receives clear field-level feedback.
-- On success, list and detail update to reflect new show.
-
-## Update Contract
-- Edit form supports updating all show fields (required/optional semantics preserved).
-- Linking to other objects is available in update flow.
-- Link removal is supported during update.
-- On success, updated values and links appear immediately.
-
-## Authorization & Security Contract
-- Only authorized users within the owning team can create/update/link shows.
-- Unauthorized access attempts are denied and do not leak protected data.
-- All write operations require CSRF-valid requests.
-
-## Audit Contract
-- Show create/update/link actions are logged via the existing audit mechanism.
-- Logs exclude sensitive data.
+## Security/Audit Contract
+- Only authorized team users may create/update/link.
+- CSRF validation required for write operations.
+- Show create/update/link actions logged without sensitive data.

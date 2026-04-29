@@ -1,45 +1,32 @@
 # Phase 0 Research — Team Show Management
 
-## Decision 1: Team tab and HTMX loading pattern
-- **Decision**: Implement Shows as a dedicated Team tab with HTMX-driven partial loading for list/detail/form interactions, while retaining full-page compatibility.
-- **Rationale**: This matches existing Team feature behavior and keeps interaction responsive without introducing new frontend stack complexity.
+## Decision 1: Venue handling model
+- **Decision**: Keep an optional free-text venue field on Show and use generic object linking for venue association.
+- **Rationale**: Matches clarified scope while keeping loose coupling to venue records.
 - **Alternatives considered**:
-  - Full page reload for all actions — rejected due to poorer UX and inconsistency with existing dynamic Team screens.
-  - Custom JavaScript behavior — rejected because existing best practice is HTMX helper usage and minimal custom client logic.
+  - Required venue foreign key — rejected by updated specification.
 
-## Decision 2: Reuse existing table/detail partials
-- **Decision**: Render Shows list/detail using `app/partials/tables/table.php` and `app/partials/tables/detail.php` with feature-specific view wrappers.
-- **Rationale**: User requested this explicitly, and it aligns with project guidance to build tables via shared table partials.
+## Decision 2: Venue link auto-fill behavior
+- **Decision**: When a venue link is added and show venue text is empty, auto-fill venue text with linked venue name.
+- **Rationale**: Preserves user convenience and avoids duplicate manual entry.
 - **Alternatives considered**:
-  - New custom show table component — rejected to avoid duplication and visual inconsistency.
+  - Never auto-fill — rejected due to unnecessary manual work.
+  - Always overwrite — rejected to avoid clobbering user-provided text.
 
-## Decision 3: Show field validation and requirement rules
-- **Decision**: Enforce required fields `date` and `venue` (venue selected from existing DB venues). Keep `show_name`, `time`, `artist_fee`, and `notes` optional.
-- **Rationale**: Matches clarified requirements and ensures minimum scheduling fidelity while allowing incomplete operational details.
+## Decision 3: Show field validation
+- **Decision**: Require date only; venue text, name, time, artist fee, and notes are optional.
+- **Rationale**: Aligns with current spec clarifications.
 - **Alternatives considered**:
-  - Require time and/or fee — rejected because current clarified scope defines these as optional.
+  - Require venue text — rejected by scope.
 
-## Decision 4: Linking flow timing and behavior
-- **Decision**: Support object linking during both show creation and show update using the same link association model and validation rules.
-- **Rationale**: Explicitly requested; avoids rework and ensures consistent link management lifecycle.
+## Decision 4: Linking lifecycle
+- **Decision**: Support add/remove links in both create and update flows.
+- **Rationale**: Explicit requirement and existing pattern compatibility.
 - **Alternatives considered**:
-  - Update-only linking — rejected because it blocks requested create-time workflow.
-  - Create-only linking — rejected because links often evolve post-creation.
+  - Update-only linking — rejected.
 
-## Decision 5: Team artist context handling
-- **Decision**: Do not store a required artist-name field on Show; derive artist context from owning Team.
-- **Rationale**: Clarified by product direction that one team maps to one artist context.
+## Decision 5: Security and audit
+- **Decision**: Preserve existing team authorization, CSRF checks, and `logAction()` for create/update/link actions.
+- **Rationale**: Required by constitution.
 - **Alternatives considered**:
-  - Keep optional artist name field — rejected as redundant and ambiguity-inducing.
-
-## Decision 6: Security and audit behavior
-- **Decision**: Apply existing team authorization checks and CSRF protection to all show write operations; log create/update/link actions through `logAction()` without sensitive data.
-- **Rationale**: Required by constitution and existing security baseline.
-- **Alternatives considered**:
-  - Reduced logging for simpler implementation — rejected because auditable actions are mandatory.
-
-## Decision 7: Venue source of truth
-- **Decision**: Venue selection is constrained to existing venue records and validated server-side on create/update.
-- **Rationale**: Prevents orphan/free-text venue data and aligns with "select from DB" requirement.
-- **Alternatives considered**:
-  - Free-text venue entry — rejected due to inconsistency and data quality risk.
+  - Reduced checks/logging — rejected.

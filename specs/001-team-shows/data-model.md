@@ -11,7 +11,7 @@ Represents one scheduled show within a single Team scope.
 - **show_name**: Optional short label/title.
 - **show_date**: Required calendar date.
 - **show_time**: Optional time-of-day.
-- **venue_id**: Required reference to an existing Venue record.
+- **venue_text**: Optional free-text venue value.
 - **artist_fee**: Optional monetary amount.
 - **notes**: Optional free-form text.
 - **created_at / updated_at**: Audit timestamps.
@@ -19,22 +19,21 @@ Represents one scheduled show within a single Team scope.
 ### Validation Rules
 - `team_id` required and must reference an accessible team.
 - `show_date` required and must be a valid date.
-- `venue_id` required and must reference an existing venue.
-- `show_time` optional; when provided, must be a valid time value.
-- `artist_fee` optional; when provided, must be a valid non-negative monetary amount.
-- `show_name` optional; when provided, trimmed and length-limited per project conventions.
-- `notes` optional; when provided, stored as plain text.
+- `show_time` optional; when provided, must be a valid time.
+- `venue_text` optional; when provided, stored as plain text.
+- `artist_fee` optional; when provided, must be non-negative.
+- `show_name` optional.
+- `notes` optional.
 
 ### Relationships
-- Many Shows belong to one Team (`Show.team_id -> Team.id`).
-- Many Shows reference one Venue (`Show.venue_id -> Venue.id`).
-- Many-to-many relationship between Show and other linkable objects via Show Link associations.
+- Many Shows belong to one Team.
+- Shows can have many object links (including venue objects) via generic link associations.
 
 ### Lifecycle
-- **Created**: Show is created with required fields (`show_date`, `venue_id`) and optional details.
-- **Updated**: Optional or required fields may be modified by authorized team users.
-- **Linked**: Related object links may be added during create or update.
-- **Unlinked**: Existing related object links may be removed.
+- **Created**: Show created with required date and optional fields.
+- **Updated**: Any mutable fields updated by authorized team users.
+- **Linked/Unlinked**: Related links added/removed during create/update workflows.
+- **Venue Auto-fill**: If venue link is added and `venue_text` is empty, set `venue_text` to linked venue name.
 
 ## Entity: Show Link
 
@@ -42,27 +41,18 @@ Represents one scheduled show within a single Team scope.
 Associates a Show with another existing object for contextual navigation.
 
 ### Fields
-- **id**: Unique link identifier.
-- **show_id**: Required reference to Show.
-- **target_type**: Type/category of linked object.
-- **target_id**: Identifier of linked object.
-- **created_at**: Link creation timestamp.
+- **id**
+- **show_id**
+- **target_type**
+- **target_id**
+- **created_at**
 
 ### Validation Rules
-- `show_id` must reference an existing show within authorized team scope.
-- `target_type + target_id` must reference an existing linkable object.
-- Duplicate link pairs for the same show/target should be prevented.
-
-### Relationships
-- Many Show Links belong to one Show.
-- Each Show Link points to one external target object.
+- Link targets must exist and be accessible.
+- Duplicate show-target link pairs are prevented.
 
 ## Entity: Team (existing)
-
-### Role in feature
-Defines ownership/scope for Shows and implicitly provides artist context.
+Defines ownership/scope for Shows.
 
 ## Entity: Venue (existing)
-
-### Role in feature
-Provides selectable venue records for required Show venue assignment.
+May be linked to a show; its name can auto-fill empty show venue text.
