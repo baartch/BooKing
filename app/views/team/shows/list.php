@@ -31,9 +31,18 @@ $listRowActions = static function (array $show) use ($baseUrl, $baseQuery, $acti
     ob_start();
     ?>
     <div class="buttons are-small is-justify-content-flex-end">
-      <form method="GET" action="<?php echo htmlspecialchars($editLink); ?>">
+      <form method="GET" action="<?php echo htmlspecialchars($editLink); ?>" data-list-ignore>
         <button type="submit" class="button" aria-label="Edit show" title="Edit show">
           <span class="icon"><i class="fa-solid fa-pen"></i></span>
+        </button>
+      </form>
+      <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/team/shows_delete.php" onsubmit="return confirm('Delete this show?');" data-list-ignore>
+        <?php renderCsrfField(); ?>
+        <input type="hidden" name="show_id" value="<?php echo (int) $showId; ?>">
+        <input type="hidden" name="team_id" value="<?php echo (int) $activeTeamId; ?>">
+        <input type="hidden" name="q" value="<?php echo htmlspecialchars($searchQuery); ?>">
+        <button type="submit" class="button" aria-label="Delete show" title="Delete show">
+          <span class="icon"><i class="fa-solid fa-trash"></i></span>
         </button>
       </form>
     </div>

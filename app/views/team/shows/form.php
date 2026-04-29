@@ -60,6 +60,8 @@ if ($isEdit && $editShow) {
         <input type="hidden" name="link_items[]" value="<?php echo htmlspecialchars((string) ($link['type'] ?? '') . ':' . (int) ($link['id'] ?? 0)); ?>">
       <?php endforeach; ?>
     </div>
+    <input type="hidden" name="link_type" id="show_fallback_link_type" value="">
+    <input type="hidden" name="link_id" id="show_fallback_link_id" value="">
 
     <div class="table-container">
       <table class="table is-fullwidth">
@@ -111,4 +113,27 @@ if ($isEdit && $editShow) {
     $linkEditorCollectorSelector = '#show-link-collector';
     require __DIR__ . '/../../../partials/link_editor_modal.php';
   ?>
+
+  <script>
+    document.addEventListener('link-editor:local-saved', function (event) {
+      const detail = event && event.detail ? event.detail : null;
+      if (!detail || detail.collectorSelector !== '#show-link-collector') {
+        return;
+      }
+      const links = Array.isArray(detail.links) ? detail.links : [];
+      const venueLink = links.find(function (link) { return link && link.type === 'venue'; });
+      const typeInput = document.getElementById('show_fallback_link_type');
+      const idInput = document.getElementById('show_fallback_link_id');
+      if (!typeInput || !idInput) {
+        return;
+      }
+      if (venueLink && venueLink.id) {
+        typeInput.value = 'venue';
+        idInput.value = String(venueLink.id);
+      } else {
+        typeInput.value = '';
+        idInput.value = '';
+      }
+    });
+  </script>
 </div>

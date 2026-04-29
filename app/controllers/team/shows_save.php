@@ -46,12 +46,13 @@ if ($payload['show_date'] === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $payloa
     $errors[] = 'Date is required and must be valid.';
 }
 
-if ($payload['show_time'] !== '' && !preg_match('/^\d{2}:\d{2}$/', $payload['show_time'])) {
-    $errors[] = 'Time must use HH:MM format.';
+if ($payload['show_time'] !== '' && !preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $payload['show_time'])) {
+    $errors[] = 'Time must use HH:MM or HH:MM:SS format.';
 }
 
 
-if ($payload['artist_fee'] !== '' && (!is_numeric($payload['artist_fee']) || (float) $payload['artist_fee'] < 0)) {
+$normalizedArtistFeeInput = str_replace(',', '.', $payload['artist_fee']);
+if ($normalizedArtistFeeInput !== '' && (!is_numeric($normalizedArtistFeeInput) || (float) $normalizedArtistFeeInput < 0)) {
     $errors[] = 'Artist fee must be a non-negative amount.';
 }
 
@@ -67,6 +68,7 @@ if ($errors) {
         $redirectParams['mode'] = 'new';
     }
     $redirectParams['notice'] = 'show_error';
+    $redirectParams['error'] = (string) ($errors[0] ?? 'Validation failed.');
     header('Location: ' . $baseUrl . '?' . http_build_query($redirectParams));
     exit;
 }
@@ -80,8 +82,11 @@ try {
         exit;
     }
 
-    $showTime = $payload['show_time'] !== '' ? $payload['show_time'] : null;
-    $artistFee = $payload['artist_fee'] !== '' ? (float) $payload['artist_fee'] : null;
+    $showTime = null;
+    if ($payload['show_time'] !== '') {
+        $showTime = preg_match('/^\d{2}:\d{2}$/', $payload['show_time']) ? $payload['show_time'] . ':00' : $payload['show_time'];
+    }
+    $artistFee = $normalizedArtistFeeInput !== '' ? (float) $normalizedArtistFeeInput : null;
 
     $rawLinkItems = array_filter(array_map('trim', $payload['links']));
     $normalizedLinkInput = [];
@@ -94,6 +99,17 @@ try {
     }
     $normalizedLinks = normalizeLinkItems($normalizedLinkInput);
     $resolvedVenueText = resolveAutoVenueText($pdo, $payload['venue_text'], $normalizedLinks);
+
+    // If link collector failed to submit but a venue link was chosen locally,
+    // recover from direct post fields as fallback.
+    if (!$normalizedLinks) {
+        $fallbackLinkType = trim((string) ($_POST['link_type'] ?? ''));
+        $fallbackLinkId = (int) ($_POST['link_id'] ?? 0);
+        if ($fallbackLinkType !== '' && $fallbackLinkId > 0) {
+            $normalizedLinks = normalizeLinkItems([['type' => $fallbackLinkType, 'id' => $fallbackLinkId]]);
+            $resolvedVenueText = resolveAutoVenueText($pdo, $payload['venue_text'], $normalizedLinks);
+        }
+    }
 
     if ($action === 'create_show') {
         $pdo->beginTransaction();

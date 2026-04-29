@@ -54,8 +54,11 @@ if ($noticeKey === 'task_created') {
     $notice['shows'] = 'Show created successfully.';
 } elseif ($noticeKey === 'show_updated') {
     $notice['shows'] = 'Show updated successfully.';
+} elseif ($noticeKey === 'show_deleted') {
+    $notice['shows'] = 'Show deleted successfully.';
 } elseif ($noticeKey === 'show_error') {
-    $notice['shows'] = 'Failed to save show.';
+    $errorDetail = trim((string) ($_GET['error'] ?? ''));
+    $notice['shows'] = $errorDetail !== '' ? ('Failed to save show: ' . $errorDetail) : 'Failed to save show.';
 } elseif ($noticeKey === 'mailbox_created') {
     $notice['mailboxes'] = 'Mailbox created successfully.';
 } elseif ($noticeKey === 'mailbox_updated') {
