@@ -133,7 +133,14 @@ try {
         $mailbox = ensureMailboxAccess($pdo, $scopeMailboxId, $userId);
         if ($mailbox) {
             $scopeConditions = [];
-            $scopeParams = [':term' => $term];
+            $scopeParams = [
+                ':term_subject' => $term,
+                ':term_id_like' => $term
+            ];
+            $queryId = ctype_digit($query) ? (int) $query : 0;
+            if ($queryId > 0) {
+                $scopeParams[':conversation_id'] = $queryId;
+            }
             if (!empty($mailbox['team_id'])) {
                 $scopeConditions[] = '(c.team_id = :team_id AND c.user_id IS NULL)';
                 $scopeParams[':team_id'] = (int) $mailbox['team_id'];
@@ -147,7 +154,7 @@ try {
                     'SELECT c.id, c.subject, c.is_closed
                      FROM email_conversations c
                      WHERE (' . implode(' OR ', $scopeConditions) . ')
-                       AND c.subject LIKE :term
+                       AND (c.subject LIKE :term_subject OR CAST(c.id AS CHAR) LIKE :term_id_like' . ($queryId > 0 ? ' OR c.id = :conversation_id' : '') . ')
                      ORDER BY c.last_activity_at DESC
                      LIMIT 8'
                 );

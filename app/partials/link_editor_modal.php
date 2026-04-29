@@ -71,7 +71,7 @@ $linkEditorModalId = htmlspecialchars('link-editor-' . $linkEditorSourceType . '
             <label class="label is-small">Conversation</label>
             <div data-link-editor-conversation-tag class="mb-2"></div>
             <div class="control has-icons-left">
-              <input class="input is-small" type="text" placeholder="Search conversations…" data-link-editor-conversation-search>
+              <input class="input is-small" type="text" placeholder="Search conversations or ID…" data-link-editor-conversation-search>
               <span class="icon is-small is-left"><i class="fa-solid fa-search"></i></span>
             </div>
             <div class="dropdown is-fullwidth" data-link-editor-conversation-dropdown>
