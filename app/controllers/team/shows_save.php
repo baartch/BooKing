@@ -34,7 +34,7 @@ $payload = [
     'name' => trim((string) ($_POST['name'] ?? '')),
     'show_date' => trim((string) ($_POST['show_date'] ?? '')),
     'show_time' => trim((string) ($_POST['show_time'] ?? '')),
-    'venue_id' => (int) ($_POST['venue_id'] ?? 0),
+    'venue_text' => trim((string) ($_POST['venue_text'] ?? '')),
     'artist_fee' => trim((string) ($_POST['artist_fee'] ?? '')),
     'notes' => trim((string) ($_POST['notes'] ?? '')),
     'links' => is_array($_POST['link_items'] ?? null) ? $_POST['link_items'] : []
@@ -50,9 +50,6 @@ if ($payload['show_time'] !== '' && !preg_match('/^\d{2}:\d{2}$/', $payload['sho
     $errors[] = 'Time must use HH:MM format.';
 }
 
-if ($payload['venue_id'] <= 0) {
-    $errors[] = 'Venue selection is required.';
-}
 
 if ($payload['artist_fee'] !== '' && (!is_numeric($payload['artist_fee']) || (float) $payload['artist_fee'] < 0)) {
     $errors[] = 'Artist fee must be a non-negative amount.';
@@ -83,11 +80,6 @@ try {
         exit;
     }
 
-    if (!venueExists($pdo, (int) $payload['venue_id'])) {
-        header('Location: ' . $baseUrl . '?' . http_build_query(array_merge($redirectParams, ['notice' => 'show_error'])));
-        exit;
-    }
-
     $showTime = $payload['show_time'] !== '' ? $payload['show_time'] : null;
     $artistFee = $payload['artist_fee'] !== '' ? (float) $payload['artist_fee'] : null;
 
@@ -101,22 +93,23 @@ try {
         ];
     }
     $normalizedLinks = normalizeLinkItems($normalizedLinkInput);
+    $resolvedVenueText = resolveAutoVenueText($pdo, $payload['venue_text'], $normalizedLinks);
 
     if ($action === 'create_show') {
         $pdo->beginTransaction();
 
         $stmt = $pdo->prepare(
             'INSERT INTO team_shows
-                (team_id, name, show_date, show_time, venue_id, artist_fee, notes, created_by)
+                (team_id, name, show_date, show_time, venue_text, artist_fee, notes, created_by)
              VALUES
-                (:team_id, :name, :show_date, :show_time, :venue_id, :artist_fee, :notes, :created_by)'
+                (:team_id, :name, :show_date, :show_time, :venue_text, :artist_fee, :notes, :created_by)'
         );
         $stmt->execute([
             ':team_id' => $teamId,
             ':name' => normalizeOptionalString($payload['name']),
             ':show_date' => $payload['show_date'],
             ':show_time' => $showTime,
-            ':venue_id' => (int) $payload['venue_id'],
+            ':venue_text' => normalizeOptionalString((string) ($resolvedVenueText ?? '')),
             ':artist_fee' => $artistFee,
             ':notes' => normalizeOptionalString($payload['notes']),
             ':created_by' => $userId > 0 ? $userId : null,
@@ -156,7 +149,7 @@ try {
          SET name = :name,
              show_date = :show_date,
              show_time = :show_time,
-             venue_id = :venue_id,
+             venue_text = :venue_text,
              artist_fee = :artist_fee,
              notes = :notes
          WHERE id = :id AND team_id = :team_id'
@@ -165,7 +158,7 @@ try {
         ':name' => normalizeOptionalString($payload['name']),
         ':show_date' => $payload['show_date'],
         ':show_time' => $showTime,
-        ':venue_id' => (int) $payload['venue_id'],
+        ':venue_text' => normalizeOptionalString((string) ($resolvedVenueText ?? '')),
         ':artist_fee' => $artistFee,
         ':notes' => normalizeOptionalString($payload['notes']),
         ':id' => (int) $existing['id'],

@@ -77,20 +77,8 @@ if ($isEdit && $editShow) {
             <td><input type="time" id="show_time" name="show_time" class="input" value="<?php echo htmlspecialchars((string) ($formValues['show_time'] ?? '')); ?>"></td>
           </tr>
           <tr>
-            <th>Venue *</th>
-            <td>
-              <div class="select is-fullwidth">
-                <select id="show_venue_id" name="venue_id" required>
-                  <option value="">Select venue</option>
-                  <?php foreach (($showVenueOptions ?? []) as $venue): ?>
-                    <?php $venueId = (int) ($venue['id'] ?? 0); ?>
-                    <option value="<?php echo $venueId; ?>" <?php echo $venueId === (int) ($formValues['venue_id'] ?? 0) ? 'selected' : ''; ?>>
-                      <?php echo htmlspecialchars((string) ($venue['name'] ?? ('Venue #' . $venueId))); ?>
-                    </option>
-                  <?php endforeach; ?>
-                </select>
-              </div>
-            </td>
+            <th>Venue</th>
+            <td><input type="text" id="show_venue_text" name="venue_text" class="input" value="<?php echo htmlspecialchars((string) ($formValues['venue_text'] ?? '')); ?>"></td>
           </tr>
           <tr>
             <th>Artist Fee</th>

@@ -1,110 +1,109 @@
 # Tasks: Team Show Management
 
 **Input**: Design documents from `/specs/001-team-shows/`
-**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
+**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
 
-**Tests**: Tests were not explicitly requested in the specification; implementation tasks include manual verification checkpoints.
+**Tests**: No explicit TDD/test-first requirement in spec; tasks include implementation and manual verification checkpoints.
 
-**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+**Organization**: Tasks are grouped by user story for independent delivery and validation.
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
-- Include exact file paths in descriptions
+- **[P]**: Can run in parallel (different files, no direct dependency)
+- **[Story]**: User story mapping (`[US1]`, `[US2]`, `[US3]`)
+- Every task includes a concrete file path.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Prepare feature scaffolding and documentation alignment
+**Purpose**: Align feature scaffolding and entrypoints
 
-- [X] T001 Create Team Shows view directory scaffold in `app/views/team/shows/`
-- [X] T002 Create Team Shows controller file scaffold in `app/controllers/team/shows.php`
-- [X] T003 Create Team Shows model helper scaffold in `app/models/team/shows.php`
+- [X] T001 Create shows module files in `app/models/team/shows.php` and `app/controllers/team/shows_save.php`
+- [X] T002 Create team shows view files in `app/views/team/shows/shows.php`, `app/views/team/shows/list.php`, `app/views/team/shows/detail.php`, and `app/views/team/shows/form.php`
+- [X] T003 Add/verify team routing aliases in `app/controllers/team/shows.php` and `app/controllers/team/teams.php`
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Core schema, routing, authorization, and shared wiring required before user-story work
+**Purpose**: Shared data and linking infrastructure required by all stories
 
-**⚠️ CRITICAL**: No user story work can begin until this phase is complete
+**⚠️ CRITICAL**: User-story work starts only after this phase
 
-- [X] T004 Update show and show-link schema structures in `sql/schema.sql`
-- [X] T005 [P] Add shared show data-access helpers (CRUD + venue validation) in `app/models/team/shows.php`
-- [X] T006 [P] Add shared show-link association helpers in `app/models/team/shows.php`
-- [X] T007 Add team-scope authorization and CSRF checks for show endpoints in `app/controllers/team/shows.php`
-- [X] T008 Add show action audit logging (`logAction`) hooks in `app/controllers/team/shows.php`
-- [X] T009 Wire Team Shows routes into team routing entrypoints in `app/controllers/team/teams.php`
+- [X] T004 Update show schema for `venue_text` (optional) and remove hard venue dependency in `sql/schema.sql`
+- [X] T005 [P] Implement shared show data access/validation helpers in `app/models/team/shows.php`
+- [X] T006 [P] Extend link scope/type support for `show` in `app/models/core/link_scope.php`
+- [X] T007 [P] Extend linked-object display behavior for show links in `app/models/core/link_helpers.php`
+- [X] T008 [P] Extend link search with show targets in `app/models/core/link_search.php`
+- [X] T009 Integrate shows loading, tab handling, and team-scope guards in `app/controllers/team/index.php`
+- [X] T010 Add audit logging points for show create/update/link behavior in `app/controllers/team/shows_save.php`
 
-**Checkpoint**: Foundation ready - user story implementation can now begin
+**Checkpoint**: Foundation complete
 
 ---
 
 ## Phase 3: User Story 1 - Create a show record (Priority: P1) 🎯 MVP
 
-**Goal**: Authorized team members can create shows with required date+venue and optional fields from a dedicated Shows tab.
+**Goal**: Team members can create shows with required date and optional fields including venue text.
 
-**Independent Test**: Open a team, navigate to Shows tab, create a show with only date+venue, then create another with optional fields; both appear correctly in list/detail with validation on missing required fields.
+**Independent Test**: In Team → Shows, create a show with only date; create another with date + venue text + optional fields; both persist and render.
 
 ### Implementation for User Story 1
 
-- [X] T010 [P] [US1] Implement Shows tab container view in `app/views/team/shows/shows.php`
-- [X] T011 [P] [US1] Implement show table list wrapper (date, venue columns via shared table partial) in `app/views/team/shows/list.php`
-- [X] T012 [P] [US1] Implement show detail wrapper using shared detail partial in `app/views/team/shows/detail.php`
-- [X] T013 [US1] Implement create/edit form view with required/optional field semantics and DB venue selector in `app/views/team/shows/form.php`
-- [X] T014 [US1] Implement show create endpoint with validation and save logic in `app/controllers/team/shows.php`
-- [X] T015 [US1] Implement HTMX list/detail/form responses for create flow in `app/controllers/team/shows.php`
-- [X] T016 [US1] Integrate Shows tab into Team UI navigation in `app/views/team/index.php`
+- [X] T011 [P] [US1] Implement Shows tab container with HTMX/full-page compatibility in `app/views/team/shows/shows.php`
+- [X] T012 [P] [US1] Implement shows list table (date column minimum) in `app/views/team/shows/list.php`
+- [X] T013 [P] [US1] Implement show detail rendering in `app/views/team/shows/detail.php`
+- [X] T014 [US1] Implement show create/update form fields (required date, optional venue text/time/fee/notes/name) in `app/views/team/shows/form.php`
+- [X] T015 [US1] Implement create action validation/persistence in `app/controllers/team/shows_save.php`
+- [X] T016 [US1] Integrate Shows tab into Team tab layout in `app/views/team/index.php`
 
-**Checkpoint**: User Story 1 is independently functional and demoable as MVP
+**Checkpoint**: US1 independently functional (MVP)
 
 ---
 
 ## Phase 4: User Story 2 - Update show details (Priority: P2)
 
-**Goal**: Authorized team members can edit existing show values while preserving required-field rules and optional-field behavior.
+**Goal**: Team members can edit existing show fields with proper validation and feedback.
 
-**Independent Test**: Select an existing show, edit required and optional fields, save successfully; invalid updates fail with clear feedback and no data corruption.
+**Independent Test**: Edit an existing show’s date/time/venue text/notes/fee/name; valid updates persist and invalid input is rejected with clear feedback.
 
 ### Implementation for User Story 2
 
-- [X] T017 [US2] Implement show update endpoint with required/optional field validation in `app/controllers/team/shows.php`
-- [X] T018 [US2] Implement edit-mode loading and submit handling in `app/views/team/shows/form.php`
-- [X] T019 [US2] Implement HTMX refresh behavior for list/detail after update in `app/controllers/team/shows.php`
-- [X] T020 [US2] Add optional artist_fee/time validation handling for update scenarios in `app/models/team/shows.php`
-- [X] T021 [US2] Add edge-case feedback handling for invalid date/venue/time/fee combinations in `app/views/team/shows/detail.php`
+- [X] T017 [US2] Implement update-path validation and persistence in `app/controllers/team/shows_save.php`
+- [X] T018 [US2] Implement edit-mode loading and form prefill behavior in `app/views/team/shows/form.php`
+- [X] T019 [US2] Implement HTMX detail/list refresh behavior after updates in `app/controllers/team/index.php`
+- [X] T020 [US2] Implement edge-case feedback rendering for invalid updates in `app/views/team/shows/shows.php`
 
-**Checkpoint**: User Stories 1 and 2 both work independently
+**Checkpoint**: US2 independently functional
 
 ---
 
 ## Phase 5: User Story 3 - Link shows to related objects (Priority: P3)
 
-**Goal**: Team members can add/remove links to other objects during both show creation and show updates.
+**Goal**: Team members can add/remove links on create/update; venue linking can auto-fill empty venue text.
 
-**Independent Test**: During create and update flows, add and remove related-object links; saved links display correctly in show detail and persist across reloads.
+**Independent Test**: Add/remove links in create/update; add venue link with empty venue text and verify auto-fill; ensure existing venue text is not overwritten.
 
 ### Implementation for User Story 3
 
-- [X] T022 [US3] Implement link add/remove endpoint handlers for show lifecycle actions in `app/controllers/team/shows.php`
-- [X] T023 [US3] Implement create-flow link capture and persistence in `app/views/team/shows/form.php`
-- [X] T024 [US3] Implement update-flow link management UI and persistence in `app/views/team/shows/form.php`
-- [X] T025 [US3] Render linked-object list in show detail wrapper in `app/views/team/shows/detail.php`
-- [X] T026 [US3] Enforce duplicate-link prevention and target existence checks in `app/models/team/shows.php`
+- [X] T021 [US3] Implement create-flow link capture handling in `app/views/team/shows/form.php`
+- [X] T022 [US3] Implement save-time link persistence for create/update in `app/controllers/team/shows_save.php`
+- [X] T023 [US3] Implement venue-link auto-fill logic (empty-only) in `app/controllers/team/shows_save.php`
+- [X] T024 [US3] Render linked objects in show detail with navigation links in `app/views/team/shows/detail.php`
+- [X] T025 [US3] Ensure duplicate-link prevention and target validation through shared link helpers in `app/models/core/object_links.php`
 
-**Checkpoint**: All user stories are independently functional
+**Checkpoint**: US3 independently functional
 
 ---
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-**Purpose**: Final hardening and end-to-end verification across stories
+**Purpose**: Final consistency, docs, and validation
 
-- [ ] T027 [P] Update feature documentation notes for Team Shows usage in `specs/001-team-shows/quickstart.md`
-- [ ] T028 Run end-to-end quickstart verification scenarios from `specs/001-team-shows/quickstart.md`
-- [X] T029 Validate HTMX full-page fallback behavior for Team Shows tab in `app/controllers/team/shows.php`
-- [ ] T030 Validate logging output for create/update/link actions (no sensitive data) in `app/models/core/database.php`
-- [ ] T031 If TypeScript sources change, run `bun run build` and verify compiled output in `app/public/js/`
+- [ ] T026 [P] Update feature implementation notes for venue text + link auto-fill in `specs/001-team-shows/quickstart.md`
+- [ ] T027 Verify full quickstart scenario execution in `specs/001-team-shows/quickstart.md`
+- [ ] T028 Verify audit log entries for show create/update/link actions in `app/models/core/database.php`
+- [ ] T029 Verify team authorization/CSRF paths for shows endpoints in `app/controllers/team/shows_save.php`
+- [ ] T030 If TypeScript files changed, run build and verify outputs in `app/public/js/`
 
 ---
 
@@ -112,66 +111,57 @@
 
 ### Phase Dependencies
 
-- **Phase 1 (Setup)**: No dependencies
-- **Phase 2 (Foundational)**: Depends on Phase 1; blocks all user stories
-- **Phase 3 (US1)**: Depends on Phase 2
-- **Phase 4 (US2)**: Depends on Phase 2 and reuses US1 structures
-- **Phase 5 (US3)**: Depends on Phase 2 and integrates with US1/US2 flows
-- **Phase 6 (Polish)**: Depends on completion of desired user stories
+- Phase 1 → no dependencies
+- Phase 2 → depends on Phase 1 (blocks all stories)
+- Phase 3 (US1) → depends on Phase 2
+- Phase 4 (US2) → depends on Phase 2 and US1 baseline
+- Phase 5 (US3) → depends on Phase 2 and show create/update baseline
+- Phase 6 → depends on desired user stories complete
 
 ### User Story Dependencies
 
-- **US1 (P1)**: Starts immediately after Foundational; no dependency on other stories
-- **US2 (P2)**: Starts after Foundational; builds on same show records but remains independently testable
-- **US3 (P3)**: Starts after Foundational; can be developed after US1 endpoint scaffolding exists
+- **US1 (P1)**: first deliverable (MVP)
+- **US2 (P2)**: extends same show records, independently testable after foundation
+- **US3 (P3)**: depends on create/update availability, independently testable
 
 ### Parallel Opportunities
 
-- **Foundational**: T005 and T006 can run in parallel
-- **US1**: T010, T011, and T012 can run in parallel
-- **Polish**: T027 can run in parallel with T029
+- Foundational: T005/T006/T007/T008 in parallel
+- US1: T011/T012/T013 in parallel
+- Polish: T026 parallel with T028
 
 ---
 
-## Parallel Example: User Story 1
+## Parallel Example: User Story 3
 
 ```bash
-Task: "T010 [US1] Implement Shows tab container view in app/views/team/shows/shows.php"
-Task: "T011 [US1] Implement show table list wrapper in app/views/team/shows/list.php"
-Task: "T012 [US1] Implement show detail wrapper in app/views/team/shows/detail.php"
+Task: "T021 [US3] Implement create-flow link capture handling in app/views/team/shows/form.php"
+Task: "T024 [US3] Render linked objects in app/views/team/shows/detail.php"
 ```
 
 ---
 
 ## Implementation Strategy
 
-### MVP First (User Story 1 Only)
-
-1. Complete Phase 1 (Setup)
-2. Complete Phase 2 (Foundational)
-3. Complete Phase 3 (US1)
-4. Validate US1 independent test criteria
-5. Demo/deploy MVP
+### MVP First
+1. Finish Phase 1 and Phase 2
+2. Deliver Phase 3 (US1)
+3. Validate US1 independently and demo
 
 ### Incremental Delivery
-
-1. Deliver US1 (create + list/detail) as first increment
-2. Deliver US2 (update behavior) as second increment
-3. Deliver US3 (link management) as third increment
-4. Run polish phase for cross-story reliability
+1. Add US2 update flow
+2. Add US3 linking + venue auto-fill
+3. Run polish and final verification
 
 ### Parallel Team Strategy
-
-1. One developer handles schema/foundational backend (T004–T009)
-2. One developer handles US1 view wrappers (T010–T013)
-3. One developer handles controller integrations and HTMX responses (T014–T019)
-4. Merge for US3 linking and polish
+1. Engineer A: schema/model/foundation tasks
+2. Engineer B: US1 views and tab integration
+3. Engineer C: US2/US3 controller-linking behavior
 
 ---
 
 ## Notes
 
-- All tasks follow required checklist format: `- [ ] T### [P?] [US?] Description with file path`
-- [P] tasks are limited to non-overlapping files or independent implementation areas
-- User story labels are applied only within story phases
-- Prioritize US1 completion before expanding scope
+- All tasks use required checklist format with IDs, labels, and file paths.
+- `[P]` markers are only used for non-conflicting parallel work.
+- Story phases are independently verifiable.

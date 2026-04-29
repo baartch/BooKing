@@ -37,7 +37,7 @@ $formValues = [
     'name' => '',
     'show_date' => '',
     'show_time' => '',
-    'venue_id' => 0,
+    'venue_text' => '',
     'artist_fee' => '',
     'notes' => '',
 ];
@@ -47,7 +47,7 @@ if ($editShow) {
         'name' => (string) ($editShow['name'] ?? ''),
         'show_date' => (string) ($editShow['show_date'] ?? ''),
         'show_time' => (string) ($editShow['show_time'] ?? ''),
-        'venue_id' => (int) ($editShow['venue_id'] ?? 0),
+        'venue_text' => (string) ($editShow['venue_text'] ?? ''),
         'artist_fee' => (string) ($editShow['artist_fee'] ?? ''),
         'notes' => (string) ($editShow['notes'] ?? ''),
     ];

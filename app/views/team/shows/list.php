@@ -3,7 +3,6 @@ require_once __DIR__ . '/../../../models/core/list_helpers.php';
 
 $listColumns = [
     buildListColumn('Date', 'show_date'),
-    buildListColumn('Venue', 'venue_name'),
 ];
 
 $listRows = $shows;

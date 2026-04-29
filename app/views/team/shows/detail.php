@@ -39,7 +39,7 @@ if ($activeShow) {
     $detailRows = [
         buildDetailRow('Date', (string) ($activeShow['show_date'] ?? '')),
         buildDetailRow('Time', (string) ($activeShow['show_time'] ?? '')),
-        buildDetailRow('Venue', (string) ($activeShow['venue_name'] ?? '')),
+        buildDetailRow('Venue', (string) ($activeShow['venue_text'] ?? '')),
         buildDetailRow('Artist Fee', (string) ($activeShow['artist_fee'] ?? '')),
         buildDetailRow('Notes', (string) ($activeShow['notes'] ?? '')),
         buildDetailRow('Created', (string) ($activeShow['created_at'] ?? '')),

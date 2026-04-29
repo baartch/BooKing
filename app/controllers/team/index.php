@@ -35,7 +35,6 @@ $notice = [
 
 $tasks = [];
 $shows = [];
-$showVenueOptions = [];
 $showLinks = [];
 $mailboxes = [];
 $templates = [];
@@ -230,7 +229,6 @@ if ($pdo) {
         if ($activeTeamId > 0) {
             $tasks = fetchTeamTasks($pdo, $activeTeamId, $searchQuery);
             $shows = fetchTeamShows($pdo, $activeTeamId, $searchQuery);
-            $showVenueOptions = fetchShowVenueOptions($pdo);
         } else {
             $errors['tasks'][] = 'No team access available.';
             $errors['shows'][] = 'No team access available.';
