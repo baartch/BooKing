@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../../../models/core/list_helpers.php';
 
+$songSetlistCounts = $songSetlistCounts ?? [];
+
 $listColumns = [
     buildListColumn('Name', 'name'),
     buildListColumn('Duration', null, static function (array $song): string {
@@ -27,12 +29,17 @@ $listRowLink = static function (array $song) use ($baseUrl, $baseQuery): array {
     ];
 };
 
-$listRowActions = static function (array $song) use ($baseUrl, $baseQuery, $activeTeamId, $searchQuery): string {
+$listRowActions = static function (array $song) use ($baseUrl, $baseQuery, $activeTeamId, $searchQuery, $songSetlistCounts): string {
     $songId = (int) ($song['id'] ?? 0);
     $editLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, [
         'song_id' => $songId,
         'mode' => 'edit',
     ]));
+
+    $setlistCount = (int) ($songSetlistCounts[$songId] ?? 0);
+    $confirmMessage = $setlistCount > 0
+        ? sprintf('Delete this song? It appears on %d show setlist%s.', $setlistCount, $setlistCount === 1 ? '' : 's')
+        : 'Delete this song?';
 
     ob_start();
     ?>
@@ -40,7 +47,7 @@ $listRowActions = static function (array $song) use ($baseUrl, $baseQuery, $acti
       <a href="<?php echo htmlspecialchars($editLink); ?>" class="button" aria-label="Edit song" title="Edit song" data-list-ignore>
         <span class="icon"><i class="fa-solid fa-pen"></i></span>
       </a>
-      <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/team/songs_delete.php" onsubmit="return confirm('Delete this song?');" data-list-ignore>
+      <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/team/songs_delete.php" onsubmit="return confirm('<?php echo htmlspecialchars($confirmMessage, ENT_QUOTES); ?>');" data-list-ignore>
         <?php renderCsrfField(); ?>
         <input type="hidden" name="song_id" value="<?php echo (int) $songId; ?>">
         <input type="hidden" name="team_id" value="<?php echo (int) $activeTeamId; ?>">

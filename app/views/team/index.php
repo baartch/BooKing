@@ -9,6 +9,7 @@
         '<script type="module" src="' . BASE_PATH . '/app/public/js/tabs.js" defer></script>',
         '<script type="module" src="' . BASE_PATH . '/app/public/js/mailboxes.js" defer></script>',
         '<script type="module" src="' . BASE_PATH . '/app/public/js/list-panel.js" defer></script>',
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/show-songs.js" defer></script>',
         '<script type="module" src="' . BASE_PATH . '/app/public/js/link-editor.js" defer></script>'
     ]
 ]); ?>

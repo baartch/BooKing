@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../../models/core/form_helpers.php';
+require_once __DIR__ . '/../../../models/team/show_songs.php';
 
 $baseUrl = BASE_PATH . '/app/controllers/team/index.php';
 $mode = (string) ($_GET['mode'] ?? '');
@@ -89,6 +90,16 @@ $listSearch = [
 $listContentPath = __DIR__ . '/list.php';
 $detailContentPath = $songForm ? __DIR__ . '/form.php' : __DIR__ . '/detail.php';
 $detailWrapperId = 'team-song-detail-panel';
+
+// Setlist usage per song, for the delete confirmation in the list.
+$songSetlistCounts = [];
+if ($activeTeamId > 0 && isset($pdo) && $songs !== []) {
+    try {
+        $songSetlistCounts = fetchSetlistCountsBySongIds($pdo, array_column($songs, 'id'));
+    } catch (Throwable $error) {
+        $songSetlistCounts = [];
+    }
+}
 
 if (HTMX::isRequest()) {
     require $detailContentPath;

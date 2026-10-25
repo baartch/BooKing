@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../models/core/form_helpers.php';
 require_once __DIR__ . '/../../models/communication/team_helpers.php';
 require_once __DIR__ . '/../../models/team/shows.php';
+require_once __DIR__ . '/../../models/team/show_songs.php';
 require_once __DIR__ . '/../../models/core/object_links.php';
 require_once __DIR__ . '/../../models/core/link_scope.php';
 
@@ -40,6 +41,8 @@ $payload = [
     'links' => is_array($_POST['link_items'] ?? null) ? $_POST['link_items'] : []
 ];
 
+$songInput = normalizeShowSongInput($_POST);
+
 $errors = [];
 
 if ($payload['show_date'] === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $payload['show_date'])) {
@@ -60,6 +63,10 @@ if (!in_array($action, ['create_show', 'update_show'], true)) {
     $errors[] = 'Unknown action.';
 }
 
+foreach ($songInput['errors'] as $songError) {
+    $errors[] = $songError;
+}
+
 if ($errors) {
     setFormFlash('team_show_form', [
         'name' => $payload['name'],
@@ -68,6 +75,7 @@ if ($errors) {
         'venue_text' => $payload['venue_text'],
         'artist_fee' => $payload['artist_fee'],
         'notes' => $payload['notes'],
+        'show_songs' => $songInput['song_ids'],
     ]);
     if ($action === 'update_show' && $showId > 0) {
         $redirectParams['show_id'] = $showId;
@@ -88,6 +96,32 @@ try {
         logAction($userId, 'team_show_access_denied', sprintf('Denied team access for show save. team_id=%d', $teamId));
         header('Location: ' . $baseUrl . '?' . http_build_query(array_merge($redirectParams, ['notice' => 'show_error'])));
         exit;
+    }
+
+    $songIds = $songInput['song_ids'];
+    if ($songIds !== []) {
+        $teamSongIds = array_map('intval', array_column(fetchTeamSongOptions($pdo, $teamId), 'id'));
+        if (array_diff($songIds, $teamSongIds) !== []) {
+            logAction($userId, 'team_show_save_rejected', sprintf('Rejected song outside team scope. team_id=%d', $teamId));
+            setFormFlash('team_show_form', [
+                'name' => $payload['name'],
+                'show_date' => $payload['show_date'],
+                'show_time' => $payload['show_time'],
+                'venue_text' => $payload['venue_text'],
+                'artist_fee' => $payload['artist_fee'],
+                'notes' => $payload['notes'],
+                'show_songs' => $songIds,
+            ]);
+            if ($action === 'update_show' && $showId > 0) {
+                $redirectParams['show_id'] = $showId;
+                $redirectParams['mode'] = 'edit';
+            } elseif ($action === 'create_show') {
+                $redirectParams['mode'] = 'new';
+            }
+            $redirectParams['error'] = 'All songs must belong to the selected team.';
+            header('Location: ' . $baseUrl . '?' . http_build_query(array_merge($redirectParams, ['notice' => 'show_error'])));
+            exit;
+        }
     }
 
     $showTime = null;
@@ -145,6 +179,8 @@ try {
             createObjectLink($pdo, 'show', $newId, (string) ($link['type'] ?? ''), (int) ($link['id'] ?? 0), $teamId, null);
         }
 
+        replaceShowSongs($pdo, $newId, $teamId, $songIds);
+
         $pdo->commit();
         logAction($userId, 'team_show_created', sprintf('Created show %d', $newId));
 
@@ -193,6 +229,8 @@ try {
     foreach ($normalizedLinks as $link) {
         createObjectLink($pdo, 'show', (int) $existing['id'], (string) ($link['type'] ?? ''), (int) ($link['id'] ?? 0), $teamId, null);
     }
+
+    replaceShowSongs($pdo, (int) $existing['id'], $teamId, $songIds);
 
     $pdo->commit();
     logAction($userId, 'team_show_updated', sprintf('Updated show %d', (int) $existing['id']));

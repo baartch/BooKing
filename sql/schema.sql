@@ -264,7 +264,7 @@ CREATE TABLE team_shows (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_team_shows_team (team_id),
+    UNIQUE KEY uniq_team_shows_team (team_id, id),
     INDEX idx_team_shows_team_date (team_id, show_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -280,7 +280,22 @@ CREATE TABLE team_songs (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_team_songs_team (team_id)
+    UNIQUE KEY uniq_team_songs_team (team_id, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE team_show_songs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    show_id INT NOT NULL,
+    team_id INT NOT NULL,
+    song_id INT NOT NULL,
+    position INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_team_show_songs_show_song (show_id, song_id),
+    UNIQUE KEY uniq_team_show_songs_show_position (show_id, position),
+    INDEX idx_team_show_songs_song (song_id),
+    INDEX idx_team_show_songs_team (team_id),
+    FOREIGN KEY (team_id, show_id) REFERENCES team_shows(team_id, id) ON DELETE CASCADE,
+    FOREIGN KEY (team_id, song_id) REFERENCES team_songs(team_id, id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE venue_ratings (
