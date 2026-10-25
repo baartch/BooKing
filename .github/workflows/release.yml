@@ -1,0 +1,56 @@
+name: Release package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - name: Check out tagged revision
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build JavaScript
+        run: bun run build
+
+      - name: Package release
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s app/public/js/map.js
+
+          package_dir="$(mktemp -d "$RUNNER_TEMP/booking-package.XXXXXX")"
+          cp -R app assets sql index.php favicon.ico .htaccess "$package_dir/"
+          mkdir "$package_dir/config"
+          cp config/config.example.php config/.htaccess "$package_dir/config/"
+
+          test ! -e "$package_dir/config/config.php"
+          test ! -e "$package_dir/node_modules"
+          test ! -e "$package_dir/src"
+
+          cd "$package_dir"
+          zip -qr "$RUNNER_TEMP/BooKing-${RELEASE_TAG}.zip" .
+          unzip -tq "$RUNNER_TEMP/BooKing-${RELEASE_TAG}.zip"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            "$RUNNER_TEMP/BooKing-${RELEASE_TAG}.zip" \
+            --verify-tag \
+            --title "$RELEASE_TAG" \
+            --generate-notes
