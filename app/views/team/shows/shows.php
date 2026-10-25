@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../../models/core/form_helpers.php';
+require_once __DIR__ . '/../../../models/team/show_songs.php';
 
 $baseUrl = BASE_PATH . '/app/controllers/team/index.php';
 $mode = (string) ($_GET['mode'] ?? '');
@@ -67,6 +68,40 @@ if ($showFlash !== null && $showForm) {
         'artist_fee' => (string) ($showFlash['artist_fee'] ?? $formValues['artist_fee']),
         'notes' => (string) ($showFlash['notes'] ?? $formValues['notes']),
     ]);
+}
+
+// Songs for the setlist editor: flash (failed save) wins, then the saved setlist.
+$teamSongOptions = [];
+$selectedSongIds = [];
+if ($activeTeamId > 0 && isset($pdo) && $showForm) {
+    try {
+        $teamSongOptions = fetchTeamSongOptions($pdo, $activeTeamId);
+    } catch (Throwable $error) {
+        $teamSongOptions = [];
+    }
+
+    if ($showFlash !== null && is_array($showFlash['show_songs'] ?? null)) {
+        $selectedSongIds = array_map('intval', $showFlash['show_songs']);
+    } elseif ($isEdit) {
+        try {
+            $selectedSongIds = array_map(
+                static fn (array $row): int => (int) $row['id'],
+                fetchShowSongs($pdo, $selectedShowId)
+            );
+        } catch (Throwable $error) {
+            $selectedSongIds = [];
+        }
+    }
+}
+
+// Setlist for the detail panel (not shown in form mode).
+$activeShowSongs = [];
+if (!$showForm && $activeShow && isset($pdo)) {
+    try {
+        $activeShowSongs = fetchShowSongs($pdo, (int) $activeShow['id']);
+    } catch (Throwable $error) {
+        $activeShowSongs = [];
+    }
 }
 
 $cancelQuery = array_filter([

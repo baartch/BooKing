@@ -2,6 +2,8 @@
 $cancelUrl = $cancelUrl ?? (BASE_PATH . '/app/controllers/team/index.php?tab=shows');
 $searchQuery = $searchQuery ?? '';
 $showLinks = $showLinks ?? [];
+$teamSongOptions = $teamSongOptions ?? [];
+$selectedSongIds = $selectedSongIds ?? [];
 
 $linkEditorLinks = [];
 foreach ($showLinks as $link) {
@@ -88,6 +90,45 @@ if ($isEdit && $editShow) {
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="field">
+      <label class="label">Songs</label>
+      <div id="show-songs-editor" data-show-songs-editor>
+        <?php
+        $renderShowSongRow = function (array $options, ?int $selectedSongId): void {
+            ?>
+            <div class="field is-grouped show-song-row" data-show-song-row>
+              <div class="control">
+                <span class="icon show-song-handle" title="Drag to reorder"><i class="fa-solid fa-grip-vertical"></i></span>
+              </div>
+              <div class="control is-expanded">
+                <div class="select is-fullwidth">
+                  <select name="show_songs[]" class="show-song-select">
+                    <option value="">Select a song…</option>
+                    <?php foreach ($options as $song): ?>
+                      <option value="<?php echo (int) $song['id']; ?>"<?php echo $selectedSongId !== null && (int) $song['id'] === $selectedSongId ? ' selected' : ''; ?>>
+                        <?php echo htmlspecialchars((string) $song['name'] . ' — ' . (string) $song['composer']); ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+              </div>
+              <div class="control">
+                <button type="button" class="delete show-song-remove" title="Remove song" aria-label="Remove song"></button>
+              </div>
+            </div>
+            <?php
+        };
+        foreach ($selectedSongIds as $selectedSongId) {
+            $renderShowSongRow($teamSongOptions, (int) $selectedSongId);
+        }
+        $renderShowSongRow($teamSongOptions, null);
+        ?>
+      </div>
+      <?php if ($teamSongOptions === []): ?>
+        <p class="help">No songs in this team yet — add songs in the Songs tab first.</p>
+      <?php endif; ?>
     </div>
 
     <div class="field">

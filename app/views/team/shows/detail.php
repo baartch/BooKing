@@ -8,6 +8,7 @@ $detailActionsHtml = null;
 $detailRows = [];
 $detailEmptyMessage = 'Select a show to see details.';
 $showLinks = $showLinks ?? [];
+$activeShowSongs = $activeShowSongs ?? [];
 
 $linkItems = [];
 $linkEditorLinks = [];
@@ -86,6 +87,25 @@ if ($activeShow) {
             <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars('link-editor-show-' . (int) $activeShow['id']); ?>" title="Edit links">
               <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
             </a>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-meta">
+      <div class="detail-meta-info">
+        <div class="detail-meta-row">
+          <span class="detail-meta-label">Setlist:</span>
+          <span class="detail-meta-value">
+            <?php if ($activeShowSongs === []): ?>
+              <span class="has-text-grey is-size-7">No songs yet</span>
+            <?php else: ?>
+              <ol class="show-setlist">
+                <?php foreach ($activeShowSongs as $song): ?>
+                  <li><?php echo htmlspecialchars((string) $song['name'] . ' — ' . (string) $song['composer']); ?></li>
+                <?php endforeach; ?>
+              </ol>
+            <?php endif; ?>
           </span>
         </div>
       </div>
