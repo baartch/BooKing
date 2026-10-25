@@ -51,12 +51,12 @@ function normalizeShowSongInput(array $post): array
 /**
  * Fetch the ordered setlist of a show, joined with song data.
  *
- * @return array<int, array{id: int, name: string, composer: string, position: int}>
+ * @return array<int, array{id: int, name: string, composer: string, arranger: string, duration_seconds: ?int, position: int}>
  */
 function fetchShowSongs(PDO $pdo, int $showId): array
 {
     $stmt = $pdo->prepare(
-        'SELECT s.id, s.name, s.composer, x.position
+        'SELECT s.id, s.name, s.composer, s.arranger, s.duration_seconds, x.position
          FROM team_show_songs x
          JOIN team_songs s ON s.id = x.song_id AND s.team_id = x.team_id
          WHERE x.show_id = :show_id
@@ -70,6 +70,8 @@ function fetchShowSongs(PDO $pdo, int $showId): array
                 'id' => (int) $row['id'],
                 'name' => (string) $row['name'],
                 'composer' => (string) $row['composer'],
+                'arranger' => (string) $row['arranger'],
+                'duration_seconds' => $row['duration_seconds'] !== null ? (int) $row['duration_seconds'] : null,
                 'position' => (int) $row['position'],
             ];
         },

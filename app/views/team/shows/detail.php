@@ -20,7 +20,14 @@ if ($activeShow) {
     $detailSubtitle = (string) ($activeShow['show_date'] ?? '');
 
     $editLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, ['show_id' => (int) $activeShow['id'], 'mode' => 'edit']));
-    $detailActionsHtml = '<a class="button is-small" href="' . htmlspecialchars($editLink) . '">Edit</a>';
+    $suisaLink = BASE_PATH . '/app/controllers/team/shows_suisa.php?' . http_build_query(array_filter([
+        'team_id' => (int) ($activeTeamId ?? 0) > 0 ? (int) $activeTeamId : null,
+        'show_id' => (int) $activeShow['id'],
+        'q' => ($searchQuery ?? '') !== '' ? $searchQuery : null,
+    ], static fn($value) => $value !== null));
+    $detailActionsHtml =
+        '<a class="button is-small" href="' . htmlspecialchars($suisaLink) . '" title="Download SUISA live programme form">Suisa</a>'
+        . ' <a class="button is-small" href="' . htmlspecialchars($editLink) . '">Edit</a>';
 
     if (!empty($showLinks)) {
         foreach ($showLinks as $link) {
