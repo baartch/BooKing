@@ -57,7 +57,9 @@ check(buildSuisaCityLine(['country' => 'CH', 'city' => 'Zürich']) === 'CH Züri
 check(buildSuisaCityLine([]) === '', 'empty venue parts are empty');
 
 echo "Test 4: download filename...\n";
-check(suisaDownloadFilename(['name' => 'Hafenkonzert & Sause', 'show_date' => '2026-10-21']) === 'SUISA_Hafenkonzert_Sause_21.10.2026.odt', 'unsafe characters are replaced');
+check(suisaDownloadFilename(['name' => 'Hafenkonzert & Sause', 'show_date' => '2026-10-21']) === '2026.10.21_SUISA_Hafenkonzert_Sause.odt', 'date-first filename, unsafe characters replaced');
+check(suisaDownloadFilename(['name' => 'Hafenkonzert', 'show_date' => 'not-a-date']) === 'SUISA_Hafenkonzert.odt', 'no date prefix on invalid date');
+check(suisaDownloadFilename(['name' => '', 'show_date' => '2026-10-21']) === '2026.10.21_SUISA_Show.odt', 'fallback name when show name is empty');
 
 // --- Document generation ------------------------------------------------
 

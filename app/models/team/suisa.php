@@ -72,9 +72,16 @@ function suisaDownloadFilename(array $show): string
         $name = 'Show';
     }
     $safeName = preg_replace('/[^A-Za-z0-9._-]+/', '_', $name);
-    $date = formatSuisaDate((string) ($show['show_date'] ?? ''));
 
-    return 'SUISA_' . $safeName . ($date !== '' ? '_' . $date : '') . '.odt';
+    // Filename date prefix: yyyy.mm.dd (sorted naturally by date).
+    $datePrefix = '';
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', (string) ($show['show_date'] ?? ''), $matches)
+        && checkdate((int) $matches[2], (int) $matches[3], (int) $matches[1])
+    ) {
+        $datePrefix = $matches[1] . '.' . $matches[2] . '.' . $matches[3] . '_';
+    }
+
+    return $datePrefix . 'SUISA_' . $safeName . '.odt';
 }
 
 /**
