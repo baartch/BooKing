@@ -86,26 +86,15 @@ bun run build
 
 Build tables with the partials in `app/partials/tables`.
 
-<!-- SPECKIT START -->
+## Tools
 
-Current implementation plan: `specs/001-team-shows/plan.md`
-
-## Active Technologies
-
-- PHP 8.0+, TypeScript (existing frontend pipeline) + HTMX request/response helpers, Bulma UI patterns, existing table/detail partials (001-team-shows)
-- MariaDB/MySQL (schema updates in `sql/schema.sql`) (001-team-shows)
-- PHP 8.0+, TypeScript (existing frontend pipeline) + HTMX helpers, Bulma patterns, shared table/detail partials, existing link editor flow (001-team-shows)
-- MariaDB/MySQL (`sql/schema.sql`) (001-team-shows)
-
-## Recent Changes
-
-- 001-team-shows: Added PHP 8.0+, TypeScript (existing frontend pipeline) + HTMX request/response helpers, Bulma UI patterns, existing table/detail partials
-
-<!-- SPECKIT END -->
+**ALWAYS** use the tools provided by the lean-ctx environment for reading files and running commands.
 
 <!-- lean-ctx -->
+
 ## lean-ctx
 
 lean-ctx is active — the MCP tools replace native equivalents.
 Full rules: LEAN-CTX.md (open on demand — do not auto-load).
+
 <!-- /lean-ctx -->
