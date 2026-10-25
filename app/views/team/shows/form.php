@@ -108,7 +108,7 @@ if ($isEdit && $editShow) {
                     <option value="">Select a song…</option>
                     <?php foreach ($options as $song): ?>
                       <option value="<?php echo (int) $song['id']; ?>"<?php echo $selectedSongId !== null && (int) $song['id'] === $selectedSongId ? ' selected' : ''; ?>>
-                        <?php echo htmlspecialchars((string) $song['name'] . ' — ' . (string) $song['composer']); ?>
+                        <?php echo htmlspecialchars((string) $song['name']); ?>
                       </option>
                     <?php endforeach; ?>
                   </select>

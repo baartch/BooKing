@@ -37,6 +37,18 @@ function userHasTeamAccess(PDO $pdo, int $userId, int $teamId): bool
     return (bool) $stmt->fetchColumn();
 }
 
+function fetchTeamName(PDO $pdo, int $teamId): string
+{
+    if ($teamId <= 0) {
+        return '';
+    }
+
+    $stmt = $pdo->prepare('SELECT name FROM teams WHERE id = :id LIMIT 1');
+    $stmt->execute([':id' => $teamId]);
+
+    return trim((string) ($stmt->fetchColumn() ?: ''));
+}
+
 function resolveActiveTeamId(PDO $pdo, int $userId, int $requestedTeamId = 0): int
 {
     $teamIds = fetchUserTeamIds($pdo, $userId);

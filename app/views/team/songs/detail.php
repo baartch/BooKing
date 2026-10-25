@@ -11,7 +11,7 @@ if ($activeSong) {
     $title = trim((string) ($activeSong['name'] ?? ''));
     $detailTitle = $title !== '' ? $title : 'Song #' . (int) ($activeSong['id'] ?? 0);
     $duration = formatSongDuration(isset($activeSong['duration_seconds']) ? (int) $activeSong['duration_seconds'] : null);
-    $detailSubtitle = $duration !== '' ? $duration : (string) ($activeSong['composer'] ?? '');
+    $detailSubtitle = $duration;
 
     $editLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, ['song_id' => (int) $activeSong['id'], 'mode' => 'edit']));
     $detailActionsHtml = '<a class="button is-small" href="' . htmlspecialchars($editLink) . '">Edit</a>';
@@ -19,11 +19,22 @@ if ($activeSong) {
     $detailRows = [
         buildDetailRow('Name', (string) ($activeSong['name'] ?? '')),
         buildDetailRow('Duration', $duration),
-        buildDetailRow('Composer', (string) ($activeSong['composer'] ?? '')),
         buildDetailRow('Arranger', (string) ($activeSong['arranger'] ?? '')),
         buildDetailRow('Created', (string) ($activeSong['created_at'] ?? '')),
         buildDetailRow('Updated', (string) ($activeSong['updated_at'] ?? '')),
     ];
+
+    $setlistLabels = [];
+    foreach (($songSetlistShows ?? []) as $setlistShow) {
+        $showName = trim((string) ($setlistShow['name'] ?? ''));
+        $showLabel = $showName !== '' ? $showName : ('Show #' . (int) ($setlistShow['id'] ?? 0));
+        $showDate = trim((string) ($setlistShow['show_date'] ?? ''));
+        if ($showDate !== '') {
+            $showLabel .= ' (' . $showDate . ')';
+        }
+        $setlistLabels[] = $showLabel;
+    }
+    $detailRows[] = buildDetailRow('Setlist', implode(', ', $setlistLabels));
 }
 ?>
 

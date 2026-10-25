@@ -20,7 +20,14 @@ if ($activeShow) {
     $detailSubtitle = (string) ($activeShow['show_date'] ?? '');
 
     $editLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, ['show_id' => (int) $activeShow['id'], 'mode' => 'edit']));
-    $detailActionsHtml = '<a class="button is-small" href="' . htmlspecialchars($editLink) . '">Edit</a>';
+    $suisaLink = BASE_PATH . '/app/controllers/team/shows_suisa.php?' . http_build_query(array_filter([
+        'team_id' => (int) ($activeTeamId ?? 0) > 0 ? (int) $activeTeamId : null,
+        'show_id' => (int) $activeShow['id'],
+        'q' => ($searchQuery ?? '') !== '' ? $searchQuery : null,
+    ], static fn($value) => $value !== null));
+    $detailActionsHtml =
+        '<a class="button is-small" href="' . htmlspecialchars($suisaLink) . '" title="Download SUISA live programme form">Suisa</a>'
+        . ' <a class="button is-small" href="' . htmlspecialchars($editLink) . '">Edit</a>';
 
     if (!empty($showLinks)) {
         foreach ($showLinks as $link) {
@@ -46,6 +53,13 @@ if ($activeShow) {
         buildDetailRow('Created', (string) ($activeShow['created_at'] ?? '')),
         buildDetailRow('Updated', (string) ($activeShow['updated_at'] ?? '')),
     ];
+
+    $setlistLabels = [];
+    foreach ($activeShowSongs as $index => $song) {
+        $songName = trim((string) ($song['name'] ?? ''));
+        $setlistLabels[] = ($index + 1) . '. ' . ($songName !== '' ? $songName : 'Song #' . (int) ($song['id'] ?? 0));
+    }
+    $detailRows[] = buildDetailRow('Setlist', implode("\n", $setlistLabels));
 }
 ?>
 
@@ -87,25 +101,6 @@ if ($activeShow) {
             <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars('link-editor-show-' . (int) $activeShow['id']); ?>" title="Edit links">
               <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
             </a>
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <div class="detail-meta">
-      <div class="detail-meta-info">
-        <div class="detail-meta-row">
-          <span class="detail-meta-label">Setlist:</span>
-          <span class="detail-meta-value">
-            <?php if ($activeShowSongs === []): ?>
-              <span class="has-text-grey is-size-7">No songs yet</span>
-            <?php else: ?>
-              <ol class="show-setlist">
-                <?php foreach ($activeShowSongs as $song): ?>
-                  <li><?php echo htmlspecialchars((string) $song['name'] . ' — ' . (string) $song['composer']); ?></li>
-                <?php endforeach; ?>
-              </ol>
-            <?php endif; ?>
           </span>
         </div>
       </div>
