@@ -165,3 +165,39 @@ function fetchSetlistCountsBySongIds(PDO $pdo, array $songIds): array
 
     return $counts;
 }
+
+/**
+ * Fetch the shows whose setlist includes the given song (same team only),
+ * newest show date first.
+ *
+ * @return array<int, array{id: int, name: string, show_date: string}>
+ */
+function fetchShowsForSong(PDO $pdo, int $teamId, int $songId): array
+{
+    if ($teamId <= 0 || $songId <= 0) {
+        return [];
+    }
+
+    $stmt = $pdo->prepare(
+        'SELECT sh.id, sh.name, sh.show_date
+         FROM team_show_songs x
+         JOIN team_shows sh ON sh.id = x.show_id AND sh.team_id = x.team_id
+         WHERE x.song_id = :song_id AND x.team_id = :team_id
+         ORDER BY sh.show_date DESC, sh.id DESC'
+    );
+    $stmt->execute([
+        ':song_id' => $songId,
+        ':team_id' => $teamId,
+    ]);
+
+    return array_map(
+        static function (array $row): array {
+            return [
+                'id' => (int) $row['id'],
+                'name' => (string) $row['name'],
+                'show_date' => (string) $row['show_date'],
+            ];
+        },
+        $stmt->fetchAll(PDO::FETCH_ASSOC)
+    );
+}

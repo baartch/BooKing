@@ -101,6 +101,16 @@ if ($activeTeamId > 0 && isset($pdo) && $songs !== []) {
     }
 }
 
+// Shows whose setlist includes the selected song, for the detail row.
+$songSetlistShows = [];
+if ($activeTeamId > 0 && $activeSong !== null && isset($pdo)) {
+    try {
+        $songSetlistShows = fetchShowsForSong($pdo, $activeTeamId, (int) ($activeSong['id'] ?? 0));
+    } catch (Throwable $error) {
+        $songSetlistShows = [];
+    }
+}
+
 if (HTMX::isRequest()) {
     require $detailContentPath;
     return;
