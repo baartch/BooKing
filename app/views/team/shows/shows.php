@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../../../models/core/form_helpers.php';
+
 $baseUrl = BASE_PATH . '/app/controllers/team/index.php';
 $mode = (string) ($_GET['mode'] ?? '');
 $selectedShowId = (int) ($_GET['show_id'] ?? 0);
@@ -51,6 +53,20 @@ if ($editShow) {
         'artist_fee' => (string) ($editShow['artist_fee'] ?? ''),
         'notes' => (string) ($editShow['notes'] ?? ''),
     ];
+}
+
+// Re-populate the form with the values of a failed submission (flash).
+// Unsaved link-editor links are not retained; saved links still show.
+$showFlash = takeFormFlash('team_show_form');
+if ($showFlash !== null && $showForm) {
+    $formValues = array_merge($formValues, [
+        'name' => (string) ($showFlash['name'] ?? $formValues['name']),
+        'show_date' => (string) ($showFlash['show_date'] ?? $formValues['show_date']),
+        'show_time' => (string) ($showFlash['show_time'] ?? $formValues['show_time']),
+        'venue_text' => (string) ($showFlash['venue_text'] ?? $formValues['venue_text']),
+        'artist_fee' => (string) ($showFlash['artist_fee'] ?? $formValues['artist_fee']),
+        'notes' => (string) ($showFlash['notes'] ?? $formValues['notes']),
+    ]);
 }
 
 $cancelQuery = array_filter([

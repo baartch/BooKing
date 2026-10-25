@@ -9,13 +9,14 @@ require_once __DIR__ . '/../../models/communication/email_helpers.php';
 require_once __DIR__ . '/../../models/communication/team_helpers.php';
 require_once __DIR__ . '/../../models/team/tasks_helpers.php';
 require_once __DIR__ . '/../../models/team/shows.php';
+require_once __DIR__ . '/../../models/team/songs.php';
 require_once __DIR__ . '/../../models/core/link_helpers.php';
 
 $isTeamAdmin = (bool) ($currentUser['is_team_admin'] ?? false);
 $activeTab = $_GET['tab'] ?? 'tasks';
 $validTabs = $isTeamAdmin
-    ? ['tasks', 'shows', 'members', 'mailboxes', 'templates']
-    : ['tasks', 'shows', 'members'];
+    ? ['tasks', 'shows', 'songs', 'members', 'mailboxes', 'templates']
+    : ['tasks', 'shows', 'songs', 'members'];
 if (!in_array($activeTab, $validTabs, true)) {
     $activeTab = 'tasks';
 }
@@ -23,12 +24,14 @@ if (!in_array($activeTab, $validTabs, true)) {
 $errors = [
     'tasks' => [],
     'shows' => [],
+    'songs' => [],
     'mailboxes' => [],
     'templates' => []
 ];
 $notice = [
     'tasks' => '',
     'shows' => '',
+    'songs' => '',
     'mailboxes' => '',
     'templates' => ''
 ];
@@ -36,6 +39,7 @@ $notice = [
 $tasks = [];
 $shows = [];
 $showLinks = [];
+$songs = [];
 $mailboxes = [];
 $templates = [];
 $teams = [];
@@ -59,6 +63,15 @@ if ($noticeKey === 'task_created') {
 } elseif ($noticeKey === 'show_error') {
     $errorDetail = trim((string) ($_GET['error'] ?? ''));
     $notice['shows'] = $errorDetail !== '' ? ('Failed to save show: ' . $errorDetail) : 'Failed to save show.';
+} elseif ($noticeKey === 'song_created') {
+    $notice['songs'] = 'Song created successfully.';
+} elseif ($noticeKey === 'song_updated') {
+    $notice['songs'] = 'Song updated successfully.';
+} elseif ($noticeKey === 'song_deleted') {
+    $notice['songs'] = 'Song deleted successfully.';
+} elseif ($noticeKey === 'song_error') {
+    $errorDetail = trim((string) ($_GET['error'] ?? ''));
+    $notice['songs'] = $errorDetail !== '' ? ('Failed to save song: ' . $errorDetail) : 'Failed to save song.';
 } elseif ($noticeKey === 'mailbox_created') {
     $notice['mailboxes'] = 'Mailbox created successfully.';
 } elseif ($noticeKey === 'mailbox_updated') {
@@ -219,6 +232,7 @@ $userTeams = [];
 $searchQuery = trim((string) ($_GET['q'] ?? ''));
 $selectedTaskId = (int) ($_GET['task_id'] ?? 0);
 $selectedShowId = (int) ($_GET['show_id'] ?? 0);
+$selectedSongId = (int) ($_GET['song_id'] ?? 0);
 $taskLinks = [];
 $showLinks = [];
 
@@ -230,11 +244,28 @@ if ($pdo) {
         $userTeams = fetchUserTeams($pdo, $userId);
 
         if ($activeTeamId > 0) {
-            $tasks = fetchTeamTasks($pdo, $activeTeamId, $searchQuery);
-            $shows = fetchTeamShows($pdo, $activeTeamId, $searchQuery);
+            $tasks = loadTeamTabList(
+                static fn() => fetchTeamTasks($pdo, $activeTeamId, $searchQuery),
+                'tasks',
+                $errors,
+                $userId
+            );
+            $shows = loadTeamTabList(
+                static fn() => fetchTeamShows($pdo, $activeTeamId, $searchQuery),
+                'shows',
+                $errors,
+                $userId
+            );
+            $songs = loadTeamTabList(
+                static fn() => fetchTeamSongs($pdo, $activeTeamId, $searchQuery),
+                'songs',
+                $errors,
+                $userId
+            );
         } else {
             $errors['tasks'][] = 'No team access available.';
             $errors['shows'][] = 'No team access available.';
+            $errors['songs'][] = 'No team access available.';
         }
 
         if ($activeTeamId > 0 && $selectedTaskId > 0) {
@@ -247,7 +278,8 @@ if ($pdo) {
     } catch (Throwable $error) {
         $errors['tasks'][] = 'Failed to load tasks.';
         $errors['shows'][] = 'Failed to load shows.';
-        logAction($currentUser['user_id'] ?? null, 'team_task_list_error', $error->getMessage());
+        $errors['songs'][] = 'Failed to load songs.';
+        logAction($currentUser['user_id'] ?? null, 'team_tab_load_error', $error->getMessage());
     }
 }
 
@@ -287,6 +319,12 @@ if (HTMX::isRequest() && $activeTab === 'tasks') {
 if (HTMX::isRequest() && $activeTab === 'shows') {
     HTMX::pushUrl($_SERVER['REQUEST_URI']);
     require __DIR__ . '/../../views/team/shows/shows.php';
+    return;
+}
+
+if (HTMX::isRequest() && $activeTab === 'songs') {
+    HTMX::pushUrl($_SERVER['REQUEST_URI']);
+    require __DIR__ . '/../../views/team/songs/songs.php';
     return;
 }
 

@@ -268,6 +268,21 @@ CREATE TABLE team_shows (
     INDEX idx_team_shows_team_date (team_id, show_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE team_songs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    team_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    duration_seconds INT DEFAULT NULL,
+    composer VARCHAR(255) NOT NULL,
+    arranger VARCHAR(255) NOT NULL,
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_team_songs_team (team_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE venue_ratings (
     id INT PRIMARY KEY AUTO_INCREMENT,
     venue_id INT NOT NULL,

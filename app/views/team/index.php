@@ -28,6 +28,9 @@
               <li class="<?php echo $activeTab === 'shows' ? 'is-active' : ''; ?>">
                 <a href="#" data-tab="shows" role="tab" aria-selected="<?php echo $activeTab === 'shows' ? 'true' : 'false'; ?>">Shows</a>
               </li>
+              <li class="<?php echo $activeTab === 'songs' ? 'is-active' : ''; ?>">
+                <a href="#" data-tab="songs" role="tab" aria-selected="<?php echo $activeTab === 'songs' ? 'true' : 'false'; ?>">Songs</a>
+              </li>
               <li class="<?php echo $activeTab === 'members' ? 'is-active' : ''; ?>">
                 <a href="#" data-tab="members" role="tab" aria-selected="<?php echo $activeTab === 'members' ? 'true' : 'false'; ?>">Members</a>
               </li>
@@ -44,6 +47,7 @@
 
           <?php require __DIR__ . '/tasks/tasks.php'; ?>
           <?php require __DIR__ . '/shows/shows.php'; ?>
+          <?php require __DIR__ . '/songs/songs.php'; ?>
 
           <div class="tab-panel <?php echo $activeTab === 'members' ? '' : 'is-hidden'; ?>" data-tab-panel="members" role="tabpanel">
             <div class="box">

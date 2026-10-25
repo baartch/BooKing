@@ -50,3 +50,24 @@ function resolveActiveTeamId(PDO $pdo, int $userId, int $requestedTeamId = 0): i
 
     return (int) ($teamIds[0] ?? 0);
 }
+
+/**
+ * Runs a team tab list fetch, recording a per-tab error and log entry on failure.
+ *
+ * @param callable $fetch Returns the list rows; may throw.
+ * @param array<string, string[]> $errors Collected by reference; gets a
+ *        "Failed to load <tabKey>." message on failure.
+ */
+function loadTeamTabList(callable $fetch, string $tabKey, array &$errors, ?int $userId): array
+{
+    try {
+        return (array) $fetch();
+    } catch (Throwable $error) {
+        if (!is_array($errors[$tabKey] ?? null)) {
+            $errors[$tabKey] = [];
+        }
+        $errors[$tabKey][] = 'Failed to load ' . $tabKey . '.';
+        logAction($userId, 'team_' . $tabKey . '_list_error', $error->getMessage());
+        return [];
+    }
+}

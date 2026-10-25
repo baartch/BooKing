@@ -61,6 +61,14 @@ if (!in_array($action, ['create_show', 'update_show'], true)) {
 }
 
 if ($errors) {
+    setFormFlash('team_show_form', [
+        'name' => $payload['name'],
+        'show_date' => $payload['show_date'],
+        'show_time' => $payload['show_time'],
+        'venue_text' => $payload['venue_text'],
+        'artist_fee' => $payload['artist_fee'],
+        'notes' => $payload['notes'],
+    ]);
     if ($action === 'update_show' && $showId > 0) {
         $redirectParams['show_id'] = $showId;
         $redirectParams['mode'] = 'edit';
