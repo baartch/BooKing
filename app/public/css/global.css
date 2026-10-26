@@ -177,3 +177,25 @@
   padding-left: 0;
   padding-right: 0;
 }
+
+/* Red dot for available app updates (Maintenance tab + sidebar Admin icon),
+   styled like the mailbox "new mail" indicator. */
+.update-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: #ff3860;
+  border: 2px solid var(--bulma-scheme-main, #fff);
+  vertical-align: middle;
+}
+
+.menu-list .icon {
+  position: relative;
+}
+
+.menu-list a .update-dot {
+  position: absolute;
+  top: -0.3rem;
+  right: -0.4rem;
+}

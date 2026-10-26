@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/users.php';
 require_once __DIR__ . '/teams.php';
 require_once __DIR__ . '/settings.php';
+require_once __DIR__ . '/maintenance.php';
 require_once __DIR__ . '/logs.php';
 
 if (HTMX::isRequest() && $activeTab === 'users') {
@@ -78,6 +79,9 @@ renderPageStart('Admin', [
         <li class="<?php echo $activeTab === 'smtp' ? 'is-active' : ''; ?>">
           <a href="#" data-tab="smtp" role="tab" aria-selected="<?php echo $activeTab === 'smtp' ? 'true' : 'false'; ?>">SMTP</a>
         </li>
+        <li class="<?php echo $activeTab === 'maintenance' ? 'is-active' : ''; ?>">
+          <a href="#" data-tab="maintenance" role="tab" aria-selected="<?php echo $activeTab === 'maintenance' ? 'true' : 'false'; ?>">Maintenance<?php echo $updateAvailable ? ' <span class="update-dot" aria-hidden="true"></span>' : ''; ?></a>
+        </li>
         <li class="<?php echo $activeTab === 'logs' ? 'is-active' : ''; ?>">
           <a href="#" data-tab="logs" role="tab" aria-selected="<?php echo $activeTab === 'logs' ? 'true' : 'false'; ?>">Logs</a>
         </li>
@@ -98,6 +102,10 @@ renderPageStart('Admin', [
 
     <div class="tab-panel <?php echo $activeTab === 'smtp' ? '' : 'is-hidden'; ?>" data-tab-panel="smtp" role="tabpanel">
       <?php require __DIR__ . '/../../views/admin/admin_smtp.php'; ?>
+    </div>
+
+    <div class="tab-panel <?php echo $activeTab === 'maintenance' ? '' : 'is-hidden'; ?>" data-tab-panel="maintenance" role="tabpanel">
+      <?php require __DIR__ . '/../../views/admin/maintenance.php'; ?>
     </div>
 
     <div class="tab-panel <?php echo $activeTab === 'logs' ? '' : 'is-hidden'; ?>" data-tab-panel="logs" role="tabpanel">

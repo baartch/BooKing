@@ -10,6 +10,8 @@ require_once __DIR__ . '/schedule_send.php';
 require_once __DIR__ . '/fetch_emails.php';
 require_once __DIR__ . '/venue_task_triggers.php';
 require_once __DIR__ . '/cleanup.php';
+require_once __DIR__ . '/../../models/core/settings.php';
+require_once __DIR__ . '/../../models/update/release_check.php';
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(403);
@@ -22,6 +24,7 @@ try {
     runScheduleSendTask($pdo);
     runFetchEmailsTask($pdo);
     runVenueTaskTriggerTask($pdo);
+    runReleaseCheckTask($pdo);
 
     $now = new DateTime('now');
     $cleanupTime = $now->format('H:i');
