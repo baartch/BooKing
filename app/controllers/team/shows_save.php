@@ -37,6 +37,7 @@ $payload = [
     'show_time' => trim((string) ($_POST['show_time'] ?? '')),
     'venue_text' => trim((string) ($_POST['venue_text'] ?? '')),
     'artist_fee' => trim((string) ($_POST['artist_fee'] ?? '')),
+    'entrance_fee' => trim((string) ($_POST['entrance_fee'] ?? '')),
     'notes' => trim((string) ($_POST['notes'] ?? '')),
     'links' => is_array($_POST['link_items'] ?? null) ? $_POST['link_items'] : []
 ];
@@ -59,6 +60,11 @@ if ($normalizedArtistFeeInput !== '' && (!is_numeric($normalizedArtistFeeInput) 
     $errors[] = 'Artist fee must be a non-negative amount.';
 }
 
+$normalizedEntranceFeeInput = str_replace(',', '.', $payload['entrance_fee']);
+if ($normalizedEntranceFeeInput !== '' && (!is_numeric($normalizedEntranceFeeInput) || (float) $normalizedEntranceFeeInput < 0)) {
+    $errors[] = 'Entrance fee must be a non-negative amount.';
+}
+
 if (!in_array($action, ['create_show', 'update_show'], true)) {
     $errors[] = 'Unknown action.';
 }
@@ -74,6 +80,7 @@ if ($errors) {
         'show_time' => $payload['show_time'],
         'venue_text' => $payload['venue_text'],
         'artist_fee' => $payload['artist_fee'],
+        'entrance_fee' => $payload['entrance_fee'],
         'notes' => $payload['notes'],
         'show_songs' => $songInput['song_ids'],
     ]);
@@ -109,6 +116,7 @@ try {
                 'show_time' => $payload['show_time'],
                 'venue_text' => $payload['venue_text'],
                 'artist_fee' => $payload['artist_fee'],
+                'entrance_fee' => $payload['entrance_fee'],
                 'notes' => $payload['notes'],
                 'show_songs' => $songIds,
             ]);
@@ -129,6 +137,7 @@ try {
         $showTime = preg_match('/^\d{2}:\d{2}$/', $payload['show_time']) ? $payload['show_time'] . ':00' : $payload['show_time'];
     }
     $artistFee = $normalizedArtistFeeInput !== '' ? (float) $normalizedArtistFeeInput : null;
+    $entranceFee = $normalizedEntranceFeeInput !== '' ? (float) $normalizedEntranceFeeInput : null;
 
     $rawLinkItems = array_filter(array_map('trim', $payload['links']));
     $normalizedLinkInput = [];
@@ -158,9 +167,9 @@ try {
 
         $stmt = $pdo->prepare(
             'INSERT INTO team_shows
-                (team_id, name, show_date, show_time, venue_text, artist_fee, notes, created_by)
+                (team_id, name, show_date, show_time, venue_text, artist_fee, entrance_fee, notes, created_by)
              VALUES
-                (:team_id, :name, :show_date, :show_time, :venue_text, :artist_fee, :notes, :created_by)'
+                (:team_id, :name, :show_date, :show_time, :venue_text, :artist_fee, :entrance_fee, :notes, :created_by)'
         );
         $stmt->execute([
             ':team_id' => $teamId,
@@ -169,6 +178,7 @@ try {
             ':show_time' => $showTime,
             ':venue_text' => normalizeOptionalString((string) ($resolvedVenueText ?? '')),
             ':artist_fee' => $artistFee,
+            ':entrance_fee' => $entranceFee,
             ':notes' => normalizeOptionalString($payload['notes']),
             ':created_by' => $userId > 0 ? $userId : null,
         ]);
@@ -211,6 +221,7 @@ try {
              show_time = :show_time,
              venue_text = :venue_text,
              artist_fee = :artist_fee,
+             entrance_fee = :entrance_fee,
              notes = :notes
          WHERE id = :id AND team_id = :team_id'
     );
@@ -220,6 +231,7 @@ try {
         ':show_time' => $showTime,
         ':venue_text' => normalizeOptionalString((string) ($resolvedVenueText ?? '')),
         ':artist_fee' => $artistFee,
+        ':entrance_fee' => $entranceFee,
         ':notes' => normalizeOptionalString($payload['notes']),
         ':id' => (int) $existing['id'],
         ':team_id' => $teamId,

@@ -42,6 +42,7 @@ $formValues = [
     'show_time' => '',
     'venue_text' => '',
     'artist_fee' => '',
+    'entrance_fee' => '',
     'notes' => '',
 ];
 
@@ -52,6 +53,7 @@ if ($editShow) {
         'show_time' => (string) ($editShow['show_time'] ?? ''),
         'venue_text' => (string) ($editShow['venue_text'] ?? ''),
         'artist_fee' => (string) ($editShow['artist_fee'] ?? ''),
+        'entrance_fee' => (string) ($editShow['entrance_fee'] ?? ''),
         'notes' => (string) ($editShow['notes'] ?? ''),
     ];
 }
@@ -66,6 +68,7 @@ if ($showFlash !== null && $showForm) {
         'show_time' => (string) ($showFlash['show_time'] ?? $formValues['show_time']),
         'venue_text' => (string) ($showFlash['venue_text'] ?? $formValues['venue_text']),
         'artist_fee' => (string) ($showFlash['artist_fee'] ?? $formValues['artist_fee']),
+        'entrance_fee' => (string) ($showFlash['entrance_fee'] ?? $formValues['entrance_fee']),
         'notes' => (string) ($showFlash['notes'] ?? $formValues['notes']),
     ]);
 }
