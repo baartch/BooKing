@@ -59,10 +59,11 @@ $makeOldInstall = function () use ($base): void {
     file_put_contents($base . '/app/a.php', 'old A content');
     file_put_contents($base . '/app/old.php', 'to be removed');
     file_put_contents($base . '/index.php', '<?php // old index');
-    file_put_contents($base . '/version.php', "<?php\ndefine('APP_VERSION', 'v1.0.0');\n");
+    file_put_contents($base . '/app/version.php', "<?php\ndefine('APP_VERSION', 'v1.0.0');\n");
     $files = [
         'app/a.php' => hash('sha256', 'old A content'),
         'app/old.php' => hash('sha256', 'to be removed'),
+        'app/version.php' => hash('sha256', "<?php\ndefine('APP_VERSION', 'v1.0.0');\n"),
         'index.php' => hash('sha256', '<?php // old index'),
     ];
     file_put_contents($base . '/manifest.json', json_encode(['version' => 'v1.0.0', 'files' => $files]));
@@ -77,7 +78,7 @@ $makeReleaseZip = static function (callable $mutateManifest = null, array $extra
         'app/a.php' => 'new A content v1.1.0',
         'app/new.php' => 'brand new file',
         'index.php' => '<?php // new index',
-        'version.php' => "<?php\ndefine('APP_VERSION', 'v1.1.0');\n",
+        'app/version.php' => "<?php\ndefine('APP_VERSION', 'v1.1.0');\n",
         'sql/migrations/2026-11-01_example.sql' => 'ALTER TABLE example ADD note VARCHAR(255);',
     ];
     $entries = array_merge($entries, $extraEntries);
@@ -119,7 +120,7 @@ $check(file_get_contents($base . '/app/a.php') === 'new A content v1.1.0', 'mana
 $check(file_get_contents($base . '/app/new.php') === 'brand new file', 'new file created');
 $check(!is_file($base . '/app/old.php'), 'stale file removed');
 $check(file_get_contents($base . '/index.php') === '<?php // new index', 'root file replaced');
-$check(strpos((string) file_get_contents($base . '/version.php'), "v1.1.0") !== false, 'version bumped');
+$check(strpos((string) file_get_contents($base . '/app/version.php'), "v1.1.0") !== false, 'version bumped');
 $check(strpos((string) file_get_contents($base . '/manifest.json'), 'v1.1.0') !== false, 'manifest installed');
 $check(file_get_contents($base . '/config/config.php') === 'SECRET_LOCAL_CONFIG', 'local config preserved');
 $check(file_get_contents($base . '/config/installer.lock') === '{"state":"completed"}', 'installer lock preserved');

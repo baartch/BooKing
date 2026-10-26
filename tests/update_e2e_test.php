@@ -37,7 +37,7 @@ foreach ($oldFiles as $relative => $content) {
     file_put_contents($destination, $content);
     $oldManifestFiles[$relative] = hash('sha256', $content);
 }
-file_put_contents($fixtureRoot . '/version.php', "<?php\ndefine('APP_VERSION', 'v0.1.0');\n");
+file_put_contents($fixtureRoot . '/app/version.php', "<?php\ndefine('APP_VERSION', 'v0.1.0');\n");
 file_put_contents($fixtureRoot . '/manifest.json', json_encode(['version' => 'v0.1.0', 'files' => $oldManifestFiles]));
 @mkdir($fixtureRoot . '/config', 0777, true);
 file_put_contents($fixtureRoot . '/config/config.php', 'LOCAL_SECRET');
@@ -50,7 +50,7 @@ $newFiles['app/controllers/tasks/taskhandler.php'] .= "\n// changed in v0.2.0\n"
 $newFiles['app/models/update/new_feature.php'] = "<?php\n// added in v0.2.0\n";
 $newFiles['sql/migrations/2026-11-05_e2e.sql'] = "ALTER TABLE example ADD e2e VARCHAR(10);";
 unset($newFiles['app/models/update/legacy_removed.php']);
-$newFiles['version.php'] = "<?php\ndefine('APP_VERSION', 'v0.2.0');\n";
+$newFiles['app/version.php'] = "<?php\ndefine('APP_VERSION', 'v0.2.0');\n";
 $newManifestFiles = [];
 foreach ($newFiles as $relative => $content) {
     $newManifestFiles[$relative] = hash('sha256', $content);
@@ -112,7 +112,7 @@ $check(str_contains((string) file_get_contents($fixtureRoot . '/app/controllers/
 $check(is_file($fixtureRoot . '/app/models/update/new_feature.php'), 'added file installed');
 $check(!is_file($fixtureRoot . '/app/models/update/legacy_removed.php'), 'removed file deleted');
 $check(is_file($fixtureRoot . '/sql/migrations/2026-11-05_e2e.sql'), 'new migration file installed');
-$check(strpos((string) file_get_contents($fixtureRoot . '/version.php'), 'v0.2.0') !== false, 'version stamped v0.2.0');
+$check(strpos((string) file_get_contents($fixtureRoot . '/app/version.php'), 'v0.2.0') !== false, 'version stamped v0.2.0');
 $check(installedAppVersion($fixtureRoot) === 'v0.2.0', 'installedAppVersion reports v0.2.0');
 $check(file_get_contents($fixtureRoot . '/config/config.php') === 'LOCAL_SECRET', 'local config preserved');
 $check(file_get_contents($fixtureRoot . '/uploads/attachment.txt') === 'kept local data', 'uploads preserved');
