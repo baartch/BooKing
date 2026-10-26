@@ -65,6 +65,17 @@ $okApplied = applyMigrationsToPdo($todo, static function (): void {
 $check($okApplied === ['2026-10-25_a.sql', '2026-11-01_b.sql', '2026-11-02_c.sql'], 'all applied in order on success');
 $check($okRecorded === $okApplied, 'each applied migration recorded');
 
+// --- baseline on pre-tracker installs ---
+// Only migrations that shipped WITH the updater (v0.2.0) may be baselined:
+// their effect is already in every pre-tracker schema and they are not
+// replay-safe (they DROP keys those installs never had). Anything shipped
+// later must execute, even on a first updater run.
+$check(MIGRATIONS_SHIPPED_WITH_TRACKER === ['2026-10-25_team_show_songs.sql'], 'tracker shipped list is frozen at v0.2.0');
+$check(computeBaselineMigrations(['2026-10-25_team_show_songs.sql', '2026-10-26_team_shows_entrance_fee.sql']) === ['2026-10-25_team_show_songs.sql'], 'baseline covers only migrations that shipped with the tracker');
+$check(computeBaselineMigrations(['2026-10-26_team_shows_entrance_fee.sql']) === [], 'later migrations are never baselined');
+$check(computeBaselineMigrations(['2026-11-05_e2e.sql']) === [], 'unknown migrations are never baselined');
+$check(computeBaselineMigrations([]) === [], 'nothing shipped baselines nothing');
+
 // --- shipped migrations on disk ---
 $shipped = shippedMigrationNames(__DIR__ . '/../sql/migrations');
 $check(in_array('2026-10-25_team_show_songs.sql', $shipped, true), 'shipped migration listed');

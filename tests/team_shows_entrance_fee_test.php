@@ -36,6 +36,7 @@ $check = function (bool $condition, string $label) use (&$failures): void {
 $schema = (string) file_get_contents(__DIR__ . '/../sql/schema.sql');
 $controller = (string) file_get_contents(__DIR__ . '/../app/controllers/team/shows_save.php');
 $showsView = (string) file_get_contents(__DIR__ . '/../app/views/team/shows/shows.php');
+$showsModel = (string) file_get_contents(__DIR__ . '/../app/models/team/shows.php');
 $listView = (string) file_get_contents(__DIR__ . '/../app/views/team/shows/list.php');
 
 echo "Team Shows Entrance Fee Test\n";
@@ -60,6 +61,9 @@ $check(substr_count($controller, "\$_POST['entrance_fee']") >= 1, 'POST input re
 $check((bool) preg_match('/\(:team_id,:name,:show_date,:show_time,:venue_text,:artist_fee,:entrance_fee,:notes,:created_by\)|:team_id, :name, :show_date, :show_time, :venue_text, :artist_fee, :entrance_fee, :notes, :created_by/', $controller), 'INSERT binds :entrance_fee');
 $check((bool) preg_match('/entrance_fee\s*=\s*:entrance_fee/', $controller), 'UPDATE sets entrance_fee = :entrance_fee');
 $check(substr_count($controller, 'entrance_fee') >= 8, 'controller wires entrance_fee through payload, validation, flash, insert, update');
+
+// --- model: list rows feed detail + edit (active show picked from them) ---
+$check((bool) preg_match('/SELECT[^\n]*entrance_fee/', $showsModel) || str_contains($showsModel, 's.entrance_fee'), 'fetchTeamShows selects entrance_fee (rows feed detail + edit)');
 
 // --- shows.php view wiring (defaults, edit populate, flash repopulate) ---
 $check((bool) preg_match("/'entrance_fee'\s*=>\s*''/", $showsView), 'form defaults include empty entrance_fee');

@@ -23,7 +23,7 @@ function fetchTeamShows(PDO $pdo, int $teamId, ?string $search = null): array
     }
 
     $stmt = $pdo->prepare(
-        'SELECT s.id, s.name, s.show_date, s.show_time, s.venue_text, s.artist_fee, s.notes, s.created_at, s.updated_at
+        'SELECT s.id, s.name, s.show_date, s.show_time, s.venue_text, s.artist_fee, s.entrance_fee, s.notes, s.created_at, s.updated_at
          FROM team_shows s
          ' . $where . '
          ORDER BY s.show_date DESC, s.id DESC'
