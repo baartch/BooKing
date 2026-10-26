@@ -27,3 +27,27 @@ function loadSettingValues(array $keys): array
 
     return $values;
 }
+
+/**
+ * Persist one setting value (encrypted upsert). Empty values clear the key.
+ */
+function saveSettingValue(string $key, string $value): bool
+{
+    try {
+        $pdo = getDatabaseConnection();
+        $stmt = $pdo->prepare(
+            'INSERT INTO settings (setting_key, setting_value)
+             VALUES (:setting_key, :setting_value)
+             ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)'
+        );
+        $stmt->execute([
+            ':setting_key' => $key,
+            ':setting_value' => encryptSettingValue($value)
+        ]);
+
+        return true;
+    } catch (Throwable $error) {
+        error_log('Saving setting failed: ' . $error->getMessage());
+        return false;
+    }
+}

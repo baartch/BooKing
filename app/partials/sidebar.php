@@ -49,9 +49,16 @@ $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
           </li>
         <?php endif; ?>
         <?php if (($currentUser['role'] ?? '') === 'admin'): ?>
+          <?php
+            $updateAvailable = false;
+            if (function_exists('loadSettingValues')) {
+                require_once __DIR__ . '/../models/update/release_check.php';
+                $updateAvailable = isUpdateAvailable();
+            }
+          ?>
           <li>
-            <a href="<?php echo BASE_PATH; ?>/app/controllers/admin/index.php" class="<?php echo $isAdmin ? 'is-active' : ''; ?>" aria-label="Admin">
-              <span class="icon"><i class="fa-solid fa-gear"></i></span>
+            <a href="<?php echo BASE_PATH; ?>/app/controllers/admin/index.php" class="<?php echo $isAdmin ? 'is-active' : ''; ?>" aria-label="<?php echo $updateAvailable ? 'Admin (update available)' : 'Admin'; ?>">
+              <span class="icon"><i class="fa-solid fa-gear"></i><?php echo $updateAvailable ? '<span class="update-dot" aria-hidden="true"></span>' : ''; ?></span>
             </a>
           </li>
         <?php endif; ?>

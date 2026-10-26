@@ -360,3 +360,14 @@ CREATE TABLE contacts (
   INDEX idx_contacts_email (team_id, email(100)),
   INDEX idx_contacts_city (team_id, city(100))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Applied migration tracking (updater). Fresh installs already contain the
+-- effect of every shipped migration below; the INSERTs mark them applied so
+-- the updater never replays them.
+CREATE TABLE schema_migrations (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO schema_migrations (name) VALUES ('2026-10-25_team_show_songs.sql');

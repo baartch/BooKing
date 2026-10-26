@@ -11,7 +11,7 @@ $errors = [];
 $notice = '';
 
 $activeTab = $_GET['tab'] ?? 'users';
-$validTabs = ['users', 'teams', 'api-keys', 'smtp', 'logs'];
+$validTabs = ['users', 'teams', 'api-keys', 'smtp', 'maintenance', 'logs'];
 if (!in_array($activeTab, $validTabs, true)) {
     $activeTab = 'users';
 }
