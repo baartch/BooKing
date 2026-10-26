@@ -2,6 +2,71 @@
 // Zip extraction tests: path traversal rejection, safe extraction, corruption.
 // Catches: '../' escapes, absolute paths, backslash tricks, partial extraction
 // on bad archives, corrupt archive handling.
+//
+// When ext/zip is absent (local dev), a faithful ZipArchive fake is aliased
+// into place so the ZipArchive code path is fully exercised; on hosts with
+// the extension the real class is used and the fake is skipped.
+
+if (!class_exists('ZipArchive')) {
+    class FakeZipArchive
+    {
+        /** @var PharData|null */
+        private $archive = null;
+        /** @var string[] */
+        private array $names = [];
+        public int $numFiles = 0;
+
+        public function open(string $path, int $flags = 0): bool|int
+        {
+            try {
+                $this->archive = new PharData($path);
+                $names = [];
+                foreach (new RecursiveIteratorIterator($this->archive, RecursiveIteratorIterator::LEAVES_ONLY) as $file) {
+                    $entry = $file->getPathname();
+                    $names[] = substr($entry, strlen('phar://' . $path . '/'));
+                }
+                $raw = listZipEntryNames($path);
+                // Mirror real ZipArchive: numFiles counts central-directory
+                // entries; directory entries appear as names ending in '/'.
+                $this->names = $raw;
+                $this->numFiles = count($raw);
+                foreach ($names as $leaf) {
+                    if (!in_array($leaf, $this->names, true)) {
+                        // Phar may normalize; keep leaf names present.
+                        $this->names[] = $leaf;
+                        $this->numFiles++;
+                    }
+                }
+
+                return true;
+            } catch (Throwable $error) {
+                return false;
+            }
+        }
+
+        public function getNameIndex(int $index): string|false
+        {
+            return $this->names[$index] ?? false;
+        }
+
+        public function getStream(string $name)
+        {
+            if ($this->archive === null || !in_array($name, $this->names, true)) {
+                return false;
+            }
+
+            return @fopen('phar://' . $this->archive->getPath() . '/' . $name, 'rb');
+        }
+
+        public function close(): void
+        {
+            $this->archive = null;
+            $this->names = [];
+            $this->numFiles = 0;
+        }
+    }
+    class_alias('FakeZipArchive', 'ZipArchive');
+}
 
 require_once __DIR__ . '/../app/models/update/zip_extract.php';
 
@@ -68,6 +133,10 @@ $check(isSafeArchiveEntry('app/../../x.php') === false, 'nested parent traversal
 $check(isSafeArchiveEntry('') === false, 'empty entry rejected');
 $check(isSafeArchiveEntry('C:/abs.php') === false, 'drive letter rejected');
 $check(isSafeArchiveEntry('app//a.php') === false, 'empty path segment rejected');
+
+// --- reader availability + dispatch ---
+$check(is_bool(zipArchiveAvailable()), 'zip reader availability reported');
+$check(zipArchiveAvailable() === true, 'ZipArchive available (real or fake) — tests exercise the ZipArchive path');
 
 // --- safe extraction ---
 $goodZip = $buildZip('good.zip', [

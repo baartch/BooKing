@@ -76,7 +76,7 @@ function updateRequirements(?string $baseDir = null): array
     return [
         ['label' => 'staging_dir_writable', 'ok' => is_writable($base . '/uploads') || is_writable($base) || is_dir($base . '/uploads')],
         ['label' => 'config_writable', 'ok' => is_writable($base . '/config')],
-        ['label' => 'zip_reader', 'ok' => class_exists('PharData')],
+        ['label' => 'zip_reader', 'ok' => zipArchiveAvailable() || class_exists('PharData')],
         [
             'label' => 'http_transport',
             'ok' => function_exists('curl_init') || (bool) ini_get('allow_url_fopen'),

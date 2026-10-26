@@ -113,30 +113,82 @@ function listZipEntryNames(string $zipPath): array
 }
 
 /**
- * Extract a release ZIP into $destDir. Returns the sorted list of extracted
- * relative file paths. Throws RuntimeException on unsafe or unreadable
- * archives (nothing is written in that case).
- *
- * @return string[]
+ * True when ext/zip is available (preferred zip reader).
  */
-function extractReleaseArchive(string $zipPath, string $destDir): array
+function zipArchiveAvailable(): bool
 {
-    if (!is_file($zipPath)) {
-        throw new RuntimeException('Downloaded release archive not found');
-    }
+    return class_exists('ZipArchive');
+}
 
-    // Validation pass: every raw central-directory name must be safe.
-    $entryNames = listZipEntryNames($zipPath);
-    $fileNames = array_values(array_filter($entryNames, static fn (string $name): bool => !str_ends_with($name, '/')));
-    if ($fileNames === []) {
-        throw new RuntimeException('Release archive is empty');
-    }
-    foreach ($fileNames as $entryName) {
-        if (!isSafeArchiveEntry($entryName)) {
-            throw new RuntimeException('Unsafe archive entry: ' . $entryName);
+/**
+ * Extract via ext/zip when available (preferred), else PharData (works with
+ * just zlib). Both paths share the raw central-directory validation above.
+ *
+ * @param string[] $validatedFileNames
+ * @return string[] extracted relative paths
+ */
+function extractValidatedArchive(string $zipPath, string $destDir, array $validatedFileNames): array
+{
+    if (zipArchiveAvailable()) {
+        $archive = new ZipArchive();
+        $opened = $archive->open($zipPath);
+        if ($opened !== true) {
+            throw new RuntimeException('Release archive is unreadable.');
         }
+
+        $entries = [];
+        try {
+            for ($i = 0; $i < $archive->numFiles; $i++) {
+                $name = $archive->getNameIndex($i);
+                if ($name === false) {
+                    throw new RuntimeException('Truncated zip directory entry');
+                }
+                if (str_ends_with($name, '/')) {
+                    continue; // Directory entry.
+                }
+                if (!in_array($name, $validatedFileNames, true)) {
+                    throw new RuntimeException('Archive entries changed during extraction');
+                }
+
+                $destination = $destDir . '/' . $name;
+                $parent = dirname($destination);
+                if (!is_dir($parent) && !mkdir($parent, 0775, true)) {
+                    throw new RuntimeException('Cannot create directory: ' . $name);
+                }
+                $source = $archive->getStream($name);
+                if ($source === false) {
+                    throw new RuntimeException('Cannot read archive entry: ' . $name);
+                }
+                $target = @fopen($destination, 'wb');
+                if ($target === false) {
+                    fclose($source);
+                    throw new RuntimeException('Cannot extract: ' . $name);
+                }
+                if (stream_copy_to_stream($source, $target) === false) {
+                    fclose($source);
+                    fclose($target);
+                    throw new RuntimeException('Cannot extract: ' . $name);
+                }
+                fclose($source);
+                fclose($target);
+                $entries[] = $name;
+            }
+        } finally {
+            $archive->close();
+        }
+
+        if (count($entries) !== count($validatedFileNames)) {
+            throw new RuntimeException('Archive entries changed during extraction');
+        }
+
+        sort($entries);
+
+        return $entries;
     }
 
+    // Fallback: PharData (zlib only). Phar may silently skip unusual entry
+    // names — the raw central-directory validation above already guaranteed
+    // every raw name is safe before we get here.
     try {
         $archive = new PharData($zipPath);
     } catch (Throwable $error) {
@@ -161,12 +213,8 @@ function extractReleaseArchive(string $zipPath, string $destDir): array
         $entries[] = [$relative, $entry];
     }
 
-    if (count($entries) !== count($fileNames)) {
+    if (count($entries) !== count($validatedFileNames)) {
         throw new RuntimeException('Archive entries changed during extraction');
-    }
-
-    if (!is_dir($destDir) && !mkdir($destDir, 0775, true)) {
-        throw new RuntimeException('Cannot create extraction directory');
     }
 
     $extracted = [];
@@ -185,4 +233,36 @@ function extractReleaseArchive(string $zipPath, string $destDir): array
     sort($extracted);
 
     return $extracted;
+}
+
+/**
+ * Extract a release ZIP into $destDir. Returns the sorted list of extracted
+ * relative file paths. Throws RuntimeException on unsafe or unreadable
+ * archives (nothing is written in that case).
+ *
+ * @return string[]
+ */
+function extractReleaseArchive(string $zipPath, string $destDir): array
+{
+    if (!is_file($zipPath)) {
+        throw new RuntimeException('Downloaded release archive not found');
+    }
+
+    // Validation pass: every raw central-directory name must be safe.
+    $entryNames = listZipEntryNames($zipPath);
+    $fileNames = array_values(array_filter($entryNames, static fn (string $name): bool => !str_ends_with($name, '/')));
+    if ($fileNames === []) {
+        throw new RuntimeException('Release archive is empty');
+    }
+    foreach ($fileNames as $entryName) {
+        if (!isSafeArchiveEntry($entryName)) {
+            throw new RuntimeException('Unsafe archive entry: ' . $entryName);
+        }
+    }
+
+    if (!is_dir($destDir) && !mkdir($destDir, 0775, true)) {
+        throw new RuntimeException('Cannot create extraction directory');
+    }
+
+    return extractValidatedArchive($zipPath, $destDir, $fileNames);
 }
