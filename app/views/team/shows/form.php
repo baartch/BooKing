@@ -88,6 +88,10 @@ if ($isEdit && $editShow) {
             <th>Artist Fee</th>
             <td><input type="number" min="0" step="0.01" id="show_artist_fee" name="artist_fee" class="input" value="<?php echo htmlspecialchars((string) ($formValues['artist_fee'] ?? '')); ?>"></td>
           </tr>
+          <tr>
+            <th>Entrance Fee</th>
+            <td><input type="number" min="0" step="0.01" id="show_entrance_fee" name="entrance_fee" class="input" value="<?php echo htmlspecialchars((string) ($formValues['entrance_fee'] ?? '')); ?>"></td>
+          </tr>
         </tbody>
       </table>
     </div>

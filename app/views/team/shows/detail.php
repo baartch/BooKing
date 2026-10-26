@@ -49,6 +49,7 @@ if ($activeShow) {
         buildDetailRow('Time', (string) ($activeShow['show_time'] ?? '')),
         buildDetailRow('Venue', (string) ($activeShow['venue_text'] ?? '')),
         buildDetailRow('Artist Fee', (string) ($activeShow['artist_fee'] ?? '')),
+        buildDetailRow('Entrance Fee', (string) ($activeShow['entrance_fee'] ?? '')),
         buildDetailRow('Notes', (string) ($activeShow['notes'] ?? '')),
         buildDetailRow('Created', (string) ($activeShow['created_at'] ?? '')),
         buildDetailRow('Updated', (string) ($activeShow['updated_at'] ?? '')),

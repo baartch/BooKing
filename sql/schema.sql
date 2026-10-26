@@ -258,6 +258,7 @@ CREATE TABLE team_shows (
     show_time TIME DEFAULT NULL,
     venue_text VARCHAR(255) DEFAULT NULL,
     artist_fee DECIMAL(10,2) DEFAULT NULL,
+    entrance_fee DECIMAL(10,2) DEFAULT NULL,
     notes TEXT DEFAULT NULL,
     created_by INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -371,3 +372,4 @@ CREATE TABLE schema_migrations (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO schema_migrations (name) VALUES ('2026-10-25_team_show_songs.sql');
+INSERT INTO schema_migrations (name) VALUES ('2026-10-26_team_shows_entrance_fee.sql');
