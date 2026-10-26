@@ -27,7 +27,6 @@ function isManagedReleasePath(string $relative): bool
         'index.php',
         'favicon.ico',
         '.htaccess',
-        'version.php',
         'manifest.json',
         'config/.htaccess',
         'config/config.example.php',
@@ -204,7 +203,7 @@ function runApplicationUpdate(array $target, callable $httpFetch, ?string $baseD
             throw new RuntimeException('Manifest version does not match the release tag.');
         }
 
-        $versionSource = (string) file_get_contents($extractDir . '/version.php');
+        $versionSource = (string) file_get_contents($extractDir . '/app/version.php');
         if (!preg_match("/define\('APP_VERSION', '([^']+)'\)/", $versionSource, $match) || $match[1] !== $tag) {
             throw new RuntimeException('Release version stamp does not match the release tag.');
         }
@@ -268,7 +267,7 @@ function runApplicationUpdate(array $target, callable $httpFetch, ?string $baseD
         $state['step'] = 'replace';
         writeUpdateLockState($handle, $state);
         $copyPlan = array_merge($manifestFiles, ['manifest.json']);
-        $installLast = ['version.php', 'manifest.json'];
+        $installLast = ['app/version.php', 'manifest.json'];
         $orderedPlan = array_values(array_filter(
             $copyPlan,
             static fn (string $relative): bool => !in_array($relative, $installLast, true)

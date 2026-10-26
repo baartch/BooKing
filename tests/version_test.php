@@ -27,23 +27,29 @@ $check(parseVersionTag('v1.2.3-beta') === null, 'non-stable suffix rejected');
 $check(parseVersionTag('1.2') === [1, 2], 'v prefix optional');
 
 $fixture = sys_get_temp_dir() . '/booking-version-test-' . getmypid();
-if (!is_dir($fixture)) {
-    mkdir($fixture, 0777, true);
+if (!is_dir($fixture . '/app')) {
+    mkdir($fixture . '/app', 0777, true);
 }
-file_put_contents($fixture . '/version.php', "<?php\ndefine('APP_VERSION', 'v9.9.9');\n");
-$check(installedAppVersion($fixture) === 'v9.9.9', 'installed version read from fixture');
+file_put_contents($fixture . '/app/version.php', "<?php\ndefine('APP_VERSION', 'v9.9.9');\n");
+$check(installedAppVersion($fixture) === 'v9.9.9', 'installed version read from fixture root (app/version.php)');
+
+// Regression: pipeline writes app/version.php in the package root; the
+// reader must resolve <installation root>/app/version.php, not a file
+// next to index.php.
+file_put_contents($fixture . '/version.php', "<?php\ndefine('APP_VERSION', 'v0.0.0-WRONG-PLACE');\n");
+$check(installedAppVersion($fixture) === 'v9.9.9', 'root-level version.php is ignored, app/version.php wins');
 
 $emptyFixture = $fixture . '/empty';
-if (!is_dir($emptyFixture)) {
-    mkdir($emptyFixture, 0777, true);
+if (!is_dir($emptyFixture . '/app')) {
+    mkdir($emptyFixture . '/app', 0777, true);
 }
-$check(installedAppVersion($emptyFixture) === '', 'missing version.php yields unknown');
+$check(installedAppVersion($emptyFixture) === '', 'missing app/version.php yields unknown');
 
-if (installedAppVersion() === 'v9.9.9') {
-    // Sanity: repo root must not accidentally define APP_VERSION.
-    $check(false, 'repo root defines no APP_VERSION');
+if (installedAppVersion() !== '') {
+    // Sanity: repo must not accidentally ship app/version.php pre-release.
+    $check(false, 'repo has no APP_VERSION (expected pre-release)');
 } else {
-    $check(true, 'repo root has no APP_VERSION (expected pre-release)');
+    $check(true, 'repo has no APP_VERSION (expected pre-release)');
 }
 
 if ($failures > 0) {
