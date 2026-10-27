@@ -1,4 +1,8 @@
-import { initHugerte, initHugertePlainPaste } from "./hugerte-editor.js";
+import {
+  getHugerteEditor,
+  initHugerte,
+  initHugertePlainPaste,
+} from "./hugerte-editor.js";
 
 type TemplateData = {
   name: string;
@@ -694,7 +698,11 @@ const resolveSubmitAction = (
   return actionField?.value ?? "";
 };
 
-const confirmEmptySend = (form: HTMLFormElement): boolean => {
+export const confirmEmptySend = (form: HTMLFormElement): boolean => {
+  // Sync live editor content into the textarea before reading it — the
+  // HugeRTE "Submit" hook only fires on native form submits, so the
+  // schedule modal pre-check would otherwise read a stale/empty value.
+  getHugerteEditor("#email_body")?.save();
   const subjectField = form.querySelector<HTMLInputElement>("#email_subject");
   const bodyField = form.querySelector<HTMLTextAreaElement>("#email_body");
   const subject = subjectField?.value?.trim() ?? "";
