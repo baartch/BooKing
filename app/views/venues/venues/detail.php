@@ -166,10 +166,16 @@ if ($activeVenue) {
         . ' <button type="button" class="button is-small ml-2" hx-get="' . htmlspecialchars($triggerUrl) . '" hx-target="#venues-detail-panel" hx-swap="innerHTML" hx-push-url="true" aria-label="' . ($showTriggers ? 'Hide task triggers' : 'Edit task triggers') . '" title="' . ($showTriggers ? 'Hide task triggers' : 'Edit task triggers') . '">'
         . '<span class="icon"><i class="fa-solid fa-pen"></i></span></button>';
 
+    $triggerTaskIds = array_map(
+        static fn(array $trigger): int => (int) ($trigger['id'] ?? 0),
+        $venueTaskTriggers
+    );
+
     if (!empty($venueLinks)) {
         foreach ($venueLinks as $link) {
             $linkItems[] = [
                 'type' => $link['type'],
+                'id' => (int) ($link['id'] ?? 0),
                 'label' => $link['label'],
                 'url' => buildLinkUrl($link)
             ];
@@ -190,8 +196,12 @@ if ($activeVenue) {
         $linksRow .= '<span class="has-text-grey is-size-7">No links yet</span>';
     } else {
         foreach ($linkItems as $linkItem) {
+            $iconClass = $linkIcons[$linkItem['type']] ?? 'fa-link';
+            if ($linkItem['type'] === 'task' && in_array((int) $linkItem['id'], $triggerTaskIds, true)) {
+                $iconClass = 'fa-circle-dot';
+            }
             $linksRow .= '<a href="' . htmlspecialchars($linkItem['url']) . '" class="detail-link-pill">'
-                . '<span class="icon is-small"><i class="fa-solid ' . htmlspecialchars($linkIcons[$linkItem['type']] ?? 'fa-link') . '"></i></span>'
+                . '<span class="icon is-small"><i class="fa-solid ' . htmlspecialchars($iconClass) . '"></i></span>'
                 . '<span>' . htmlspecialchars($linkItem['label']) . '</span>'
                 . '</a>';
         }
