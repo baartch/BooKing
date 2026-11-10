@@ -70,6 +70,10 @@ $check(releaseCheckDue(['last_check_at' => ''], $now) === true, 'never checked b
 $check(releaseCheckDue([], $now) === true, 'empty state due');
 $check(releaseCheckDue(['last_check_at' => 'garbage'], $now) === true, 'unparseable last check is due');
 
+$releaseCheckSource = file_get_contents(__DIR__ . '/../app/models/update/release_check.php');
+$check(!str_contains($releaseCheckSource, "'update_check_done'"), 'successful release check is not logged');
+$check(str_contains($releaseCheckSource, "'update_check_error'"), 'release check errors are still logged');
+
 if ($failures > 0) {
     echo "{$failures} test(s) FAILED\n";
     exit(1);

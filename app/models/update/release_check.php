@@ -93,7 +93,6 @@ function runReleaseCheckTask(PDO $pdo, bool $force = false): void
             saveSettingValue('update_latest_notes_url', $release['notes_url']);
             saveSettingValue('update_check_error', '');
             saveSettingValue('update_last_check_at', $nowIso);
-            logAction(null, 'update_check_done', 'Latest release: ' . $release['tag']);
             return;
         }
 
