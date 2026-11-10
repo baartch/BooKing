@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 
-GlobalRegistrator.register();
+if (!GlobalRegistrator.isRegistered) GlobalRegistrator.register();
 
 type Source = {
   id: string;
@@ -18,7 +18,7 @@ type CalendarOptions = {
   eventSources: Source[];
   loading: (loading: boolean) => void;
   eventsSet: (events: unknown[]) => void;
-  eventContent: (info: { event: { title: string; extendedProps?: Record<string, string | undefined> } }) => { domNodes: Node[] };
+  eventContent: (info: { event: { title: string; extendedProps?: Record<string, string | undefined> }; timeText?: string }) => { domNodes: Node[] };
   eventClick: (info: {
     event: { title: string; extendedProps?: Record<string, string | undefined> };
     el: HTMLElement;
@@ -69,6 +69,8 @@ const buildCalendar = (teamMarkup: string): HTMLElement => {
 describe("dashboard calendar initialization", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
+    document.documentElement.removeAttribute("data-theme");
+    document.documentElement.removeAttribute("data-color-scheme");
     FakeCalendar.instances = [];
     (window as unknown as { FullCalendar: { Calendar: typeof FakeCalendar } }).FullCalendar = { Calendar: FakeCalendar };
   });
@@ -290,11 +292,13 @@ describe("dashboard calendar initialization", () => {
     const calendar = FakeCalendar.instances[0];
     const showContent = calendar.options.eventContent({ event: { title: "Concert", extendedProps: { kind: "show", teamName: "Brass" } } });
     const taskContent = calendar.options.eventContent({ event: { title: "Book venue", extendedProps: { kind: "task", teamName: "Brass" } } });
+    const timedShowContent = calendar.options.eventContent({ event: { title: "Concert", extendedProps: { kind: "show", teamName: "Brass" } }, timeText: "19:30" });
 
     expect(showContent.domNodes.map((node) => node.textContent).join("")).toContain("Brass");
     expect(showContent.domNodes.map((node) => node.textContent).join("")).toContain("Show");
     expect(taskContent.domNodes.map((node) => node.textContent).join("")).toContain("Brass");
     expect(taskContent.domNodes.map((node) => node.textContent).join("")).toContain("Task");
+    expect(timedShowContent.domNodes.map((node) => node.textContent).join("")).toContain("19:30");
   });
 
   test("replaces old preview content when a later entry has no notes", async () => {
@@ -321,5 +325,24 @@ describe("dashboard calendar initialization", () => {
     expect(dialog.querySelector("[data-calendar-dialog-description]")!.textContent).toBe("");
     expect((dialog.querySelector<HTMLElement>("[data-calendar-dialog-description]")!).hidden).toBe(true);
     expect((dialog.querySelector<HTMLElement>("[data-calendar-dialog-description-label]")!).hidden).toBe(true);
+  });
+
+  test("maps the app's explicit and system theme choices to FullCalendar's palette", async () => {
+    const { syncDashboardCalendarColorScheme } = await import("../src/dashboard-calendar.js");
+    const root = document.documentElement;
+
+    root.setAttribute("data-theme", "dark");
+    syncDashboardCalendarColorScheme(root, false);
+    expect(root.getAttribute("data-color-scheme")).toBe("dark");
+
+    root.setAttribute("data-theme", "light");
+    syncDashboardCalendarColorScheme(root, true);
+    expect(root.hasAttribute("data-color-scheme")).toBe(false);
+
+    root.removeAttribute("data-theme");
+    syncDashboardCalendarColorScheme(root, true);
+    expect(root.getAttribute("data-color-scheme")).toBe("dark");
+    syncDashboardCalendarColorScheme(root, false);
+    expect(root.hasAttribute("data-color-scheme")).toBe(false);
   });
 });

@@ -37,7 +37,7 @@ type CalendarOptions = {
   eventSources: CalendarEventSource[];
   loading: (loading: boolean) => void;
   eventsSet: (events: CalendarEvent[]) => void;
-  eventContent: (info: { event: CalendarEvent }) => { domNodes: Node[] };
+  eventContent: (info: { event: CalendarEvent; timeText: string }) => { domNodes: Node[] };
   eventClick: (info: CalendarEventClickInfo) => void;
 };
 
@@ -69,6 +69,27 @@ const TEAM_COLORS = [
 ];
 const boundDialogs = new WeakSet<HTMLDialogElement>();
 const dialogReturnFocus = new WeakMap<HTMLDialogElement, HTMLElement>();
+let themeSyncInstalled = false;
+
+export const syncDashboardCalendarColorScheme = (
+  root: HTMLElement = document.documentElement,
+  prefersDarkSystem = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false,
+): void => {
+  const theme = root.getAttribute('data-theme');
+  const useDarkPalette = theme === 'dark' || (theme !== 'light' && prefersDarkSystem);
+  if (useDarkPalette) root.setAttribute('data-color-scheme', 'dark');
+  else root.removeAttribute('data-color-scheme');
+};
+
+const installThemeSync = (): void => {
+  if (themeSyncInstalled) return;
+  themeSyncInstalled = true;
+  const root = document.documentElement;
+  const sync = (): void => syncDashboardCalendarColorScheme(root);
+  sync();
+  new MutationObserver(sync).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+  window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', sync);
+};
 
 export const initDashboardCalendar = (scope: ParentNode = document): void => {
   const roots: HTMLElement[] = [];
@@ -89,6 +110,7 @@ const initializeCalendar = (root: HTMLElement): void => {
   const emptyElement = root.querySelector<HTMLElement>('[data-calendar-empty]');
   if (!calendarElement) return;
   calendarElement.tabIndex = -1;
+  installThemeSync();
 
   const showError = (message: string): void => {
     if (!errorElement) return;
@@ -186,6 +208,9 @@ const initializeCalendar = (root: HTMLElement): void => {
     editable: false,
     eventSources: initialSources,
     eventContent: (info) => {
+      const time = document.createElement('span');
+      time.className = 'dashboard-calendar-event-time';
+      time.textContent = info.timeText === '' ? '' : `${info.timeText} · `;
       const kind = info.event.extendedProps?.kind === 'show' ? 'Show' : 'Task';
       const teamName = info.event.extendedProps?.teamName ?? '';
       const teamLabel = document.createElement('span');
@@ -197,7 +222,7 @@ const initializeCalendar = (root: HTMLElement): void => {
       const title = document.createElement('span');
       title.className = 'dashboard-calendar-event-title';
       title.textContent = info.event.title;
-      return { domNodes: [teamLabel, kindLabel, title] };
+      return { domNodes: [time, teamLabel, kindLabel, title] };
     },
     eventClick: (info) => openEventPreview(root, calendarElement, info),
     loading: (loading) => {

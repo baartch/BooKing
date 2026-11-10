@@ -23,6 +23,11 @@
   font-weight: 600;
 }
 
+.dashboard-calendar-event-time {
+  margin-right: 0.2rem;
+  font-weight: 600;
+}
+
 .dashboard-calendar-dialog {
   width: min(36rem, 90vw);
   border: 0;
