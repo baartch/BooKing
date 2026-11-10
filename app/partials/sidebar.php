@@ -16,6 +16,7 @@ $isAdmin = strpos($relativePath, '/app/controllers/admin') === 0;
 $isProfile = strpos($relativePath, '/app/controllers/profile') === 0;
 $isCommunication = strpos($relativePath, '/app/controllers/communication') === 0;
 $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
+$isTeamMember = $currentUser['is_team_member'] ?? false;
 ?>
 <aside class="column is-narrow">
   <div class="is-flex is-flex-direction-column is-justify-content-space-between is-fullheight p-3">
@@ -41,7 +42,7 @@ $isTeamAdmin = $currentUser['is_team_admin'] ?? false;
             <span class="icon"><i class="fa-solid fa-comments"></i></span>
           </a>
         </li>
-        <?php if ($isTeamAdmin): ?>
+        <?php if ($isTeamAdmin || $isTeamMember): ?>
           <li>
             <a href="<?php echo BASE_PATH; ?>/app/controllers/team/index.php" class="<?php echo $isTeam ? 'is-active' : ''; ?>" aria-label="Team">
               <span class="icon"><i class="fa-solid fa-users"></i></span>

@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../models/auth/team_admin_check.php';
+require_once __DIR__ . '/../../models/auth/check.php';
 require_once __DIR__ . '/../../models/core/database.php';
 require_once __DIR__ . '/../../views/core/layout.php';
 require_once __DIR__ . '/../../models/communication/email_templates_helpers.php';
@@ -26,7 +26,7 @@ $pdo = null;
 
 try {
     $pdo = getDatabaseConnection();
-    $teams = fetchTeamAdminTeams($pdo, (int) ($currentUser['user_id'] ?? 0));
+    $teams = fetchUserTeams($pdo, (int) ($currentUser['user_id'] ?? 0));
     $teamIds = array_map('intval', array_column($teams, 'id'));
 } catch (Throwable $error) {
     $errors[] = 'Failed to load teams.';
