@@ -13,10 +13,16 @@ require_once __DIR__ . '/../../models/team/songs.php';
 require_once __DIR__ . '/../../models/core/link_helpers.php';
 
 $isTeamAdmin = (bool) ($currentUser['is_team_admin'] ?? false);
+$isTeamMember = (bool) ($currentUser['is_team_member'] ?? false);
 $activeTab = $_GET['tab'] ?? 'tasks';
-$validTabs = $isTeamAdmin
-    ? ['tasks', 'shows', 'songs', 'members', 'mailboxes', 'templates']
-    : ['tasks', 'shows', 'songs', 'members'];
+$validTabs = ['tasks', 'shows', 'songs'];
+if ($isTeamMember) {
+    $validTabs[] = 'templates';
+}
+if ($isTeamAdmin) {
+    $validTabs[] = 'members';
+    $validTabs[] = 'mailboxes';
+}
 if (!in_array($activeTab, $validTabs, true)) {
     $activeTab = 'tasks';
 }
@@ -301,7 +307,7 @@ if ($pdo && $isTeamAdmin && $teamIds) {
     }
 }
 
-if ($pdo && $isTeamAdmin) {
+if ($pdo && $isTeamMember) {
     try {
         $templates = loadTeamTemplates($pdo, (int) ($currentUser['user_id'] ?? 0));
     } catch (Throwable $error) {

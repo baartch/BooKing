@@ -126,6 +126,25 @@ function isTeamAdmin(int $userId): bool
     }
 }
 
+function isTeamMember(int $userId): bool
+{
+    if ($userId <= 0) {
+        return false;
+    }
+
+    try {
+        $pdo = getDatabaseConnection();
+        $stmt = $pdo->prepare(
+            'SELECT 1 FROM team_members WHERE user_id = :user_id LIMIT 1'
+        );
+        $stmt->execute([':user_id' => $userId]);
+        return (bool) $stmt->fetchColumn();
+    } catch (Throwable $error) {
+        error_log('Team membership check failed: ' . $error->getMessage());
+        return false;
+    }
+}
+
 function updateUserTheme(int $userId, string $theme): void
 {
     $pdo = getDatabaseConnection();
@@ -146,4 +165,3 @@ function updateUserVenuePageSize(int $userId, int $pageSize): void
         ':user_id' => $userId
     ]);
 }
-

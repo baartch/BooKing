@@ -71,3 +71,6 @@ $currentUser = [
 $currentUser['is_team_admin'] = $currentUser['user_id'] > 0
     ? isTeamAdmin($currentUser['user_id'])
     : false;
+$currentUser['is_team_member'] = $currentUser['user_id'] > 0
+    ? isTeamMember($currentUser['user_id'])
+    : false;
