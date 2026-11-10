@@ -219,6 +219,10 @@ try {
         exit;
     }
 
+    if (!array_key_exists('state', $_POST)) {
+        $payload['state'] = (string) ($existing['state'] ?? 'provisional');
+    }
+
     $pdo->beginTransaction();
 
     $stmt = $pdo->prepare(
