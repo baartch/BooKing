@@ -12,6 +12,12 @@
   vertical-align: -0.05rem;
 }
 
+.dashboard-calendar-event-kind {
+  margin-right: 0.2rem;
+  font-size: 0.75em;
+  font-weight: 700;
+}
+
 .dashboard-calendar-dialog {
   width: min(36rem, 90vw);
   border: 0;
