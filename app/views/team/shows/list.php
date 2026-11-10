@@ -3,6 +3,16 @@ require_once __DIR__ . '/../../../models/core/list_helpers.php';
 
 $listColumns = [
     buildListColumn('Date', 'show_date'),
+    buildListColumn('State', null, static function (array $show): string {
+        $states = [
+            'provisional' => ['Provisional', 'fa-circle-question', 'has-text-warning'],
+            'definitely' => ['Definitely', 'fa-circle-check', 'has-text-success'],
+            'canceled' => ['Canceled', 'fa-circle-xmark', 'has-text-danger'],
+        ];
+        $state = (string) ($show['state'] ?? 'provisional');
+        [$label, $icon, $color] = $states[$state] ?? $states['provisional'];
+        return '<span class="' . $color . '"><i class="fa-solid ' . $icon . '" aria-hidden="true"></i> ' . $label . '</span>';
+    }, true),
     buildListColumn('Venue', null, static function (array $show): string {
         $venue = trim((string) ($show['venue_text'] ?? ''));
         return $venue !== '' ? $venue : '—';

@@ -259,6 +259,7 @@ CREATE TABLE team_shows (
     venue_text VARCHAR(255) DEFAULT NULL,
     artist_fee DECIMAL(10,2) DEFAULT NULL,
     entrance_fee DECIMAL(10,2) DEFAULT NULL,
+    state ENUM('provisional', 'definitely', 'canceled') NOT NULL DEFAULT 'provisional',
     notes TEXT DEFAULT NULL,
     created_by INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -373,3 +374,4 @@ CREATE TABLE schema_migrations (
 
 INSERT INTO schema_migrations (name) VALUES ('2026-10-25_team_show_songs.sql');
 INSERT INTO schema_migrations (name) VALUES ('2026-10-26_team_shows_entrance_fee.sql');
+INSERT INTO schema_migrations (name) VALUES ('2026-11-10_team_shows_state.sql');
