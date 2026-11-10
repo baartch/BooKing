@@ -38,6 +38,7 @@ $payload = [
     'venue_text' => trim((string) ($_POST['venue_text'] ?? '')),
     'artist_fee' => trim((string) ($_POST['artist_fee'] ?? '')),
     'entrance_fee' => trim((string) ($_POST['entrance_fee'] ?? '')),
+    'state' => trim((string) ($_POST['state'] ?? 'provisional')),
     'notes' => trim((string) ($_POST['notes'] ?? '')),
     'links' => is_array($_POST['link_items'] ?? null) ? $_POST['link_items'] : []
 ];
@@ -54,6 +55,9 @@ if ($payload['show_time'] !== '' && !preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $pay
     $errors[] = 'Time must use HH:MM or HH:MM:SS format.';
 }
 
+if (!in_array($payload['state'], ['provisional', 'definitely', 'canceled'], true)) {
+    $errors[] = 'Show state is invalid.';
+}
 
 $normalizedArtistFeeInput = str_replace(',', '.', $payload['artist_fee']);
 if ($normalizedArtistFeeInput !== '' && (!is_numeric($normalizedArtistFeeInput) || (float) $normalizedArtistFeeInput < 0)) {
@@ -81,6 +85,7 @@ if ($errors) {
         'venue_text' => $payload['venue_text'],
         'artist_fee' => $payload['artist_fee'],
         'entrance_fee' => $payload['entrance_fee'],
+        'state' => array_key_exists('state', $_POST) ? $payload['state'] : null,
         'notes' => $payload['notes'],
         'show_songs' => $songInput['song_ids'],
     ]);
@@ -117,6 +122,7 @@ try {
                 'venue_text' => $payload['venue_text'],
                 'artist_fee' => $payload['artist_fee'],
                 'entrance_fee' => $payload['entrance_fee'],
+                'state' => array_key_exists('state', $_POST) ? $payload['state'] : null,
                 'notes' => $payload['notes'],
                 'show_songs' => $songIds,
             ]);
@@ -167,9 +173,9 @@ try {
 
         $stmt = $pdo->prepare(
             'INSERT INTO team_shows
-                (team_id, name, show_date, show_time, venue_text, artist_fee, entrance_fee, notes, created_by)
+                (team_id, name, show_date, show_time, venue_text, artist_fee, entrance_fee, notes, created_by, state)
              VALUES
-                (:team_id, :name, :show_date, :show_time, :venue_text, :artist_fee, :entrance_fee, :notes, :created_by)'
+                (:team_id, :name, :show_date, :show_time, :venue_text, :artist_fee, :entrance_fee, :notes, :created_by, :state)'
         );
         $stmt->execute([
             ':team_id' => $teamId,
@@ -179,6 +185,7 @@ try {
             ':venue_text' => normalizeOptionalString((string) ($resolvedVenueText ?? '')),
             ':artist_fee' => $artistFee,
             ':entrance_fee' => $entranceFee,
+            ':state' => $payload['state'],
             ':notes' => normalizeOptionalString($payload['notes']),
             ':created_by' => $userId > 0 ? $userId : null,
         ]);
@@ -212,6 +219,10 @@ try {
         exit;
     }
 
+    if (!array_key_exists('state', $_POST)) {
+        $payload['state'] = (string) ($existing['state'] ?? 'provisional');
+    }
+
     $pdo->beginTransaction();
 
     $stmt = $pdo->prepare(
@@ -222,6 +233,7 @@ try {
              venue_text = :venue_text,
              artist_fee = :artist_fee,
              entrance_fee = :entrance_fee,
+             state = :state,
              notes = :notes
          WHERE id = :id AND team_id = :team_id'
     );
@@ -232,6 +244,7 @@ try {
         ':venue_text' => normalizeOptionalString((string) ($resolvedVenueText ?? '')),
         ':artist_fee' => $artistFee,
         ':entrance_fee' => $entranceFee,
+        ':state' => $payload['state'],
         ':notes' => normalizeOptionalString($payload['notes']),
         ':id' => (int) $existing['id'],
         ':team_id' => $teamId,

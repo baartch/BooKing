@@ -92,6 +92,17 @@ if ($isEdit && $editShow) {
             <th>Entrance Fee</th>
             <td><input type="number" min="0" step="0.01" id="show_entrance_fee" name="entrance_fee" class="input" value="<?php echo htmlspecialchars((string) ($formValues['entrance_fee'] ?? '')); ?>"></td>
           </tr>
+          <tr>
+            <th>State</th>
+            <td>
+              <?php foreach (['provisional' => 'Provisional', 'definitely' => 'Definitely', 'canceled' => 'Canceled'] as $stateValue => $stateLabel): ?>
+                <label class="radio mr-3">
+                  <input type="radio" name="state" value="<?php echo htmlspecialchars($stateValue); ?>"<?php echo ($formValues['state'] ?? 'provisional') === $stateValue ? ' checked' : ''; ?>>
+                  <?php echo htmlspecialchars($stateLabel); ?>
+                </label>
+              <?php endforeach; ?>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
