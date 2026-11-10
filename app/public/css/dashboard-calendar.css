@@ -18,6 +18,11 @@
   font-weight: 700;
 }
 
+.dashboard-calendar-event-team {
+  font-size: 0.75em;
+  font-weight: 600;
+}
+
 .dashboard-calendar-dialog {
   width: min(36rem, 90vw);
   border: 0;

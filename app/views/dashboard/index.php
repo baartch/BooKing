@@ -1,18 +1,19 @@
 <?php
 $fullCalendarUrl = 'https://cdn.jsdelivr.net/npm/fullcalendar@7.1.4';
+$hasCalendarAssets = ($calendarError ?? '') === '' && !empty($calendarTeams);
 renderPageStart('Dashboard', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',
-    'extraStyles' => [
+    'extraStyles' => $hasCalendarAssets ? [
         $fullCalendarUrl . '/skeleton.css',
         $fullCalendarUrl . '/themes/monarch/theme.css',
         $fullCalendarUrl . '/themes/monarch/palettes/purple.css',
         BASE_PATH . '/app/public/css/dashboard-calendar.css',
-    ],
-    'extraScripts' => [
+    ] : [],
+    'extraScripts' => $hasCalendarAssets ? [
         '<script defer src="' . $fullCalendarUrl . '/all/global.js"></script>',
         '<script defer src="' . $fullCalendarUrl . '/themes/monarch/global.js"></script>',
         '<script type="module" src="' . BASE_PATH . '/app/public/js/dashboard-calendar.js"></script>',
-    ],
+    ] : [],
 ]);
 ?>
       <section class="section">

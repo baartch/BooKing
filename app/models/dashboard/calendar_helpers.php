@@ -43,6 +43,81 @@ function parseDashboardCalendarDateRange(string $start, string $end): ?array
     return [$startDate, $endDate];
 }
 
+function parseDashboardCalendarRequest(array $query): ?array
+{
+    $teamValue = $query['team_id'] ?? null;
+    $startValue = $query['start'] ?? null;
+    $endValue = $query['end'] ?? null;
+    if ((!is_string($teamValue) && !is_int($teamValue)) || !is_string($startValue) || !is_string($endValue)) {
+        return null;
+    }
+
+    $teamId = filter_var($teamValue, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+    $range = parseDashboardCalendarDateRange($startValue, $endValue);
+    if ($teamId === false || $range === null) {
+        return null;
+    }
+
+    return ['teamId' => (int) $teamId, 'range' => $range];
+}
+
+function fetchDashboardCalendarEvents(PDO $pdo, array $teams, int $requestedTeamId, array $range): ?array
+{
+    $team = resolveDashboardCalendarTeam($teams, $requestedTeamId);
+    if ($team === null || count($range) !== 2) {
+        return null;
+    }
+
+    [$startDate, $endDate] = $range;
+    $showStmt = $pdo->prepare(
+        'SELECT id, name, show_date, show_time, state, notes
+         FROM team_shows
+         WHERE team_id = :team_id
+           AND state <> \'canceled\'
+           AND show_date >= :start_date
+           AND show_date < :end_date
+         ORDER BY show_date, show_time, id'
+    );
+    $showStmt->execute([
+        ':team_id' => $requestedTeamId,
+        ':start_date' => $startDate,
+        ':end_date' => $endDate,
+    ]);
+
+    $taskStmt = $pdo->prepare(
+        'SELECT id, title, due_date, description, is_template
+         FROM team_tasks
+         WHERE team_id = :team_id
+           AND is_template = 0
+           AND due_date IS NOT NULL
+           AND due_date >= :start_date
+           AND due_date < :end_date
+         ORDER BY due_date, id'
+    );
+    $taskStmt->execute([
+        ':team_id' => $requestedTeamId,
+        ':start_date' => $startDate,
+        ':end_date' => $endDate,
+    ]);
+
+    return buildDashboardCalendarEvents($showStmt->fetchAll(), $taskStmt->fetchAll(), $team);
+}
+
+function buildDashboardCalendarFeedResponse(PDO $pdo, array $teams, int $requestedTeamId, array $range): array
+{
+    try {
+        $events = fetchDashboardCalendarEvents($pdo, $teams, $requestedTeamId, $range);
+    } catch (Throwable $error) {
+        return ['status' => 500, 'body' => ['error' => 'Failed to load calendar events.']];
+    }
+
+    if ($events === null) {
+        return ['status' => 403, 'body' => ['error' => 'You do not have access to this team.']];
+    }
+
+    return ['status' => 200, 'body' => $events];
+}
+
 function buildDashboardCalendarEvents(array $shows, array $tasks, array $team): array
 {
     $teamId = (int) ($team['id'] ?? 0);

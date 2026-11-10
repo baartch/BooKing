@@ -288,10 +288,12 @@ describe("dashboard calendar initialization", () => {
     const root = buildCalendar('<span hidden data-calendar-team data-team-id="7" data-team-name="Brass"></span>');
     initDashboardCalendar(root);
     const calendar = FakeCalendar.instances[0];
-    const showContent = calendar.options.eventContent({ event: { title: "Concert", extendedProps: { kind: "show" } } });
-    const taskContent = calendar.options.eventContent({ event: { title: "Book venue", extendedProps: { kind: "task" } } });
+    const showContent = calendar.options.eventContent({ event: { title: "Concert", extendedProps: { kind: "show", teamName: "Brass" } } });
+    const taskContent = calendar.options.eventContent({ event: { title: "Book venue", extendedProps: { kind: "task", teamName: "Brass" } } });
 
+    expect(showContent.domNodes.map((node) => node.textContent).join("")).toContain("Brass");
     expect(showContent.domNodes.map((node) => node.textContent).join("")).toContain("Show");
+    expect(taskContent.domNodes.map((node) => node.textContent).join("")).toContain("Brass");
     expect(taskContent.domNodes.map((node) => node.textContent).join("")).toContain("Task");
   });
 

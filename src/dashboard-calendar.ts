@@ -187,13 +187,17 @@ const initializeCalendar = (root: HTMLElement): void => {
     eventSources: initialSources,
     eventContent: (info) => {
       const kind = info.event.extendedProps?.kind === 'show' ? 'Show' : 'Task';
+      const teamName = info.event.extendedProps?.teamName ?? '';
+      const teamLabel = document.createElement('span');
+      teamLabel.className = 'dashboard-calendar-event-team';
+      teamLabel.textContent = teamName === '' ? '' : `${teamName} · `;
       const kindLabel = document.createElement('span');
       kindLabel.className = 'dashboard-calendar-event-kind';
       kindLabel.textContent = `${kind} · `;
       const title = document.createElement('span');
       title.className = 'dashboard-calendar-event-title';
       title.textContent = info.event.title;
-      return { domNodes: [kindLabel, title] };
+      return { domNodes: [teamLabel, kindLabel, title] };
     },
     eventClick: (info) => openEventPreview(root, calendarElement, info),
     loading: (loading) => {
