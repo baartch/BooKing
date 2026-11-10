@@ -49,6 +49,7 @@ $check(str_contains($model, 's.state'), 'show list query retrieves state');
 $check(str_contains($controller, "'state' => trim((string) (\$_POST['state'] ?? 'provisional'))"), 'save controller reads state with provisional fallback');
 $check(str_contains($controller, "['provisional', 'definitely', 'canceled']"), 'save controller validates all allowed states');
 $check(str_contains($controller, "if (!array_key_exists('state', \$_POST))") && str_contains($controller, "\$payload['state'] = (string) (\$existing['state']"), 'update without a state preserves the saved state');
+$check(substr_count($controller, "'state' => array_key_exists('state', \$_POST) ? \$payload['state'] : null") === 2, 'validation-error flash does not replace an omitted state');
 $check(str_contains($controller, 'state = :state'), 'show update persists state');
 $check(str_contains($controller, 'created_by, state') && str_contains($controller, ':created_by, :state'), 'show insert persists state');
 $check((bool) preg_match("/'state'\s*=>\s*'provisional'/", $showsView), 'new show form defaults to provisional');

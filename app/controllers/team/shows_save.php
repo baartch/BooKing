@@ -85,7 +85,7 @@ if ($errors) {
         'venue_text' => $payload['venue_text'],
         'artist_fee' => $payload['artist_fee'],
         'entrance_fee' => $payload['entrance_fee'],
-        'state' => $payload['state'],
+        'state' => array_key_exists('state', $_POST) ? $payload['state'] : null,
         'notes' => $payload['notes'],
         'show_songs' => $songInput['song_ids'],
     ]);
@@ -122,7 +122,7 @@ try {
                 'venue_text' => $payload['venue_text'],
                 'artist_fee' => $payload['artist_fee'],
                 'entrance_fee' => $payload['entrance_fee'],
-                'state' => $payload['state'],
+                'state' => array_key_exists('state', $_POST) ? $payload['state'] : null,
                 'notes' => $payload['notes'],
                 'show_songs' => $songIds,
             ]);
