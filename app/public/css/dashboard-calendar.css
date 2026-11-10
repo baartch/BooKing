@@ -1,0 +1,45 @@
+.dashboard-calendar {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.dashboard-calendar-team-swatch {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-right: 0.3rem;
+  border-radius: 50%;
+  vertical-align: -0.05rem;
+}
+
+.dashboard-calendar-event-kind {
+  margin-right: 0.2rem;
+  font-size: 0.75em;
+  font-weight: 700;
+}
+
+.dashboard-calendar-event-team {
+  font-size: 0.75em;
+  font-weight: 600;
+}
+
+.dashboard-calendar-event-time {
+  margin-right: 0.2rem;
+  font-weight: 600;
+}
+
+.dashboard-calendar-dialog {
+  width: min(36rem, 90vw);
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.dashboard-calendar-dialog::backdrop {
+  background: rgb(0 0 0 / 60%);
+}
+
+.dashboard-calendar-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
