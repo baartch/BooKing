@@ -1,5 +1,26 @@
 <?php
 
+function dashboardEmailTimestampToIso8601(?string $timestamp): ?string
+{
+    $timestamp = trim((string) $timestamp);
+    if ($timestamp === '') {
+        return null;
+    }
+
+    try {
+        $timezone = new DateTimeZone(date_default_timezone_get());
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $timestamp, $timezone);
+        $errors = DateTimeImmutable::getLastErrors();
+        if (!$date || (is_array($errors) && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+            return null;
+        }
+
+        return $date->format(DATE_ATOM);
+    } catch (Throwable $error) {
+        return null;
+    }
+}
+
 function fetchDashboardUnreadEmails(PDO $pdo, array $mailboxes): array
 {
     $mailboxesById = [];

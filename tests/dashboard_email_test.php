@@ -82,6 +82,15 @@ if (function_exists('fetchDashboardUnreadEmails')) {
         ['id' => 13, 'name' => 'Å-Team', 'display_name' => '', 'user_id' => null, 'team_name' => 'Music'],
     ]);
     $check(($unicodeMessages[0]['mailbox_initial'] ?? '') === 'Å', 'keeps a non-ASCII mailbox initial as a complete UTF-8 character');
+
+    $check(function_exists('dashboardEmailTimestampToIso8601'), 'dashboard timestamp normalizer is available');
+    if (function_exists('dashboardEmailTimestampToIso8601')) {
+        $defaultTimezone = date_default_timezone_get();
+        date_default_timezone_set('America/Los_Angeles');
+        $check(dashboardEmailTimestampToIso8601('2026-12-12 15:43:00') === '2026-12-12T15:43:00-08:00', 'adds the PHP source timezone offset when normalizing a stored naive timestamp');
+        $check(dashboardEmailTimestampToIso8601('not-a-date') === null, 'rejects invalid stored timestamps');
+        date_default_timezone_set($defaultTimezone);
+    }
 }
 
 if ($failures > 0) {
