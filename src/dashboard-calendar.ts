@@ -203,7 +203,7 @@ const initializeCalendar = (root: HTMLElement): void => {
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay',
+      right: 'dayGridMonth,timeGridWeek,listYear',
     },
     editable: false,
     eventSources: initialSources,
