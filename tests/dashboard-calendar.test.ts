@@ -75,7 +75,7 @@ describe("dashboard calendar initialization", () => {
     (window as unknown as { FullCalendar: { Calendar: typeof FakeCalendar } }).FullCalendar = { Calendar: FakeCalendar };
   });
 
-  test("defaults to month view with week and day choices", async () => {
+  test("defaults to month view with week and yearly list choices", async () => {
     const { initDashboardCalendar } = await import("../src/dashboard-calendar.js");
     const root = buildCalendar('<span hidden data-calendar-team data-team-id="7" data-team-name="Brass"></span>');
 
@@ -85,7 +85,8 @@ describe("dashboard calendar initialization", () => {
     expect(FakeCalendar.instances[0].options.initialView).toBe("dayGridMonth");
     expect(FakeCalendar.instances[0].options.headerToolbar.right).toContain("dayGridMonth");
     expect(FakeCalendar.instances[0].options.headerToolbar.right).toContain("timeGridWeek");
-    expect(FakeCalendar.instances[0].options.headerToolbar.right).toContain("timeGridDay");
+    expect(FakeCalendar.instances[0].options.headerToolbar.right).toContain("listYear");
+    expect(FakeCalendar.instances[0].options.headerToolbar.right).not.toContain("timeGridDay");
     expect(root.querySelector("[data-calendar-team-toggle]")).toBeNull();
   });
 
