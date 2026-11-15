@@ -32,6 +32,14 @@ type CalendarEventClickInfo = {
 
 type CalendarOptions = {
   initialView: string;
+  views: {
+    listFuture: {
+      type: string;
+      buttonText: string;
+      visibleRange: (currentDate: Date) => { start: Date; end: Date };
+      eventOrder: string;
+    };
+  };
   headerToolbar: { left: string; center: string; right: string };
   editable: boolean;
   eventSources: CalendarEventSource[];
@@ -199,11 +207,28 @@ const initializeCalendar = (root: HTMLElement): void => {
     .map((team) => sources.get(team.id)!);
 
   const calendar = new fullCalendar.Calendar(calendarElement, {
-    initialView: 'dayGridMonth',
+    initialView: 'listFuture',
+    views: {
+      listFuture: {
+        type: 'list',
+        buttonText: 'List',
+        visibleRange: (currentDate) => {
+          const start = new Date(currentDate);
+          start.setHours(0, 0, 0, 0);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (start < today) start.setTime(today.getTime());
+          const end = new Date(start);
+          end.setFullYear(end.getFullYear() + 1);
+          return { start, end };
+        },
+        eventOrder: 'start',
+      },
+    },
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
-      right: 'dayGridMonth,timeGridWeek,listYear',
+      right: 'dayGridMonth,timeGridWeek,listFuture',
     },
     editable: false,
     eventSources: initialSources,

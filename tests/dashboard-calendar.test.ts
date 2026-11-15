@@ -75,18 +75,33 @@ describe("dashboard calendar initialization", () => {
     (window as unknown as { FullCalendar: { Calendar: typeof FakeCalendar } }).FullCalendar = { Calendar: FakeCalendar };
   });
 
-  test("defaults to month view with week and yearly list choices", async () => {
+  test("defaults to an upcoming list with month and week choices", async () => {
     const { initDashboardCalendar } = await import("../src/dashboard-calendar.js");
     const root = buildCalendar('<span hidden data-calendar-team data-team-id="7" data-team-name="Brass"></span>');
 
     initDashboardCalendar(root);
 
     expect(FakeCalendar.instances).toHaveLength(1);
-    expect(FakeCalendar.instances[0].options.initialView).toBe("dayGridMonth");
-    expect(FakeCalendar.instances[0].options.headerToolbar.right).toContain("dayGridMonth");
-    expect(FakeCalendar.instances[0].options.headerToolbar.right).toContain("timeGridWeek");
-    expect(FakeCalendar.instances[0].options.headerToolbar.right).toContain("listYear");
-    expect(FakeCalendar.instances[0].options.headerToolbar.right).not.toContain("timeGridDay");
+    expect(FakeCalendar.instances).toHaveLength(1);
+    const options = FakeCalendar.instances[0].options;
+    expect(options.initialView).toBe("listFuture");
+    expect(options.headerToolbar.right).toContain("dayGridMonth");
+    expect(options.headerToolbar.right).toContain("timeGridWeek");
+    expect(options.headerToolbar.right).toContain("listFuture");
+    expect(options.headerToolbar.right).not.toContain("listYear");
+    expect(options.headerToolbar.right).not.toContain("timeGridDay");
+    const futureList = (options.views as { listFuture: { buttonText: string; visibleRange: (date: Date) => { start: Date; end: Date }; eventOrder: string } }).listFuture;
+    expect(futureList.buttonText).toBe("List");
+    expect(futureList.eventOrder).toBe("start");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const pastDate = new Date(today);
+    pastDate.setDate(pastDate.getDate() - 1);
+    const range = futureList.visibleRange(pastDate);
+    const expectedEnd = new Date(today);
+    expectedEnd.setFullYear(expectedEnd.getFullYear() + 1);
+    expect(range.start.getTime()).toBe(today.getTime());
+    expect(range.end.getTime()).toBe(expectedEnd.getTime());
     expect(root.querySelector("[data-calendar-team-toggle]")).toBeNull();
   });
 

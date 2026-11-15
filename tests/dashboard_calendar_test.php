@@ -10,6 +10,7 @@ if (!function_exists('renderPageStart')) {
     function renderPageEnd(array $options = []): void {}
 }
 require_once __DIR__ . '/../app/models/dashboard/calendar_helpers.php';
+require_once __DIR__ . '/../app/models/dashboard/email_helpers.php';
 
 final class DashboardCalendarTestPDO extends PDO
 {
@@ -117,9 +118,16 @@ $check($failedFeed === ['status' => 500, 'body' => ['error' => 'Failed to load c
 
 $dashboardController = (string) file_get_contents(__DIR__ . '/../app/controllers/dashboard/index.php');
 $eventsController = (string) file_get_contents(__DIR__ . '/../app/controllers/dashboard/calendar-events.php');
-$renderDashboard = static function (array $teams, string $error = ''): array {
+$renderDashboard = static function (
+    array $teams,
+    string $error = '',
+    array $emails = [],
+    string $emailError = ''
+): array {
     $calendarTeams = $teams;
     $calendarError = $error;
+    $unreadEmails = $emails;
+    $unreadEmailsError = $emailError;
     $currentUser = ['display_name' => 'Calendar Test', 'username' => 'calendar-test'];
     ob_start();
     require __DIR__ . '/../app/views/dashboard/index.php';
@@ -127,17 +135,75 @@ $renderDashboard = static function (array $teams, string $error = ''): array {
 };
 $singleTeamDashboard = $renderDashboard([['id' => 7, 'name' => 'Brass']]);
 $check(str_contains($dashboardController, 'fetchUserTeams'), 'dashboard loads only teams the current user belongs to');
+$check(str_contains($dashboardController, 'fetchAccessibleMailboxes') && str_contains($dashboardController, 'fetchDashboardUnreadEmails'), 'dashboard loads unread messages only from accessible mailboxes');
 $check(str_contains($singleTeamDashboard[0], 'data-calendar-events-url') && str_contains(implode(' ', $singleTeamDashboard[1]['extraScripts'] ?? []), 'fullcalendar@7.1.4'), 'dashboard renders the calendar shell and pinned FullCalendar scripts');
 $check(!str_contains($singleTeamDashboard[0], 'data-calendar-team-toggle') && str_contains($singleTeamDashboard[0], 'data-calendar-team'), 'single-team view has no team toggle control');
 $check(str_contains($singleTeamDashboard[0], 'data-calendar-dialog') && str_contains($singleTeamDashboard[0], 'data-calendar-dialog-link'), 'dashboard renders the event preview dialog and detail link');
+$dateTimezone = date_default_timezone_get();
+date_default_timezone_set('America/Los_Angeles');
+$emailDashboard = $renderDashboard(
+    [['id' => 7, 'name' => 'Brass']],
+    '',
+    [
+        [
+            'id' => 42,
+            'mailbox_id' => 7,
+            'mailbox_label' => 'Brass & <Team>',
+            'mailbox_initial' => 'Å',
+            'from_email' => 'info<sender@example.com',
+            'subject' => '<script>alert(1)</script>',
+            'received_at' => '2026-12-12 15:43:00',
+            'received_at_epoch' => 1797118980,
+            'created_at' => '2026-12-12 15:43:00',
+            'created_at_epoch' => 1797118980,
+        ],
+        [
+            'id' => 43,
+            'mailbox_id' => 7,
+            'mailbox_label' => 'Brass & <Team>',
+            'mailbox_initial' => 'Å',
+            'from_email' => 'team@example.com',
+            'subject' => '',
+            'received_at' => null,
+            'received_at_epoch' => null,
+            'created_at' => '2026-12-11 09:00:00',
+            'created_at_epoch' => 1797008400,
+        ],
+    ]
+);
+date_default_timezone_set($dateTimezone);
+$calendarColumnPosition = strpos($emailDashboard[0], 'data-calendar-column');
+$emailCardPosition = strpos($emailDashboard[0], 'data-unread-email-card');
+$check($calendarColumnPosition !== false && $emailCardPosition !== false && $calendarColumnPosition < $emailCardPosition, 'renders calendar and unread email card in left-to-right columns');
+$check(str_contains($emailDashboard[0], 'columns') && str_contains($emailDashboard[0], 'is-full-mobile is-half-tablet'), 'uses responsive Bulma half-width columns that stack on mobile');
+$mailHeaders = ['Mailbox', 'Sender', 'Subject', 'Date'];
+$mailHeaderPositions = array_map(static function (string $header) use ($emailDashboard): int|false {
+    if (preg_match('/<th>\s*' . preg_quote($header, '/') . '\s*<\/th>/', $emailDashboard[0], $matches, PREG_OFFSET_CAPTURE) !== 1) {
+        return false;
+    }
+    return $matches[0][1];
+}, $mailHeaders);
+$check(count($mailHeaderPositions) === 4 && !in_array(false, $mailHeaderPositions, true) && $mailHeaderPositions[0] < $mailHeaderPositions[1] && $mailHeaderPositions[1] < $mailHeaderPositions[2] && $mailHeaderPositions[2] < $mailHeaderPositions[3], 'renders mailbox, sender, subject, and date columns in order');
+$check(str_contains($emailDashboard[0], 'datetime="2026-12-12T23:43:00+00:00"') && str_contains($emailDashboard[0], 'data-dashboard-email-date'), 'renders the preserved received instant as browser-localizable UTC');
+$check(str_contains($emailDashboard[0], 'datetime="2026-12-11T17:00:00+00:00"'), 'uses the database timestamp instant when received date is absent');
+$check(str_contains($emailDashboard[0], 'Brass &amp; &lt;Team&gt;') && str_contains($emailDashboard[0], 'role="img" aria-label="Brass &amp; &lt;Team&gt;"') && str_contains($emailDashboard[0], '>Å<'), 'escapes the mailbox label and exposes it accessibly beside its complete UTF-8 initial');
+$check(str_contains($emailDashboard[0], 'info&lt;sender@example.com') && str_contains($emailDashboard[0], '&lt;script&gt;alert(1)&lt;/script&gt;') && !str_contains($emailDashboard[0], '<script>alert(1)</script>'), 'renders sender and subject as escaped text');
+$check(str_contains($emailDashboard[0], 'No subject'), 'uses a readable fallback for a missing subject');
+$mailLink = BASE_PATH . '/app/controllers/communication/index.php?tab=email&amp;mailbox_id=7&amp;folder=inbox&amp;message_id=42';
+$check(str_contains($emailDashboard[0], 'data-row-link="' . $mailLink . '"') && str_contains($emailDashboard[0], 'href="' . $mailLink . '"'), 'links message rows to their inbox mailbox and message in the mail view');
+$check(str_contains($emailDashboard[0], 'dashboard-unread-email-table') && in_array(BASE_PATH . '/app/public/css/dashboard-unread-emails.css', $emailDashboard[1]['extraStyles'] ?? [], true), 'scopes the unread table and loads its overflow stylesheet');
+$check(str_contains(implode(' ', $emailDashboard[1]['extraScripts'] ?? []), '/app/public/js/list-panel.js') && str_contains(implode(' ', $emailDashboard[1]['extraScripts'] ?? []), '/app/public/js/dashboard-email.js'), 'loads row navigation and local date formatting independently of calendar availability');
 $multipleTeamDashboard = $renderDashboard([['id' => 7, 'name' => 'Brass <One>'], ['id' => 8, 'name' => 'Strings']]);
 $check(substr_count($multipleTeamDashboard[0], 'data-calendar-team-toggle') === 2, 'multiple-team view renders one toggle per team');
 $check(str_contains($multipleTeamDashboard[0], 'Brass &lt;One&gt;'), 'team labels and attributes are HTML escaped');
 $emptyDashboard = $renderDashboard([]);
-$check(!str_contains($emptyDashboard[0], 'data-dashboard-calendar') && str_contains($emptyDashboard[0], 'Join a team'), 'zero-team dashboard renders a useful empty state without calendar controls');
-$check(empty($emptyDashboard[1]['extraScripts'] ?? []) && empty($emptyDashboard[1]['extraStyles'] ?? []), 'dashboard does not load calendar assets when there are no teams');
+$check(!str_contains($emptyDashboard[0], 'data-dashboard-calendar') && str_contains($emptyDashboard[0], 'Join a team') && str_contains($emptyDashboard[0], 'data-unread-email-card'), 'zero-team dashboard preserves the calendar empty state and unread mail card');
+$check(!str_contains(implode(' ', $emptyDashboard[1]['extraScripts'] ?? []), 'fullcalendar@') && !in_array(BASE_PATH . '/app/public/css/dashboard-calendar.css', $emptyDashboard[1]['extraStyles'] ?? [], true), 'dashboard does not load calendar assets when there are no teams');
+$check(str_contains($emptyDashboard[0], 'No unread emails.'), 'shows a useful empty state for unread email');
 $errorDashboard = $renderDashboard([], 'Unable to load your teams for the calendar.');
-$check(str_contains($errorDashboard[0], 'role="alert"') && str_contains($errorDashboard[0], 'Unable to load your teams'), 'dashboard renders a visible team-loading error');
+$check(str_contains($errorDashboard[0], 'role="alert"') && str_contains($errorDashboard[0], 'Unable to load your teams') && str_contains($errorDashboard[0], 'data-unread-email-card'), 'calendar error remains visible without suppressing the unread mail card');
+$mailErrorDashboard = $renderDashboard([['id' => 7, 'name' => 'Brass']], '', [], 'Unable to load unread emails.');
+$check(str_contains($mailErrorDashboard[0], 'Unable to load unread emails.') && str_contains($mailErrorDashboard[0], 'data-calendar-events-url') && str_contains(implode(' ', $mailErrorDashboard[1]['extraScripts'] ?? []), 'fullcalendar@7.1.4'), 'mail error does not suppress calendar markup or assets');
 $check(str_contains($eventsController, 'fetchUserTeams') && str_contains($eventsController, 'buildDashboardCalendarFeedResponse'), 'event feed applies the current user membership before event queries');
 
 if ($failures > 0) {

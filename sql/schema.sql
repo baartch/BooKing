@@ -163,6 +163,7 @@ CREATE TABLE email_messages (
     message_id VARCHAR(255) DEFAULT NULL,
     is_read TINYINT(1) NOT NULL DEFAULT 0,
     received_at DATETIME DEFAULT NULL,
+    received_at_epoch BIGINT DEFAULT NULL,
     sent_at DATETIME DEFAULT NULL,
     scheduled_at DATETIME DEFAULT NULL,
     start_new_conversation TINYINT(1) NOT NULL DEFAULT 0,
@@ -375,3 +376,4 @@ CREATE TABLE schema_migrations (
 INSERT INTO schema_migrations (name) VALUES ('2026-10-25_team_show_songs.sql');
 INSERT INTO schema_migrations (name) VALUES ('2026-10-26_team_shows_entrance_fee.sql');
 INSERT INTO schema_migrations (name) VALUES ('2026-11-10_team_shows_state.sql');
+INSERT INTO schema_migrations (name) VALUES ('2026-11-15_email_received_at_epoch.sql');
