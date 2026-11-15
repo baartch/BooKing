@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 if (!GlobalRegistrator.isRegistered) GlobalRegistrator.register();
 
@@ -19,6 +21,14 @@ const loadDashboardEmailModule = async (): Promise<DashboardEmailModule | null> 
 const setBrowserLocales = (locales: string[]): void => {
   Object.defineProperty(navigator, "languages", { configurable: true, value: locales });
 };
+
+const dashboardEmailStyles = (() => {
+  try {
+    return readFileSync(join(import.meta.dir, "../app/public/css/dashboard-unread-emails.css"), "utf8");
+  } catch {
+    return null;
+  }
+})();
 
 describe("dashboard email date formatting", () => {
   beforeEach(() => {
@@ -82,5 +92,30 @@ describe("dashboard email date formatting", () => {
     expect(scope.querySelector("time[data-dashboard-email-date]")?.textContent).toBe(expected);
     expect(scope.querySelector("time:not([data-dashboard-email-date])")?.textContent).toBe("Leave this unchanged");
     expect(scope.querySelector("time[datetime='invalid-date']")?.textContent).toBe("Invalid fallback");
+  });
+
+  test("keeps unread email tables within their panel and wraps long cell content", () => {
+    expect(dashboardEmailStyles).not.toBeNull();
+    if (!dashboardEmailStyles) return;
+
+    const style = document.createElement("style");
+    style.textContent = dashboardEmailStyles;
+    document.head.append(style);
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div class="dashboard-unread-email-table">
+        <div class="table-container table-container--dropdowns">
+          <table><tbody><tr><td class="sender">verylongsenderaddress@example.com</td></tr></tbody></table>
+        </div>
+      </div>
+    `;
+    document.body.append(wrapper);
+    const container = wrapper.querySelector<HTMLElement>(".table-container")!;
+    const table = wrapper.querySelector<HTMLTableElement>("table")!;
+    const sender = wrapper.querySelector<HTMLElement>(".sender")!;
+
+    expect(getComputedStyle(container).overflowX).toBe("auto");
+    expect(getComputedStyle(table).tableLayout).toBe("fixed");
+    expect(getComputedStyle(sender).overflowWrap).toBe("anywhere");
   });
 });

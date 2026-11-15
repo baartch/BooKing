@@ -1,7 +1,15 @@
 <?php
 
-function dashboardEmailTimestampToIso8601(?string $timestamp): ?string
+function dashboardEmailTimestampToIso8601(?string $timestamp, ?int $epoch = null): ?string
 {
+    if ($epoch !== null) {
+        try {
+            return (new DateTimeImmutable('@' . $epoch))->format(DATE_ATOM);
+        } catch (Throwable $error) {
+            return null;
+        }
+    }
+
     $timestamp = trim((string) $timestamp);
     if ($timestamp === '') {
         return null;
@@ -66,7 +74,8 @@ function fetchDashboardUnreadEmails(PDO $pdo, array $mailboxes): array
     $mailboxIds = array_keys($mailboxesById);
     $placeholders = implode(', ', array_fill(0, count($mailboxIds), '?'));
     $stmt = $pdo->prepare(
-        'SELECT id, mailbox_id, from_email, subject, received_at, created_at
+        'SELECT id, mailbox_id, from_email, subject, received_at, received_at_epoch, created_at,
+                UNIX_TIMESTAMP(created_at) AS created_at_epoch
          FROM email_messages
          WHERE mailbox_id IN (' . $placeholders . ')
            AND folder = \'inbox\'

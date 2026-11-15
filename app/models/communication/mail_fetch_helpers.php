@@ -1,5 +1,18 @@
 <?php
 
+function normalizeFetchedEmailTimestamp(string $date): array
+{
+    $epoch = trim($date) !== '' ? strtotime($date) : false;
+    if ($epoch === false) {
+        return ['received_at' => null, 'received_at_epoch' => null];
+    }
+
+    return [
+        'received_at' => date('Y-m-d H:i:s', $epoch),
+        'received_at_epoch' => $epoch,
+    ];
+}
+
 function decodeHeaderValue(?string $value): string
 {
     return $value ? imap_utf8($value) : '';

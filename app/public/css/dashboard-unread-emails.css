@@ -1,0 +1,27 @@
+.dashboard-unread-email-column,
+.dashboard-unread-email-card,
+.dashboard-unread-email-table {
+  min-width: 0;
+}
+
+.dashboard-unread-email-table {
+  max-width: 100%;
+}
+
+.dashboard-unread-email-table .table-container.table-container--dropdowns {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.dashboard-unread-email-table table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.dashboard-unread-email-table td {
+  overflow-wrap: anywhere;
+}
+
+.dashboard-unread-email-table td:first-child {
+  width: 5rem;
+}

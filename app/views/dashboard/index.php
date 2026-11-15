@@ -1,6 +1,15 @@
 <?php
 $fullCalendarUrl = 'https://cdn.jsdelivr.net/npm/fullcalendar@7.1.4';
 $hasCalendarAssets = ($calendarError ?? '') === '' && !empty($calendarTeams);
+$dashboardStyles = [BASE_PATH . '/app/public/css/dashboard-unread-emails.css'];
+if ($hasCalendarAssets) {
+    $dashboardStyles = array_merge([
+        $fullCalendarUrl . '/skeleton.css',
+        $fullCalendarUrl . '/themes/monarch/theme.css',
+        $fullCalendarUrl . '/themes/monarch/palettes/purple.css',
+        BASE_PATH . '/app/public/css/dashboard-calendar.css',
+    ], $dashboardStyles);
+}
 $dashboardScripts = [
     '<script type="module" src="' . BASE_PATH . '/app/public/js/list-panel.js" defer></script>',
     '<script type="module" src="' . BASE_PATH . '/app/public/js/dashboard-email.js" defer></script>',
@@ -54,8 +63,14 @@ $renderUnreadEmailTable = static function (array $rows): void {
             'label' => 'Date',
             'isHtml' => true,
             'render' => static function (array $row): string {
-                $timestamp = trim((string) (($row['received_at'] ?? '') !== '' ? $row['received_at'] : ($row['created_at'] ?? '')));
-                $datetime = dashboardEmailTimestampToIso8601($timestamp);
+                $receivedAt = trim((string) ($row['received_at'] ?? ''));
+                $createdAt = trim((string) ($row['created_at'] ?? ''));
+                $timestamp = $receivedAt !== '' ? $receivedAt : $createdAt;
+                $epochValue = $receivedAt !== ''
+                    ? ($row['received_at_epoch'] ?? null)
+                    : ($row['created_at_epoch'] ?? null);
+                $epoch = is_numeric($epochValue) ? (int) $epochValue : null;
+                $datetime = dashboardEmailTimestampToIso8601($timestamp, $epoch);
                 $datetimeAttribute = $datetime !== null
                     ? ' datetime="' . htmlspecialchars($datetime, ENT_QUOTES, 'UTF-8') . '"'
                     : '';
@@ -72,12 +87,7 @@ $renderUnreadEmailTable = static function (array $rows): void {
 
 renderPageStart('Dashboard', [
     'bodyClass' => 'is-flex is-flex-direction-column is-fullheight',
-    'extraStyles' => $hasCalendarAssets ? [
-        $fullCalendarUrl . '/skeleton.css',
-        $fullCalendarUrl . '/themes/monarch/theme.css',
-        $fullCalendarUrl . '/themes/monarch/palettes/purple.css',
-        BASE_PATH . '/app/public/css/dashboard-calendar.css',
-    ] : [],
+    'extraStyles' => $dashboardStyles,
     'extraScripts' => $dashboardScripts,
 ]);
 ?>
@@ -135,13 +145,15 @@ renderPageStart('Dashboard', [
                 </dialog>
               <?php endif; ?>
             </div>
-            <div class="column is-full-mobile is-half-tablet">
-              <div class="box" data-unread-email-card>
+            <div class="column is-full-mobile is-half-tablet dashboard-unread-email-column">
+              <div class="box dashboard-unread-email-card" data-unread-email-card>
                 <h2 class="title is-4">Unread emails</h2>
                 <?php if (($unreadEmailsError ?? '') !== ''): ?>
                   <div class="notification is-danger" role="alert"><?php echo htmlspecialchars($unreadEmailsError, ENT_QUOTES, 'UTF-8'); ?></div>
                 <?php else: ?>
-                  <?php $renderUnreadEmailTable($unreadEmails ?? []); ?>
+                  <div class="dashboard-unread-email-table">
+                    <?php $renderUnreadEmailTable($unreadEmails ?? []); ?>
+                  </div>
                 <?php endif; ?>
               </div>
             </div>

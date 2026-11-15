@@ -80,11 +80,19 @@ $check(computeBaselineMigrations([]) === [], 'nothing shipped baselines nothing'
 $shipped = shippedMigrationNames(__DIR__ . '/../sql/migrations');
 $check(in_array('2026-10-25_team_show_songs.sql', $shipped, true), 'shipped migration listed');
 $check($shipped === array_values($shipped), 'shipped names sorted');
+$epochMigration = '2026-11-15_email_received_at_epoch.sql';
+$check(in_array($epochMigration, $shipped, true), 'received timestamp epoch migration is shipped');
+$epochMigrationSql = is_file(__DIR__ . '/../sql/migrations/' . $epochMigration)
+    ? (string) file_get_contents(__DIR__ . '/../sql/migrations/' . $epochMigration)
+    : '';
+$check(str_contains($epochMigrationSql, 'ADD COLUMN received_at_epoch BIGINT DEFAULT NULL'), 'migration adds a nullable source epoch to existing email rows');
 
 // --- schema.sql covers fresh installs ---
 $schema = (string) file_get_contents(__DIR__ . '/../sql/schema.sql');
 $check(str_contains($schema, 'CREATE TABLE schema_migrations'), 'schema.sql creates schema_migrations');
 $check((bool) preg_match("/INSERT INTO schema_migrations.*2026-10-25_team_show_songs\.sql/s", $schema), 'schema.sql marks shipped migration applied');
+$check(str_contains($schema, 'received_at_epoch BIGINT DEFAULT NULL'), 'fresh schema includes the source receive epoch');
+$check(str_contains($schema, "INSERT INTO schema_migrations (name) VALUES ('" . $epochMigration . "')"), 'fresh schema marks the received timestamp migration applied');
 
 if ($failures > 0) {
     echo "{$failures} test(s) FAILED\n";

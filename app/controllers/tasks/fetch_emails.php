@@ -252,13 +252,15 @@ function runFetchEmailsTask(PDO $pdo): void
 
                 $isSentMessage = $fromCandidate !== '' && in_array($fromCandidate, $mailboxIdentityEmails, true);
                 $messageFolder = $isSentMessage ? 'sent' : $normalizedFolder;
-                $messageTimestamp = $date !== '' ? date('Y-m-d H:i:s', strtotime($date)) : null;
+                $messageTimestampData = normalizeFetchedEmailTimestamp($date);
+                $messageTimestamp = $messageTimestampData['received_at'];
+                $messageTimestampEpoch = $messageTimestampData['received_at_epoch'];
 
                 $stmt = $pdo->prepare(
                     'INSERT INTO email_messages
-                     (mailbox_id, team_id, user_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, message_id, is_read, received_at, sent_at, conversation_id)
+                     (mailbox_id, team_id, user_id, folder, subject, body, body_html, from_name, from_email, to_emails, cc_emails, message_id, is_read, received_at, received_at_epoch, sent_at, conversation_id)
                      VALUES
-                     (:mailbox_id, :team_id, :user_id, :folder, :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :message_id, :is_read, :received_at, :sent_at, :conversation_id)'
+                     (:mailbox_id, :team_id, :user_id, :folder, :subject, :body, :body_html, :from_name, :from_email, :to_emails, :cc_emails, :message_id, :is_read, :received_at, :received_at_epoch, :sent_at, :conversation_id)'
                 );
                 $stmt->execute([
                     ':mailbox_id' => $mailboxId,
@@ -275,6 +277,7 @@ function runFetchEmailsTask(PDO $pdo): void
                     ':message_id' => $messageId !== '' ? $messageId : null,
                     ':is_read' => $isSentMessage ? 1 : 0,
                     ':received_at' => $isSentMessage ? null : $messageTimestamp,
+                    ':received_at_epoch' => $isSentMessage ? null : $messageTimestampEpoch,
                     ':sent_at' => $isSentMessage ? $messageTimestamp : null,
                     ':conversation_id' => $conversationId
                 ]);

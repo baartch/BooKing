@@ -14,6 +14,7 @@ $helperPath = __DIR__ . '/../app/models/dashboard/email_helpers.php';
 if (is_file($helperPath)) {
     require_once $helperPath;
 }
+require_once __DIR__ . '/../app/models/communication/mail_fetch_helpers.php';
 
 $check(function_exists('fetchDashboardUnreadEmails'), 'dashboard unread email helper is available');
 
@@ -53,9 +54,9 @@ if (function_exists('fetchDashboardUnreadEmails')) {
 
     $pdo = new DashboardUnreadTestPDO();
     $pdo->rows = [
-        ['id' => 42, 'mailbox_id' => 3, 'from_email' => 'info@example.com', 'subject' => 'Hello', 'received_at' => '2026-12-12 15:43:00', 'created_at' => '2026-12-12 15:43:00'],
-        ['id' => 43, 'mailbox_id' => 7, 'from_email' => 'team@example.com', 'subject' => 'Meeting', 'received_at' => null, 'created_at' => '2026-12-11 09:00:00'],
-        ['id' => 44, 'mailbox_id' => 9, 'from_email' => 'unicode@example.com', 'subject' => null, 'received_at' => null, 'created_at' => '2026-12-10 09:00:00'],
+        ['id' => 42, 'mailbox_id' => 3, 'from_email' => 'info@example.com', 'subject' => 'Hello', 'received_at' => '2026-12-12 15:43:00', 'received_at_epoch' => 1797118980, 'created_at' => '2026-12-12 15:43:00', 'created_at_epoch' => 1797118980],
+        ['id' => 43, 'mailbox_id' => 7, 'from_email' => 'team@example.com', 'subject' => 'Meeting', 'received_at' => null, 'received_at_epoch' => null, 'created_at' => '2026-12-11 09:00:00', 'created_at_epoch' => 1797008400],
+        ['id' => 44, 'mailbox_id' => 9, 'from_email' => 'unicode@example.com', 'subject' => null, 'received_at' => null, 'received_at_epoch' => null, 'created_at' => '2026-12-10 09:00:00', 'created_at_epoch' => 1796922000],
     ];
     $mailboxes = [
         ['id' => 3, 'name' => 'private', 'display_name' => 'Private box', 'user_id' => 5, 'team_name' => null],
@@ -68,6 +69,7 @@ if (function_exists('fetchDashboardUnreadEmails')) {
     $check(array_values($query['params']) === [3, 7, 9], 'binds only IDs from the accessible mailbox list');
     $check(str_contains($query['sql'], 'folder') && str_contains($query['sql'], "'inbox'") && str_contains($query['sql'], 'is_read = 0'), 'query includes only unread Inbox messages');
     $check(str_contains($query['sql'], 'COALESCE(received_at, created_at) DESC, id DESC') && !preg_match('/\bLIMIT\b/i', $query['sql']), 'orders newest first without silently limiting results');
+    $check(str_contains($query['sql'], 'received_at_epoch') && str_contains($query['sql'], 'UNIX_TIMESTAMP(created_at) AS created_at_epoch'), 'selects the original receive instant and database-session-safe creation instant');
     $check(!preg_match('/\b(body|body_html|imap_password|smtp_password)\b/i', $query['sql']), 'selects summaries without message bodies or mailbox credentials');
     $check(($messages[0]['mailbox_label'] ?? '') === 'Personal · Private box' && ($messages[0]['mailbox_initial'] ?? '') === 'P', 'uses personal mailbox display name and initial');
     $check(($messages[1]['mailbox_label'] ?? '') === 'Brass · shared' && ($messages[1]['mailbox_initial'] ?? '') === 'S', 'uses team context and stored mailbox name when display name is empty');
@@ -88,7 +90,22 @@ if (function_exists('fetchDashboardUnreadEmails')) {
         $defaultTimezone = date_default_timezone_get();
         date_default_timezone_set('America/Los_Angeles');
         $check(dashboardEmailTimestampToIso8601('2026-12-12 15:43:00') === '2026-12-12T15:43:00-08:00', 'adds the PHP source timezone offset when normalizing a stored naive timestamp');
+        $check(dashboardEmailTimestampToIso8601('2026-11-01 01:30:00', 1793521800) === '2026-11-01T08:30:00+00:00', 'uses the source epoch for the first repeated DST-fold time');
+        $check(dashboardEmailTimestampToIso8601('2026-11-01 01:30:00', 1793525400) === '2026-11-01T09:30:00+00:00', 'distinguishes the second repeated DST-fold time by its source epoch');
+        $check(dashboardEmailTimestampToIso8601('2026-12-11 09:00:00', 1797008400) === '2026-12-11T17:00:00+00:00', 'uses the database timestamp epoch instead of the PHP timezone assumption');
         $check(dashboardEmailTimestampToIso8601('not-a-date') === null, 'rejects invalid stored timestamps');
+        date_default_timezone_set($defaultTimezone);
+    }
+
+    $check(function_exists('normalizeFetchedEmailTimestamp'), 'mail ingestion timestamp normalizer is available');
+    if (function_exists('normalizeFetchedEmailTimestamp')) {
+        $defaultTimezone = date_default_timezone_get();
+        date_default_timezone_set('America/Los_Angeles');
+        $firstFold = normalizeFetchedEmailTimestamp('Sun, 01 Nov 2026 01:30:00 -0700');
+        $secondFold = normalizeFetchedEmailTimestamp('Sun, 01 Nov 2026 01:30:00 -0800');
+        $check($firstFold === ['received_at' => '2026-11-01 01:30:00', 'received_at_epoch' => 1793521800], 'preserves the first original IMAP offset through a repeated local time');
+        $check($secondFold === ['received_at' => '2026-11-01 01:30:00', 'received_at_epoch' => 1793525400], 'preserves the second original IMAP offset through a repeated local time');
+        $check(normalizeFetchedEmailTimestamp('invalid') === ['received_at' => null, 'received_at_epoch' => null], 'does not create a bogus timestamp for an invalid mail date');
         date_default_timezone_set($defaultTimezone);
     }
 }
