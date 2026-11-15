@@ -68,7 +68,7 @@ if (function_exists('fetchDashboardUnreadEmails')) {
     $query = $pdo->queries[0] ?? ['sql' => '', 'params' => []];
     $check(array_values($query['params']) === [3, 7, 9], 'binds only IDs from the accessible mailbox list');
     $check(str_contains($query['sql'], 'folder') && str_contains($query['sql'], "'inbox'") && str_contains($query['sql'], 'is_read = 0'), 'query includes only unread Inbox messages');
-    $check(str_contains($query['sql'], 'COALESCE(received_at, created_at) DESC, id DESC') && !preg_match('/\bLIMIT\b/i', $query['sql']), 'orders newest first without silently limiting results');
+    $check(str_contains($query['sql'], 'COALESCE(received_at_epoch, UNIX_TIMESTAMP(received_at), UNIX_TIMESTAMP(created_at)) DESC, id DESC') && !preg_match('/\bLIMIT\b/i', $query['sql']), 'orders by preserved message instants newest first without limiting results');
     $check(str_contains($query['sql'], 'received_at_epoch') && str_contains($query['sql'], 'UNIX_TIMESTAMP(created_at) AS created_at_epoch'), 'selects the original receive instant and database-session-safe creation instant');
     $check(!preg_match('/\b(body|body_html|imap_password|smtp_password)\b/i', $query['sql']), 'selects summaries without message bodies or mailbox credentials');
     $check(($messages[0]['mailbox_label'] ?? '') === 'Personal · Private box' && ($messages[0]['mailbox_initial'] ?? '') === 'P', 'uses personal mailbox display name and initial');

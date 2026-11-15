@@ -80,7 +80,7 @@ function fetchDashboardUnreadEmails(PDO $pdo, array $mailboxes): array
          WHERE mailbox_id IN (' . $placeholders . ')
            AND folder = \'inbox\'
            AND is_read = 0
-         ORDER BY COALESCE(received_at, created_at) DESC, id DESC'
+         ORDER BY COALESCE(received_at_epoch, UNIX_TIMESTAMP(received_at), UNIX_TIMESTAMP(created_at)) DESC, id DESC'
     );
     $stmt->execute($mailboxIds);
 
