@@ -1,0 +1,10 @@
+{
+  "worktree": {
+    "setup": "bun install --frozen-lockfile"
+  },
+  "metadataGeneration": {
+    "commitMessage": {
+      "instructions": "use git-commit skill"
+    }
+  }
+}
