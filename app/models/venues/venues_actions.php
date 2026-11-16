@@ -3,6 +3,8 @@
 require_once __DIR__ . '/../core/database.php';
 require_once __DIR__ . '/../core/form_helpers.php';
 require_once __DIR__ . '/../core/object_links.php';
+require_once __DIR__ . '/../core/search_helpers.php';
+require_once __DIR__ . '/../core/settings.php';
 require_once __DIR__ . '/venues_repository.php';
 
 function handleVenueImport(array $currentUser, array $countryOptions, string $importPayload): array
@@ -54,6 +56,7 @@ function handleVenueImport(array $currentUser, array $countryOptions, string $im
         $importedCount = 0;
         $rowErrors = [];
         $duplicateNotices = [];
+        $mapboxApiKey = null;
 
         foreach ($decoded as $index => $entry) {
             if (!is_array($entry)) {
@@ -87,6 +90,27 @@ function handleVenueImport(array $currentUser, array $countryOptions, string $im
                 continue;
             }
 
+            $address = normalizeOptionalString((string) ($entry['street'] ?? ''));
+            if ($latitude === null && $longitude === null && $address !== null) {
+                if ($mapboxApiKey === null) {
+                    $settings = loadSettingValues(['mapbox_api_key_server']);
+                    $mapboxApiKey = $settings['mapbox_api_key_server'];
+                }
+                if ($mapboxApiKey !== '') {
+                    $lookupErrors = [];
+                    $query = $city !== null ? sprintf('%s, %s', $address, $city) : $address;
+                    try {
+                        $mapboxData = runMapboxAddressLookup($query, $country !== '' ? $country : 'DE', $mapboxApiKey, $lookupErrors);
+                        if (is_numeric($mapboxData['latitude'] ?? null) && is_numeric($mapboxData['longitude'] ?? null)) {
+                            $latitude = (float) $mapboxData['latitude'];
+                            $longitude = (float) $mapboxData['longitude'];
+                        }
+                    } catch (Throwable $error) {
+                        // A failed lookup must not prevent the venue from being imported.
+                    }
+                }
+            }
+
             if ($latitude !== null && $longitude !== null) {
                 $duplicateVenue = findVenueNearCoordinates($pdo, $latitude, $longitude);
                 if ($duplicateVenue) {
@@ -101,7 +125,6 @@ function handleVenueImport(array $currentUser, array $countryOptions, string $im
                 }
             }
 
-            $address = normalizeOptionalString((string) ($entry['street'] ?? ''));
             $postalCode = normalizeOptionalString((string) ($entry['postalCode'] ?? ''));
             $city = normalizeOptionalString((string) ($entry['city'] ?? ''));
             $website = normalizeOptionalString((string) ($entry['url'] ?? $entry['website'] ?? ''));
