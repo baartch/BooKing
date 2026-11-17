@@ -263,6 +263,15 @@
   display: none;
 }
 
+.conversation-list li + li {
+  margin-top: 0.125rem;
+}
+
+.conversation-list a {
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+}
+
 .conversation-row {
   display: flex;
   align-items: center;
