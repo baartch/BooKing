@@ -45,7 +45,7 @@ class LinkScopeException extends RuntimeException
  */
 function getAllowedLinkTypes(): array
 {
-    return ['email', 'contact', 'task', 'venue', 'show'];
+    return ['email', 'contact', 'task', 'venue', 'show', 'conversation_note'];
 }
 
 function normalizeLinkType(string $type): string
@@ -95,7 +95,7 @@ function normalizeLinkItems(array $links): array
             continue;
         }
 
-        if (!in_array($type, getAllowedLinkTypes(), true)) {
+        if (!in_array($type, getAllowedLinkTypes(), true) || $type === 'conversation_note') {
             continue;
         }
 
@@ -162,6 +162,34 @@ function resolveLinkSourceScopeOrThrow(PDO $pdo, string $sourceType, int $source
             return resolveVenueLinkScopeOrThrow($pdo, $sourceId, $requestUserId, $context);
         case 'show':
             return resolveShowLinkScopeOrThrow($pdo, $sourceId, $requestUserId);
+        case 'conversation_note':
+            $stmt = $pdo->prepare(
+                'SELECT c.id, c.team_id, c.user_id
+                 FROM conversation_notes n
+                 JOIN email_conversations c ON c.id = n.conversation_id
+                 LEFT JOIN team_members tm ON tm.team_id = c.team_id AND tm.user_id = :member_id
+                 WHERE n.id = :note_id
+                   AND ((c.team_id IS NOT NULL AND tm.user_id = :team_member_id)
+                     OR (c.user_id IS NOT NULL AND c.user_id = :owner_id))
+                 LIMIT 1'
+            );
+            $stmt->execute([
+                ':note_id' => $sourceId,
+                ':member_id' => $requestUserId,
+                ':team_member_id' => $requestUserId,
+                ':owner_id' => $requestUserId,
+            ]);
+            $noteConversation = $stmt->fetch();
+            if (!$noteConversation) {
+                throwLinkScopeException($requestUserId > 0 ? $requestUserId : null, 'source_access_denied', 'Conversation note is not accessible.', ['source_id' => $sourceId], 403);
+            }
+            return [
+                'source_type' => 'conversation_note',
+                'source_id' => $sourceId,
+                'team_id' => !empty($noteConversation['team_id']) ? (int) $noteConversation['team_id'] : null,
+                'user_id' => !empty($noteConversation['user_id']) ? (int) $noteConversation['user_id'] : null,
+                'mailbox_id' => null,
+            ];
     }
 
     throwLinkScopeException(

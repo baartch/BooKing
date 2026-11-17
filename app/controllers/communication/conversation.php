@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/../../models/auth/check.php';
 require_once __DIR__ . '/../../models/communication/conversation_helpers.php';
+require_once __DIR__ . '/../../models/communication/conversation_notes.php';
+require_once __DIR__ . '/../../models/communication/team_helpers.php';
+require_once __DIR__ . '/../../models/core/object_links.php';
+require_once __DIR__ . '/../../models/core/link_scope.php';
+require_once __DIR__ . '/../../models/core/link_helpers.php';
 require_once __DIR__ . '/../../models/communication/navigation_helpers.php';
 require_once __DIR__ . '/../../models/core/error_helpers.php';
 require_once __DIR__ . '/../../models/core/form_helpers.php';
@@ -16,6 +21,7 @@ $userId = (int) ($currentUser['user_id'] ?? 0);
 $action = (string) ($_POST['action'] ?? '');
 $conversationId = (int) ($_POST['conversation_id'] ?? 0);
 $messageId = (int) ($_POST['message_id'] ?? 0);
+$noteId = (int) ($_POST['note_id'] ?? 0);
 
 $redirectParams = buildConversationsTabQuery($conversationId > 0 ? $conversationId : null);
 
@@ -50,6 +56,18 @@ try {
             }
             $redirect($redirectParams);
 
+        case 'save_note':
+            $pdo = getDatabaseConnection();
+            saveConversationNote($pdo, $conversationId, $userId, $noteId, $_POST);
+            logAction($userId, $noteId > 0 ? 'conversation_note_updated' : 'conversation_note_created', sprintf('Saved note in conversation %d', $conversationId));
+            $redirect($redirectParams);
+
+        case 'delete_note':
+            $pdo = getDatabaseConnection();
+            deleteConversationNote($pdo, $conversationId, $userId, $noteId);
+            logAction($userId, 'conversation_note_deleted', sprintf('Deleted note %d from conversation %d', $noteId, $conversationId));
+            $redirect($redirectParams);
+
         case 'delete_all_closed':
             $deletedCount = deleteAllClosedConversationsForUser($userId);
             if ($deletedCount > 0) {
@@ -80,6 +98,11 @@ try {
 
         case 'remove_message':
             logAction($userId, 'conversation_email_remove_error', $error->getMessage());
+            $redirect($redirectParams);
+
+        case 'save_note':
+        case 'delete_note':
+            logThrowable($userId, 'conversation_note_action_error', $error);
             $redirect($redirectParams);
 
         default:
