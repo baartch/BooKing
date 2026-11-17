@@ -239,7 +239,11 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
             $messageBody = (string) ($message['body'] ?? '');
         }
         if ($messageBody !== '' && $messageBody !== strip_tags($messageBody)) {
-            echo $messageBody;
+            $emailDocument = '<!doctype html><html><head>'
+                . '<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; form-action &#39;none&#39;; base-uri &#39;none&#39;">'
+                . '</head><body>' . $messageBody . '</body></html>';
+            echo '<iframe class="email-detail-frame" title="Email content" sandbox="" srcdoc="'
+                . htmlspecialchars($emailDocument, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '"></iframe>';
         } else {
             echo formatPlainEmailBodyWithQuotes($messageBody);
         }
