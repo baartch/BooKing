@@ -79,7 +79,6 @@ bun run build
 - Sidebar consists only of icons, no labels
 - Logs written via `logAction()` in `app/models/core/database.php` (do NOT log sensitive data like cookies)
 - List item highlighting (client-side): add `data-list-selectable` on the list container, `data-list-item` on clickable entries, and optional `data-list-active-class` to override the default `is-active` class (handled in `src/list-panel.ts`).
-- Do NOT create a new markdown file to document each change or summarize your work unless specifically requested by the user.
 - **DO NOT COMMIT** unless the user tells you to. Commit only changes you made.
 
 ### Tables

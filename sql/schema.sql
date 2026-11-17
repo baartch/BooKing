@@ -183,6 +183,19 @@ CREATE TABLE email_messages (
     INDEX idx_email_messages_conversation (conversation_id, created_at)
 );
 
+CREATE TABLE conversation_notes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    conversation_id INT NOT NULL,
+    body TEXT NOT NULL,
+    occurred_at DATETIME NOT NULL,
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (conversation_id) REFERENCES email_conversations(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_conversation_notes_timeline (conversation_id, occurred_at)
+);
+
 CREATE TABLE email_attachments (
     id INT PRIMARY KEY AUTO_INCREMENT,
     email_id INT NOT NULL,
@@ -364,6 +377,14 @@ CREATE TABLE contacts (
   INDEX idx_contacts_city (team_id, city(100))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE conversation_note_participants (
+    note_id INT NOT NULL,
+    contact_id INT NOT NULL,
+    PRIMARY KEY (note_id, contact_id),
+    FOREIGN KEY (note_id) REFERENCES conversation_notes(id) ON DELETE CASCADE,
+    FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+);
+
 -- Applied migration tracking (updater). Fresh installs already contain the
 -- effect of every shipped migration below; the INSERTs mark them applied so
 -- the updater never replays them.
@@ -377,3 +398,4 @@ INSERT INTO schema_migrations (name) VALUES ('2026-10-25_team_show_songs.sql');
 INSERT INTO schema_migrations (name) VALUES ('2026-10-26_team_shows_entrance_fee.sql');
 INSERT INTO schema_migrations (name) VALUES ('2026-11-10_team_shows_state.sql');
 INSERT INTO schema_migrations (name) VALUES ('2026-11-15_email_received_at_epoch.sql');
+INSERT INTO schema_migrations (name) VALUES ('2026-11-17_conversation_notes.sql');

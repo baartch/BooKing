@@ -1,5 +1,19 @@
 <?php
 require_once __DIR__ . '/../core/database.php';
+require_once __DIR__ . '/../core/object_links.php';
+
+function clearConversationNoteLinks(PDO $pdo, array $conversationIds): void
+{
+    if (!$conversationIds) {
+        return;
+    }
+    $placeholders = implode(',', array_fill(0, count($conversationIds), '?'));
+    $stmt = $pdo->prepare('SELECT id FROM conversation_notes WHERE conversation_id IN (' . $placeholders . ')');
+    $stmt->execute(array_values($conversationIds));
+    foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $noteId) {
+        clearAllObjectLinks($pdo, 'conversation_note', (int) $noteId);
+    }
+}
 
 function fetchConversationSubjectById(int $conversationId): string
 {
@@ -488,6 +502,7 @@ function deleteClosedConversationForUser(int $conversationId, int $userId): bool
 
     $pdo->beginTransaction();
     try {
+        clearConversationNoteLinks($pdo, [$conversationId]);
         $updateStmt = $pdo->prepare(
             'UPDATE email_messages
              SET conversation_id = NULL
@@ -566,6 +581,7 @@ function deleteAllClosedConversationsForUser(int $userId): int
 
     $pdo->beginTransaction();
     try {
+        clearConversationNoteLinks($pdo, $conversationIds);
         $unlinkStmt = $pdo->prepare(
             'UPDATE email_messages
              SET conversation_id = NULL

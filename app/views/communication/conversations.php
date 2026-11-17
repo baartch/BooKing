@@ -2,10 +2,19 @@
 require_once __DIR__ . '/../../models/core/link_helpers.php';
 require_once __DIR__ . '/../../models/communication/email_helpers.php';
 require_once __DIR__ . '/../../models/communication/conversation_helpers.php';
+require_once __DIR__ . '/../../models/communication/conversation_notes.php';
+require_once __DIR__ . '/../../models/communication/team_helpers.php';
+require_once __DIR__ . '/../../models/core/object_links.php';
+require_once __DIR__ . '/../../models/core/link_scope.php';
+require_once __DIR__ . '/../../models/core/link_helpers.php';
 
 $errors = [];
 $conversations = [];
 $conversationMessages = [];
+$conversationNotes = [];
+$noteTeams = [];
+$noteContactOptions = [];
+$conversationScope = null;
 $userId = (int) ($currentUser['user_id'] ?? 0);
 $folderOptions = getEmailFolderOptions();
 
@@ -25,6 +34,13 @@ if ($conversationId > 0) {
             $errors[] = 'Conversation access denied.';
         } else {
       $conversationMessages = $messages;
+      $pdo = getDatabaseConnection();
+      $conversationScope = ensureConversationAccess($pdo, $conversationId, $userId);
+      $conversationNotes = fetchConversationNotes($pdo, $conversationId, $userId);
+      if ($conversationScope) {
+          $noteTeams = fetchConversationNoteTeams($pdo, $conversationScope, $userId);
+          $noteContactOptions = fetchConversationNoteContactOptions($pdo, $conversationScope, $userId);
+      }
         }
     } catch (Throwable $error) {
         $errors[] = 'Failed to load conversation emails.';
@@ -299,17 +315,41 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
     <div class="box">
       <div class="level mb-3">
         <div class="level-left">
-          <h2 class="title is-5">Conversation emails</h2>
+          <h2 class="title is-5">Conversation</h2>
         </div>
       </div>
 
       <?php if (!$conversationId): ?>
         <p>Select a conversation to view emails.</p>
-      <?php elseif (!$conversationMessages): ?>
-        <p>No emails found for this conversation.</p>
+      <?php elseif (!$conversationMessages && !$conversationNotes): ?>
+        <p>No emails or notes in this conversation yet.</p>
       <?php else: ?>
         <div class="content">
-          <?php foreach ($conversationMessages as $messageItem): ?>
+          <?php foreach (buildConversationTimeline($conversationMessages, $conversationNotes) as $timelineItem): ?>
+            <?php if ($timelineItem['type'] === 'note'): ?>
+              <?php $noteItem = $timelineItem['item']; ?>
+              <article class="box mb-3">
+                <div class="is-flex is-justify-content-space-between">
+                  <strong>Call note · <?php echo htmlspecialchars(date('Y-m-d H:i', strtotime((string) $noteItem['occurred_at']))); ?></strong>
+                  <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation.php" onsubmit="return confirm('Delete this note?');">
+                    <?php renderCsrfField(); ?>
+                    <input type="hidden" name="action" value="delete_note"><input type="hidden" name="conversation_id" value="<?php echo $conversationId; ?>"><input type="hidden" name="note_id" value="<?php echo (int) $noteItem['id']; ?>">
+                    <button class="button is-small" type="submit" aria-label="Delete note"><span class="icon"><i class="fa-solid fa-trash"></i></span></button>
+                  </form>
+                </div>
+                <div class="content mt-2"><?php echo nl2br(htmlspecialchars((string) $noteItem['body'])); ?></div>
+                <?php if (!empty($noteItem['participants'])): ?><p class="is-size-7"><strong>Participants:</strong> <?php echo htmlspecialchars(implode(', ', array_map(static fn($person) => trim($person['firstname'] . ' ' . $person['surname']), $noteItem['participants']))); ?></p><?php endif; ?>
+                <?php if (!empty($noteItem['links'])): ?><p class="is-size-7"><strong>Related:</strong> <?php echo htmlspecialchars(implode(', ', array_column($noteItem['links'], 'label'))); ?></p><?php endif; ?>
+                <details><summary class="is-size-7">Edit note</summary>
+                  <?php
+                    $noteFormId = 'conversation-note-edit-' . (int) $noteItem['id'];
+                    $noteEdit = $noteItem;
+                    require __DIR__ . '/conversation_note_form.php';
+                  ?>
+                </details>
+              </article>
+            <?php else: ?>
+            <?php $messageItem = $timelineItem['item']; ?>
             <?php
               $messageFolder = $messageItem['folder'] ?? 'inbox';
               $displayName = $messageFolder === 'inbox'
@@ -394,8 +434,13 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
               </form>
             </div>
             <?php $message = null; ?>
+            <?php endif; ?>
           <?php endforeach; ?>
         </div>
+      <?php endif; ?>
+      <?php if ($conversationId > 0 && $conversationScope): ?>
+        <hr><h3 class="title is-6">Add call note</h3>
+        <?php $noteFormId = 'conversation-note-new'; $noteEdit = null; require __DIR__ . '/conversation_note_form.php'; ?>
       <?php endif; ?>
     </div>
   </section>
