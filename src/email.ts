@@ -518,6 +518,11 @@ const initEmailDragAndDrop = (): void => {
 };
 
 const initMailboxSwitch = (): void => {
+  const emailPanel = document.querySelector<HTMLElement>('[data-tab-panel="email"]');
+  if (!emailPanel || emailPanel.classList.contains("is-hidden")) {
+    return;
+  }
+
   const currentUrl = new URL(window.location.href);
   const currentTab = currentUrl.searchParams.get("tab") ?? "";
   if (currentTab !== "" && currentTab !== "email") {
@@ -1272,7 +1277,8 @@ const bindHugerteEditor = (): void => {
     initComposeEnterGuard();
     initComposeLinkRefresh();
     initLinkList();
-    initMailboxSwitch();
+    // Tab activation fires before tabs.ts updates the URL.
+    queueMicrotask(initMailboxSwitch);
     initRecipientToggle();
     initSendMenu();
     initSendConfirmation();
