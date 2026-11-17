@@ -74,14 +74,20 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
         };
 
         $incomingConversations = [];
-        $outgoingConversations = [];
+        $overdueConversations = [];
+        $waitingConversations = [];
 
         foreach ($openConversations as $conversation) {
             $lastFolder = (string) ($conversation['last_message_folder'] ?? '');
+            $lastActivity = $conversation['last_activity_at'] ?? $conversation['created_at'] ?? null;
+            $lastActivityTime = $lastActivity ? strtotime((string) $lastActivity) : null;
+            $elapsedSeconds = $lastActivityTime ? max(0, time() - $lastActivityTime) : $cooldownSeconds;
             if ($lastFolder === 'inbox') {
                 $incomingConversations[] = $conversation;
+            } elseif ($elapsedSeconds >= $cooldownSeconds) {
+                $overdueConversations[] = $conversation;
             } else {
-                $outgoingConversations[] = $conversation;
+                $waitingConversations[] = $conversation;
             }
         }
 
@@ -118,19 +124,26 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
         };
 
         usort($incomingConversations, $sortByHeat);
-        usort($outgoingConversations, $sortByHeat);
+        usort($overdueConversations, $sortByHeat);
+        usort($waitingConversations, $sortByHeat);
         usort($closedConversations, $sortByHeat);
 
-        $orderedOpenConversations = array_merge($incomingConversations, $outgoingConversations);
+        $openGroups = array_filter([
+            'Reply needed' => $incomingConversations,
+            'Follow up or close' => $overdueConversations,
+            'Waiting' => $waitingConversations
+        ]);
       ?>
+        <?php if (!$conversations): ?>
+          <p>No conversations found.</p>
+        <?php elseif (!$openGroups): ?>
+          <p>No open conversations.</p>
+        <?php endif; ?>
+        <?php foreach ($openGroups as $groupLabel => $groupConversations): ?>
+        <h3 class="title is-6 mb-2 mt-4"><?php echo htmlspecialchars($groupLabel); ?> (<?php echo count($groupConversations); ?>)</h3>
         <div class="menu">
-          <ul class="menu-list">
-            <?php if (!$conversations): ?>
-              <li><span>No conversations found.</span></li>
-            <?php elseif (!$orderedOpenConversations): ?>
-              <li><span>No open conversations.</span></li>
-            <?php else: ?>
-              <?php foreach ($orderedOpenConversations as $conversation): ?>
+          <ul class="menu-list conversation-list">
+              <?php foreach ($groupConversations as $conversation): ?>
                 <?php
                   $conversationLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, [
                       'conversation_id' => $conversation['id']
@@ -154,7 +167,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                   $scopeIcon = !empty($conversation['team_id']) ? 'fa-users' : 'fa-user';
                   $trimmedSubject = $trimConversationSubject((string) ($conversation['subject'] ?? ''));
                 ?>
-                <li class="mb-2">
+                <li>
                   <div class="is-flex is-justify-content-space-between">
                     <a href="<?php echo htmlspecialchars($conversationLink); ?>" class="is-flex-grow-1 <?php echo (int) $conversation['id'] === $conversationId ? 'is-active' : ''; ?>">
                       <div class="conversation-row">
@@ -190,22 +203,33 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                   </div>
                 </li>
               <?php endforeach; ?>
-            <?php endif; ?>
           </ul>
         </div>
+        <?php endforeach; ?>
 
         <?php if ($closedConversations): ?>
-          <div class="mt-4">
+          <div class="mt-4" data-closed-conversations>
             <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
-              <h3 class="title is-6 mb-0">Closed</h3>
+              <button type="button" class="button is-ghost is-small px-0 title is-6 mb-0" data-closed-toggle aria-expanded="false">
+                <span class="icon is-small mr-1"><i class="fa-solid fa-chevron-right" data-closed-toggle-icon></i></span>
+                <span>Closed (<?php echo count($closedConversations); ?>)</span>
+              </button>
               <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/communication/conversation.php" onsubmit="return confirm('Delete all closed conversations?');">
                 <?php renderCsrfField(); ?>
                 <input type="hidden" name="action" value="delete_all_closed">
                 <button type="submit" class="button is-small" title="Delete all closed conversations">Delete all</button>
               </form>
             </div>
+            <div class="is-hidden" data-closed-body>
+            <div class="field">
+              <div class="control has-icons-left">
+                <input class="input is-small" type="search" placeholder="Search closed conversations" aria-label="Search closed conversations" data-closed-search>
+                <span class="icon is-small is-left"><i class="fa-solid fa-magnifying-glass"></i></span>
+              </div>
+            </div>
+            <p class="is-size-7 is-hidden" data-closed-empty>No matching conversations.</p>
             <div class="menu">
-              <ul class="menu-list">
+              <ul class="menu-list conversation-list">
                 <?php foreach ($closedConversations as $conversation): ?>
                   <?php
                     $conversationLink = $baseUrl . '?' . http_build_query(array_merge($baseQuery, [
@@ -222,7 +246,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                     $scopeIcon = !empty($conversation['team_id']) ? 'fa-users' : 'fa-user';
                     $trimmedSubject = $trimConversationSubject((string) ($conversation['subject'] ?? ''));
                   ?>
-                  <li class="mb-2">
+                  <li data-closed-item data-search-text="<?php echo htmlspecialchars(mb_strtolower($conversation['id'] . ' ' . $participantLabel . ' ' . formatConversationSubject((string) ($conversation['subject'] ?? '')))); ?>">
                     <div class="is-flex is-justify-content-space-between">
                       <a href="<?php echo htmlspecialchars($conversationLink); ?>" class="is-flex-grow-1 <?php echo (int) $conversation['id'] === $conversationId ? 'is-active' : ''; ?>">
                         <div class="conversation-row">
@@ -262,6 +286,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                   </li>
                 <?php endforeach; ?>
               </ul>
+            </div>
             </div>
           </div>
         <?php endif; ?>

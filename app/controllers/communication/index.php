@@ -29,6 +29,7 @@ if (HTMX::isRequest()) {
         '<script type="module" src="' . BASE_PATH . '/app/public/js/tabs.js" defer></script>',
         '<script type="module" src="' . BASE_PATH . '/app/public/js/email.js" defer></script>',
         '<script type="module" src="' . BASE_PATH . '/app/public/js/list-panel.js" defer></script>',
+        '<script type="module" src="' . BASE_PATH . '/app/public/js/conversations.js" defer></script>',
         '<script type="module" src="' . BASE_PATH . '/app/public/js/link-editor.js" defer></script>'
     ]
 ]); ?>
