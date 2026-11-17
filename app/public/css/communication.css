@@ -272,6 +272,24 @@
   padding-bottom: 0.2rem;
 }
 
+.conversation-arrow-outgoing {
+  color: #b45309;
+}
+
+html[data-theme="dark"] .conversation-arrow-outgoing {
+  color: #ffb45b;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) .conversation-arrow-outgoing {
+    color: #ffb45b;
+  }
+}
+
+.conversation-list a.is-active .conversation-arrow-outgoing {
+  color: #ffc47d;
+}
+
 .conversation-row {
   display: flex;
   align-items: center;
