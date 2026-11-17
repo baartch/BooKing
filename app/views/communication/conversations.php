@@ -164,6 +164,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                   $messageCount = (int) ($conversation['message_count'] ?? 0);
                   $lastFolder = (string) ($conversation['last_message_folder'] ?? '');
                   $arrowIcon = $lastFolder === 'inbox' ? 'fa-arrow-right' : 'fa-arrow-left';
+                  $arrowColor = $lastFolder === 'inbox' ? 'has-text-success' : 'conversation-arrow-outgoing';
                   $scopeIcon = !empty($conversation['team_id']) ? 'fa-users' : 'fa-user';
                   $trimmedSubject = $trimConversationSubject((string) ($conversation['subject'] ?? ''));
                 ?>
@@ -173,7 +174,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                       <div class="conversation-row">
                         <div class="conversation-row-main">
                           <span class="icon is-small mr-1"><i class="fa-solid <?php echo $scopeIcon; ?>"></i></span>
-                          <span class="icon is-small mr-1"><i class="fa-solid <?php echo $arrowIcon; ?>"></i></span>
+                          <span class="icon is-small mr-1"><i class="fa-solid <?php echo $arrowIcon; ?> <?php echo $arrowColor; ?>"></i></span>
                           <span class="has-text-weight-semibold mr-1"><?php echo (int) $conversation['id']; ?>:</span>
                           <span class="is-size-7 mr-1 conversation-participant"><?php echo htmlspecialchars($participantLabel); ?></span>
                           <span class="has-text-weight-semibold conversation-subject" title="<?php echo htmlspecialchars(formatConversationSubject((string) ($conversation['subject'] ?? ''))); ?>">
@@ -243,6 +244,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                     $messageCount = (int) ($conversation['message_count'] ?? 0);
                     $lastFolder = (string) ($conversation['last_message_folder'] ?? '');
                     $arrowIcon = $lastFolder === 'inbox' ? 'fa-arrow-right' : 'fa-arrow-left';
+                    $arrowColor = $lastFolder === 'inbox' ? 'has-text-success' : 'conversation-arrow-outgoing';
                     $scopeIcon = !empty($conversation['team_id']) ? 'fa-users' : 'fa-user';
                     $trimmedSubject = $trimConversationSubject((string) ($conversation['subject'] ?? ''));
                   ?>
@@ -252,7 +254,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                         <div class="conversation-row">
                           <div class="conversation-row-main">
                             <span class="icon is-small mr-1"><i class="fa-solid <?php echo $scopeIcon; ?>"></i></span>
-                            <span class="icon is-small mr-1"><i class="fa-solid <?php echo $arrowIcon; ?>"></i></span>
+                            <span class="icon is-small mr-1"><i class="fa-solid <?php echo $arrowIcon; ?> <?php echo $arrowColor; ?>"></i></span>
                             <span class="has-text-weight-semibold mr-1"><?php echo (int) $conversation['id']; ?>:</span>
                             <span class="is-size-7 mr-1 conversation-participant"><?php echo htmlspecialchars($participantLabel); ?></span>
                             <span class="has-text-weight-semibold conversation-subject" title="<?php echo htmlspecialchars(formatConversationSubject((string) ($conversation['subject'] ?? ''))); ?>">
