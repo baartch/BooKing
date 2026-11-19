@@ -9,6 +9,7 @@
  */
 require_once __DIR__ . '/../../../models/core/list_helpers.php';
 require_once __DIR__ . '/../../../models/core/link_helpers.php';
+require_once __DIR__ . '/../../../partials/linked_objects.php';
 
 $detailTitle = null;
 $detailSubtitle = null;
@@ -19,7 +20,6 @@ $taskLinks = $taskLinks ?? [];
 
 $linkItems = [];
 $linkEditorLinks = [];
-$linkIcons = getLinkIcons();
 
 if ($activeTask) {
     $detailTitle = (string) ($activeTask['title'] ?? '');
@@ -80,19 +80,10 @@ if ($activeTask) {
         <div class="detail-meta-row">
           <span class="detail-meta-label">Links:</span>
           <span class="detail-meta-value detail-link-list">
-            <?php if (!$linkItems): ?>
-              <span class="has-text-grey is-size-7">No links yet</span>
-            <?php else: ?>
-              <?php foreach ($linkItems as $link): ?>
-                <a href="<?php echo htmlspecialchars($link['url']); ?>" class="detail-link-pill">
-                  <span class="icon is-small"><i class="fa-solid <?php echo htmlspecialchars($linkIcons[$link['type']] ?? 'fa-link'); ?>"></i></span>
-                  <span><?php echo htmlspecialchars($link['label']); ?></span>
-                </a>
-              <?php endforeach; ?>
-            <?php endif; ?>
-            <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars('link-editor-task-' . (int) $activeTask['id']); ?>" title="Edit links">
-              <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
-            </a>
+            <?php echo renderLinkedObjects([
+                'items' => $linkItems,
+                'modalId' => 'link-editor-task-' . (int) $activeTask['id'],
+            ]); ?>
           </span>
         </div>
       </div>

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../models/core/link_helpers.php';
+require_once __DIR__ . '/../../partials/linked_objects.php';
 require_once __DIR__ . '/../../models/communication/email_helpers.php';
 require_once __DIR__ . '/../../models/communication/conversation_helpers.php';
 require_once __DIR__ . '/../../models/communication/conversation_notes.php';
@@ -334,11 +335,17 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                 <div class="content mt-2"><?php echo nl2br(htmlspecialchars((string) $noteItem['body'])); ?></div>
                 <?php if (!empty($noteItem['participants'])): ?><p class="is-size-7"><strong>Participants:</strong> <?php echo htmlspecialchars(implode(', ', array_map(static fn($person) => trim($person['firstname'] . ' ' . $person['surname']), $noteItem['participants']))); ?></p><?php endif; ?>
                 <?php if (!empty($noteItem['links'])): ?>
-                  <div class="detail-meta-row"><span class="detail-meta-label">Links:</span><span class="detail-meta-value detail-link-list">
-                    <?php foreach ($noteItem['links'] as $link): ?>
-                      <a href="<?php echo htmlspecialchars(buildLinkUrl($link)); ?>" class="detail-link-pill"><span class="icon is-small"><i class="fa-solid <?php echo htmlspecialchars(getLinkIcons()[$link['type']] ?? 'fa-link'); ?>"></i></span><span><?php echo htmlspecialchars($link['label']); ?></span></a>
-                    <?php endforeach; ?>
-                  </span></div>
+                  <?php
+                    $noteLinkItems = [];
+                    foreach ($noteItem['links'] as $link) {
+                        $noteLinkItems[] = [
+                            'type' => $link['type'],
+                            'label' => $link['label'],
+                            'url' => buildLinkUrl($link),
+                        ];
+                    }
+                  ?>
+                  <div class="detail-meta-row"><span class="detail-meta-label">Links:</span><span class="detail-meta-value detail-link-list"><?php echo renderLinkedObjects(['items' => $noteLinkItems]); ?></span></div>
                 <?php endif; ?>
                 <details><summary class="is-size-7">Edit note</summary>
                   <?php
