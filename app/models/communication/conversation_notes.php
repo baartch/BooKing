@@ -193,11 +193,13 @@ function saveConversationNote(PDO $pdo, int $conversationId, int $userId, int $n
             $stmt->execute([$contactTeam, $firstName, $surname !== '' ? $surname : null]);
             $participantIds[] = (int) $pdo->lastInsertId();
         }
-        $stmt = $pdo->prepare('DELETE FROM conversation_note_participants WHERE note_id = ?');
-        $stmt->execute([$noteId]);
-        $stmt = $pdo->prepare('INSERT INTO conversation_note_participants (note_id, contact_id) VALUES (?, ?)');
-        foreach ($participantIds as $id) {
-            $stmt->execute([$noteId, $id]);
+        if (array_key_exists('participants', $input) || $names) {
+            $stmt = $pdo->prepare('DELETE FROM conversation_note_participants WHERE note_id = ?');
+            $stmt->execute([$noteId]);
+            $stmt = $pdo->prepare('INSERT INTO conversation_note_participants (note_id, contact_id) VALUES (?, ?)');
+            foreach ($participantIds as $id) {
+                $stmt->execute([$noteId, $id]);
+            }
         }
         $scopeUser = !empty($conversation['user_id']) ? (int) $conversation['user_id'] : null;
         clearObjectLinks($pdo, 'conversation_note', $noteId, $teamId, $scopeUser);

@@ -12,8 +12,6 @@ $errors = [];
 $conversations = [];
 $conversationMessages = [];
 $conversationNotes = [];
-$noteTeams = [];
-$noteContactOptions = [];
 $conversationScope = null;
 $userId = (int) ($currentUser['user_id'] ?? 0);
 $folderOptions = getEmailFolderOptions();
@@ -37,10 +35,6 @@ if ($conversationId > 0) {
       $pdo = getDatabaseConnection();
       $conversationScope = ensureConversationAccess($pdo, $conversationId, $userId);
       $conversationNotes = fetchConversationNotes($pdo, $conversationId, $userId);
-      if ($conversationScope) {
-          $noteTeams = fetchConversationNoteTeams($pdo, $conversationScope, $userId);
-          $noteContactOptions = fetchConversationNoteContactOptions($pdo, $conversationScope, $userId);
-      }
         }
     } catch (Throwable $error) {
         $errors[] = 'Failed to load conversation emails.';
@@ -339,7 +333,13 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                 </div>
                 <div class="content mt-2"><?php echo nl2br(htmlspecialchars((string) $noteItem['body'])); ?></div>
                 <?php if (!empty($noteItem['participants'])): ?><p class="is-size-7"><strong>Participants:</strong> <?php echo htmlspecialchars(implode(', ', array_map(static fn($person) => trim($person['firstname'] . ' ' . $person['surname']), $noteItem['participants']))); ?></p><?php endif; ?>
-                <?php if (!empty($noteItem['links'])): ?><p class="is-size-7"><strong>Related:</strong> <?php echo htmlspecialchars(implode(', ', array_column($noteItem['links'], 'label'))); ?></p><?php endif; ?>
+                <?php if (!empty($noteItem['links'])): ?>
+                  <div class="detail-meta-row"><span class="detail-meta-label">Links:</span><span class="detail-meta-value detail-link-list">
+                    <?php foreach ($noteItem['links'] as $link): ?>
+                      <a href="<?php echo htmlspecialchars(buildLinkUrl($link)); ?>" class="detail-link-pill"><span class="icon is-small"><i class="fa-solid <?php echo htmlspecialchars(getLinkIcons()[$link['type']] ?? 'fa-link'); ?>"></i></span><span><?php echo htmlspecialchars($link['label']); ?></span></a>
+                    <?php endforeach; ?>
+                  </span></div>
+                <?php endif; ?>
                 <details><summary class="is-size-7">Edit note</summary>
                   <?php
                     $noteFormId = 'conversation-note-edit-' . (int) $noteItem['id'];
