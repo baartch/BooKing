@@ -7,9 +7,31 @@
  * - string $searchQuery
  * - array $taskLinks
  */
+require_once __DIR__ . '/../../../models/core/link_helpers.php';
+require_once __DIR__ . '/../../../partials/linked_objects.php';
+
 $cancelUrl = $cancelUrl ?? (BASE_PATH . '/app/controllers/team/index.php?tab=tasks');
 $searchQuery = $searchQuery ?? '';
 $taskLinks = $taskLinks ?? [];
+$linkItems = [];
+foreach ($taskLinks as $link) {
+    $linkUrl = '#';
+    if ($link['type'] === 'contact') {
+        $linkUrl = BASE_PATH . '/app/controllers/communication/index.php?tab=contacts&contact_id=' . (int) $link['id'];
+    } elseif ($link['type'] === 'venue') {
+        $linkUrl = BASE_PATH . '/app/controllers/venues/index.php?q=' . urlencode($link['label']);
+    } elseif ($link['type'] === 'email') {
+        $linkUrl = BASE_PATH . '/app/controllers/communication/index.php?tab=email&message_id=' . (int) $link['id'];
+    } elseif ($link['type'] === 'task') {
+        $linkUrl = BASE_PATH . '/app/controllers/team/index.php?tab=tasks&task_id=' . (int) $link['id'];
+    }
+    $linkItems[] = [
+        'type' => $link['type'],
+        'label' => $link['label'],
+        'url' => $linkUrl,
+        'icon' => ($link['type'] ?? '') === 'show' ? 'fa-link' : null,
+    ];
+}
 ?>
 <div class="box">
   <div class="level mb-3">
@@ -32,44 +54,11 @@ $taskLinks = $taskLinks ?? [];
         <div class="detail-meta-info">
           <div class="detail-meta-row">
             <span class="detail-meta-label">Links:</span>
-            <span class="detail-meta-value detail-link-list">
-              <?php if (empty($taskLinks ?? [])): ?>
-                <span class="has-text-grey is-size-7">No links yet</span>
-              <?php else: ?>
-                <?php foreach ($taskLinks as $link): ?>
-                  <?php
-                    $linkUrl = '#';
-                    if ($link['type'] === 'contact') {
-                        $linkUrl = BASE_PATH . '/app/controllers/communication/index.php?tab=contacts&contact_id=' . (int) $link['id'];
-                    } elseif ($link['type'] === 'venue') {
-                        $linkUrl = BASE_PATH . '/app/controllers/venues/index.php?q=' . urlencode($link['label']);
-                    } elseif ($link['type'] === 'email') {
-                        $linkUrl = BASE_PATH . '/app/controllers/communication/index.php?tab=email&message_id=' . (int) $link['id'];
-                    } elseif ($link['type'] === 'task') {
-                        $linkUrl = BASE_PATH . '/app/controllers/team/index.php?tab=tasks&task_id=' . (int) $link['id'];
-                    }
-                  ?>
-                  <?php
-                    $linkIcon = 'fa-link';
-                    if ($link['type'] === 'contact') {
-                        $linkIcon = 'fa-user';
-                    } elseif ($link['type'] === 'venue') {
-                        $linkIcon = 'fa-location-dot';
-                    } elseif ($link['type'] === 'email') {
-                        $linkIcon = 'fa-envelope';
-                    } elseif ($link['type'] === 'task') {
-                        $linkIcon = 'fa-list-check';
-                    }
-                  ?>
-                  <a href="<?php echo htmlspecialchars($linkUrl); ?>" class="detail-link-pill">
-                    <span class="icon is-small"><i class="fa-solid <?php echo htmlspecialchars($linkIcon); ?>"></i></span>
-                    <span><?php echo htmlspecialchars($link['label']); ?></span>
-                  </a>
-                <?php endforeach; ?>
-              <?php endif; ?>
-              <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars('link-editor-task-' . (int) ($editTask['id'] ?? 0)); ?>" title="Edit links">
-                <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
-              </a>
+            <span class="detail-meta-value">
+              <?php echo renderLinkedObjects([
+                  'items' => $linkItems,
+                  'modalId' => 'link-editor-task-' . (int) ($editTask['id'] ?? 0),
+              ]); ?>
             </span>
           </div>
         </div>

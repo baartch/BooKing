@@ -1,4 +1,43 @@
 <?php
+require_once __DIR__ . '/../../partials/linked_objects.php';
+
+$composeValues = $composeValues ?? [];
+$selectedMailbox = $selectedMailbox ?? ['id' => 0, 'team_id' => 0];
+$composeLinkEditorLinks = [];
+if (!empty($composeValues['link_items']) && is_array($composeValues['link_items'])) {
+    foreach ($composeValues['link_items'] as $linkItem) {
+        $type = (string) ($linkItem['type'] ?? '');
+        $id = (int) ($linkItem['id'] ?? 0);
+        $label = trim((string) ($linkItem['label'] ?? ''));
+        if ($type === '' || $id <= 0) {
+            continue;
+        }
+        $composeLinkEditorLinks[] = [
+            'type' => $type,
+            'id' => $id,
+            'label' => $label !== '' ? $label : ($type . ' #' . $id),
+            'icon' => $type === 'show' ? 'fa-link' : null,
+        ];
+    }
+}
+$composeLinkListAttributes = [
+    'data-email-links-list' => '',
+    'data-team-id' => (string) ((int) ($selectedMailbox['team_id'] ?? 0)),
+    'data-contact-url-base' => BASE_PATH . '/app/controllers/communication/index.php',
+    'data-venue-url-base' => BASE_PATH . '/app/controllers/venues/index.php',
+    'data-email-url-base' => BASE_PATH . '/app/controllers/communication/index.php',
+    'data-task-url-base' => BASE_PATH . '/app/controllers/team/index.php',
+    'data-conversation-url-base' => BASE_PATH . '/app/controllers/communication/index.php',
+];
+$composeConversationPillItems = [];
+if (!empty($composeValues['conversation_id'])) {
+    $composeConversationPillId = (int) $composeValues['conversation_id'];
+    $composeConversationPillItems[] = [
+        'type' => 'conversation',
+        'id' => $composeConversationPillId,
+        'label' => (string) ($composeValues['conversation_label'] ?? ('Conversation #' . $composeConversationPillId)),
+    ];
+}
 ?>
 <form method="POST" action="<?php echo BASE_PATH; ?>/app/controllers/email/send.php" data-email-compose-form>
   <?php renderCsrfField(); ?>
@@ -144,29 +183,17 @@
     </div>
     <div class="is-size-7 email-link-metadata" data-email-links>
       Links:
-      <span
-        class="detail-link-list"
-        data-email-links-list
-        data-team-id="<?php echo (int) ($selectedMailbox['team_id'] ?? 0); ?>"
-        data-contact-url-base="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/communication/index.php'); ?>"
-        data-venue-url-base="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/venues/index.php'); ?>"
-        data-email-url-base="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/communication/index.php'); ?>"
-        data-task-url-base="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/team/index.php'); ?>"
-        data-conversation-url-base="<?php echo htmlspecialchars(BASE_PATH . '/app/controllers/communication/index.php'); ?>"
-      >
-        <span class="has-text-grey is-size-7">No links yet</span>
-      </span>
+      <?php echo renderLinkedObjects([
+          'items' => $composeLinkEditorLinks,
+          'modalId' => 'link-editor-email-0',
+          'listAttributes' => $composeLinkListAttributes,
+      ]); ?>
       <span class="mr-1" data-email-conversation-pill>
-        <?php if (!empty($composeValues['conversation_id'])): ?>
-          <span class="detail-link-pill">
-            <span class="icon is-small"><i class="fa-solid fa-comments"></i></span>
-            <span><?php echo htmlspecialchars((string) ($composeValues['conversation_label'] ?? ('Conversation #' . (int) $composeValues['conversation_id']))); ?></span>
-          </span>
-        <?php endif; ?>
+        <?php echo renderLinkedObjects([
+            'items' => $composeConversationPillItems,
+            'emptyText' => '',
+        ]); ?>
       </span>
-      <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars('link-editor-email-0'); ?>" title="Edit links">
-        <span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>
-      </a>
     </div>
     <div id="email-compose-link-collector" data-email-link-inputs data-link-editor-collector>
       <?php if (!empty($composeValues['link_items']) && is_array($composeValues['link_items'])): ?>
@@ -233,22 +260,6 @@
   $composeLinkEditorSourceType = 'email';
   $composeLinkEditorSourceId = 0;
   $composeLinkEditorMailboxId = (int) ($selectedMailbox['id'] ?? 0);
-  $composeLinkEditorLinks = [];
-  if (!empty($composeValues['link_items']) && is_array($composeValues['link_items'])) {
-      foreach ($composeValues['link_items'] as $linkItem) {
-          $type = (string) ($linkItem['type'] ?? '');
-          $id = (int) ($linkItem['id'] ?? 0);
-          $label = trim((string) ($linkItem['label'] ?? ''));
-          if ($type === '' || $id <= 0) {
-              continue;
-          }
-          $composeLinkEditorLinks[] = [
-              'type' => $type,
-              'id' => $id,
-              'label' => $label !== '' ? $label : ($type . ' #' . $id)
-          ];
-      }
-  }
   $composeLinkEditorConversationId = !empty($composeValues['conversation_id'])
       ? (int) $composeValues['conversation_id']
       : null;

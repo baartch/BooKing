@@ -1,11 +1,11 @@
 <?php
 require_once __DIR__ . '/../../models/core/link_helpers.php';
+require_once __DIR__ . '/../../partials/linked_objects.php';
 $noteFormId = preg_replace('/[^a-zA-Z0-9_-]/', '-', $noteFormId);
 $noteId = (int) ($noteEdit['id'] ?? 0);
 $collectorId = $noteFormId . '-links';
 $pillsId = $noteFormId . '-link-pills';
 $noteLinks = $noteEdit['links'] ?? [];
-$linkIcons = getLinkIcons();
 $occurredAt = $noteEdit['occurred_at'] ?? date('Y-m-d H:i:s');
 $occurredAtInput = date('Y-m-d\TH:i', strtotime((string) $occurredAt));
 $linkEditorSourceType = 'conversation_note';
@@ -32,13 +32,13 @@ $linkEditorCollectorSelector = '#' . $collectorId;
   <div class="detail-meta mb-4">
     <div class="detail-meta-info"><div class="detail-meta-row">
       <span class="detail-meta-label">Links:</span>
-      <span class="detail-meta-value detail-link-list" id="<?php echo htmlspecialchars($pillsId); ?>">
-        <?php if (!$noteLinks): ?><span class="has-text-grey is-size-7">No links yet</span><?php endif; ?>
-        <?php foreach ($noteLinks as $link): ?>
-          <span class="detail-link-pill"><span class="icon is-small"><i class="fa-solid <?php echo htmlspecialchars($linkIcons[$link['type']] ?? 'fa-link'); ?>"></i></span><span><?php echo htmlspecialchars($link['label']); ?></span></span>
-        <?php endforeach; ?>
+      <span class="detail-meta-value">
+        <?php echo renderLinkedObjects([
+            'items' => $noteLinks,
+            'modalId' => 'link-editor-conversation_note-' . $noteId,
+            'listId' => $pillsId,
+        ]); ?>
       </span>
-      <a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="<?php echo htmlspecialchars('link-editor-conversation_note-' . $noteId); ?>" title="Edit links" aria-label="Edit links"><span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span></a>
     </div></div>
   </div>
   <div id="<?php echo htmlspecialchars($collectorId); ?>" data-link-editor-collector data-link-editor-pills-selector="<?php echo htmlspecialchars('#' . $pillsId); ?>"><?php foreach ($noteLinks as $link): ?><input type="hidden" name="link_items[]" value="<?php echo htmlspecialchars($link['type'] . ':' . (int) $link['id']); ?>"><?php endforeach; ?></div>

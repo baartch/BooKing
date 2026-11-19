@@ -5,6 +5,7 @@
  */
 require_once __DIR__ . '/../../../models/core/list_helpers.php';
 require_once __DIR__ . '/../../../models/core/link_helpers.php';
+require_once __DIR__ . '/../../../partials/linked_objects.php';
 
 $baseUrl = BASE_PATH . '/app/controllers/venues/index.php';
 $activeTeamId = (int) ($activeTeamId ?? 0);
@@ -17,7 +18,6 @@ $triggerNotice = $triggerNotice ?? '';
 $venueLinks = $venueLinks ?? [];
 $linkItems = [];
 $linkEditorLinks = [];
-$linkIcons = getLinkIcons();
 $ratingSource = (string) ($_GET['source'] ?? 'list');
 $ratingMapLat = trim((string) ($_GET['lat'] ?? ''));
 $ratingMapLng = trim((string) ($_GET['lng'] ?? ''));
@@ -173,12 +173,16 @@ if ($activeVenue) {
 
     if (!empty($venueLinks)) {
         foreach ($venueLinks as $link) {
-            $linkItems[] = [
+            $linkItem = [
                 'type' => $link['type'],
                 'id' => (int) ($link['id'] ?? 0),
                 'label' => $link['label'],
                 'url' => buildLinkUrl($link)
             ];
+            if ($linkItem['type'] === 'task' && in_array($linkItem['id'], $triggerTaskIds, true)) {
+                $linkItem['icon'] = 'fa-circle-dot';
+            }
+            $linkItems[] = $linkItem;
 
             $linkEditorLinks[] = [
                 'type' => $link['type'],
@@ -190,28 +194,11 @@ if ($activeVenue) {
 
     $linksRow = '<div class="detail-meta-row">'
         . '<span class="detail-meta-label">Links:</span>'
-        . '<span class="detail-meta-value detail-link-list">';
-
-    if (!$linkItems) {
-        $linksRow .= '<span class="has-text-grey is-size-7">No links yet</span>';
-    } else {
-        foreach ($linkItems as $linkItem) {
-            $iconClass = $linkIcons[$linkItem['type']] ?? 'fa-link';
-            if ($linkItem['type'] === 'task' && in_array((int) $linkItem['id'], $triggerTaskIds, true)) {
-                $iconClass = 'fa-circle-dot';
-            }
-            $linksRow .= '<a href="' . htmlspecialchars($linkItem['url']) . '" class="detail-link-pill">'
-                . '<span class="icon is-small"><i class="fa-solid ' . htmlspecialchars($iconClass) . '"></i></span>'
-                . '<span>' . htmlspecialchars($linkItem['label']) . '</span>'
-                . '</a>';
-        }
-    }
-
-    $linksRow .= '<a href="#" class="detail-link-edit" data-link-editor-trigger data-link-editor-modal-id="'
-        . htmlspecialchars('link-editor-venue-' . (int) $activeVenue['id'])
-        . '" title="Edit links">'
-        . '<span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span>'
-        . '</a>'
+        . '<span class="detail-meta-value">'
+        . renderLinkedObjects([
+            'items' => $linkItems,
+            'modalId' => 'link-editor-venue-' . (int) $activeVenue['id'],
+        ])
         . '</span>'
         . '</div>';
 

@@ -55,6 +55,18 @@
   flex-wrap: wrap;
   gap: 0.35rem;
   align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.detail-link-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  max-width: 100%;
+  white-space: normal;
 }
 
 .detail-link-pill {
