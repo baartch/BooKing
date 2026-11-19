@@ -86,6 +86,64 @@ test("email compose PHP view keeps one URL-aware component list and a blank-safe
   expect(document.querySelector("[data-link-editor-modal-id='link-editor-email-0']")).not.toBeNull();
 });
 
+test("recipient lookup keeps newly selected links when rendering empty and populated collectors", async () => {
+  document.body.innerHTML = renderComposeForm();
+  const originalFetch = globalThis.fetch;
+  const hugerteWindow = window as Window & { hugerte?: unknown };
+  const originalHugerte = hugerteWindow.hugerte;
+  hugerteWindow.hugerte = { init: () => undefined, get: () => null };
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    const item = url.includes("q=Ha")
+      ? {
+          id: 55,
+          type: "venue",
+          name: "Hall",
+          label: "Hall",
+          email: "hall@example.test",
+          source: "Team 7",
+        }
+      : {
+          id: 42,
+          type: "contact",
+          name: "Jane Doe",
+          label: "Jane Doe",
+          email: "jane@example.test",
+          source: "Team 7",
+        };
+    return new Response(JSON.stringify({ items: [item] }), { status: 200 });
+  };
+
+  try {
+    await import("../src/email.ts");
+    document.dispatchEvent(new Event("DOMContentLoaded"));
+    const recipientInput = document.querySelector<HTMLInputElement>("#email_to")!;
+    const lookupContact = async (query: string): Promise<void> => {
+      recipientInput.value = query;
+      recipientInput.dispatchEvent(new Event("input", { bubbles: true }));
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      document.querySelector<HTMLElement>("[data-email-lookup] .dropdown-item[data-index]")!.click();
+    };
+
+    await lookupContact("Jane");
+    expect(
+      Array.from(document.querySelectorAll<HTMLInputElement>("#email-compose-link-collector input[name='link_items[]']")).map((input) => input.value),
+    ).toEqual(["contact:42"]);
+    expect(document.querySelector("[data-email-links-list] .detail-link-pill")!.textContent).toContain("Jane Doe");
+
+    await lookupContact("jane@example.test, Hall");
+    expect(
+      Array.from(document.querySelectorAll<HTMLInputElement>("#email-compose-link-collector input[name='link_items[]']")).map((input) => input.value),
+    ).toEqual(["contact:42", "venue:55"]);
+    expect(Array.from(document.querySelectorAll("[data-email-links-list] .detail-link-pill")).map((pill) => pill.textContent?.trim()))
+      .toEqual(["Jane Doe", "Hall"]);
+  } finally {
+    globalThis.fetch = originalFetch;
+    hugerteWindow.hugerte = originalHugerte;
+    document.body.innerHTML = "";
+  }
+});
+
 test("email compose modal submits local links, attaches a conversation, reopens, and detaches cleanly", async () => {
   document.body.innerHTML = renderComposeForm();
   const originalFetch = globalThis.fetch;

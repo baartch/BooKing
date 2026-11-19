@@ -133,11 +133,10 @@ type LocalLinkEditorSavedEvent = CustomEvent<{
   detachConversation?: boolean;
 }>;
 
-const renderLinkItems = (): void => {
+const hydrateLinkItems = (): void => {
   const form = document.querySelector<HTMLFormElement>("[data-email-compose-form]");
-  const list = form?.querySelector<HTMLElement>("[data-email-links-list]");
   const inputs = form?.querySelector<HTMLElement>("[data-email-link-inputs]");
-  if (!form || !list || !inputs) {
+  if (!form || !inputs) {
     return;
   }
 
@@ -181,6 +180,15 @@ const renderLinkItems = (): void => {
         name: item.label || match?.name || `${item.type} #${item.id}`,
       };
     });
+};
+
+const renderLinkItems = (): void => {
+  const form = document.querySelector<HTMLFormElement>("[data-email-compose-form]");
+  const list = form?.querySelector<HTMLElement>("[data-email-links-list]");
+  const inputs = form?.querySelector<HTMLElement>("[data-email-link-inputs]");
+  if (!form || !list || !inputs) {
+    return;
+  }
 
   inputs.innerHTML = "";
 
@@ -266,6 +274,7 @@ const addLinkItem = (item: LinkItem): void => {
 };
 
 const initLinkList = (): void => {
+  hydrateLinkItems();
   renderLinkItems();
 };
 
@@ -1171,9 +1180,8 @@ const initComposeLinkRefresh = (): void => {
       return;
     }
 
-    const links = detail?.links ?? [];
+    const links = Array.isArray(detail?.links) ? detail.links : [];
     const composeForm = document.querySelector<HTMLFormElement>("[data-email-compose-form]");
-    const composeCollector = composeForm?.querySelector<HTMLElement>("#email-compose-link-collector");
     const composeConversationInput = composeForm?.querySelector<HTMLInputElement>(
       "[data-email-conversation-id]",
     );
@@ -1181,18 +1189,13 @@ const initComposeLinkRefresh = (): void => {
       "[data-email-conversation-pill]",
     );
 
-    if (Array.isArray(detail?.links)) {
-      selectedLinkItems = links
-        .filter((link) => link.type && Number(link.id) > 0)
-        .map((link) => ({
-          id: Number(link.id),
-          type: link.type,
-          name: link.label || `${link.type} #${link.id}`,
-        }));
-    }
-    if (composeCollector && !composeCollector.querySelector('input[name="link_items[]"]')) {
-      selectedLinkItems = [];
-    }
+    selectedLinkItems = links
+      .filter((link) => link.type && Number(link.id) > 0)
+      .map((link) => ({
+        id: Number(link.id),
+        type: link.type,
+        name: link.label || `${link.type} #${link.id}`,
+      }));
 
     if (composeConversationInput) {
       const shouldDetach = Boolean(detail?.detachConversation);
