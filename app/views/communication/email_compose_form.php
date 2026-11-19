@@ -16,6 +16,7 @@ if (!empty($composeValues['link_items']) && is_array($composeValues['link_items'
             'type' => $type,
             'id' => $id,
             'label' => $label !== '' ? $label : ($type . ' #' . $id),
+            'icon' => $type === 'show' ? 'fa-link' : null,
         ];
     }
 }
@@ -30,11 +31,11 @@ $composeLinkListAttributes = [
 ];
 $composeConversationPillItems = [];
 if (!empty($composeValues['conversation_id'])) {
-    $composeConversationId = (int) $composeValues['conversation_id'];
+    $composeConversationPillId = (int) $composeValues['conversation_id'];
     $composeConversationPillItems[] = [
         'type' => 'conversation',
-        'id' => $composeConversationId,
-        'label' => (string) ($composeValues['conversation_label'] ?? ('Conversation #' . $composeConversationId)),
+        'id' => $composeConversationPillId,
+        'label' => (string) ($composeValues['conversation_label'] ?? ('Conversation #' . $composeConversationPillId)),
     ];
 }
 ?>

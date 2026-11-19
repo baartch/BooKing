@@ -29,6 +29,7 @@ foreach ($taskLinks as $link) {
         'type' => $link['type'],
         'label' => $link['label'],
         'url' => $linkUrl,
+        'icon' => ($link['type'] ?? '') === 'show' ? 'fa-link' : null,
     ];
 }
 ?>

@@ -281,7 +281,7 @@ $taskFormVars = [
     'formValues' => $taskFormValues,
     'cancelUrl' => '/cancel',
     'searchQuery' => '',
-    'taskLinks' => [$venueLink],
+    'taskLinks' => [$venueLink, ['type' => 'show', 'id' => 22, 'label' => 'Show link']],
     'activeTeamId' => 1,
 ];
 $taskForm = $render($taskFormPath, $taskFormVars);
@@ -290,6 +290,8 @@ $checkSingleList($taskForm, 'task form');
 $checkEditableModal($taskForm, 'task', 31, 'contact,venue,email,task', 'task form');
 $contains($taskForm, 'data-link-editor-collector', 'task form retains its link collector');
 $contains($taskForm, 'name="link_items[]"', 'task form retains its hidden link inputs');
+$contains($taskForm, 'fa-solid fa-link', 'task form preserves the generic icon for show links');
+$notContains($taskForm, 'fa-solid fa-music', 'task form does not substitute the show-specific icon for linked shows');
 $taskFormEmpty = $render($taskFormPath, array_merge($taskFormVars, ['taskLinks' => []]));
 $contains($taskFormEmpty, 'No links yet', 'task form renders the empty state');
 $taskCreateForm = $render($taskFormPath, array_merge($taskFormVars, ['isEdit' => false, 'editTask' => null]));

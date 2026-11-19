@@ -244,6 +244,7 @@ const renderLinkItems = (): void => {
       id: item.id,
       label: item.name,
       ...(href !== "" ? { url: href } : {}),
+      ...(item.type === "show" ? { icon: "fa-link" } : {}),
     };
   });
   renderLinkedObjectPills(list, pillItems);
@@ -1186,7 +1187,7 @@ const initComposeLinkRefresh = (): void => {
       "[data-email-conversation-id]",
     );
     const composeConversationPill = composeForm?.querySelector<HTMLElement>(
-      "[data-email-conversation-pill]",
+      "[data-email-conversation-pill] .detail-link-list",
     );
 
     selectedLinkItems = links

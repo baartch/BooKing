@@ -13,7 +13,7 @@ function renderLinkedObjects(array $options): string
     $icons = function_exists('getLinkIcons') ? getLinkIcons() : [];
     $escape = static fn(string $value): string => htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-    $html = '<span class="detail-link-list"';
+    $html = '<span class="detail-link-group"><span class="detail-link-list"';
     if ($listId !== '') {
         $html .= ' id="' . $escape($listId) . '"';
     }
@@ -72,6 +72,8 @@ function renderLinkedObjects(array $options): string
             . $escapedModalId
             . '" title="Edit links" aria-label="Edit links"><span class="icon is-small"><i class="fa-solid fa-pen fa-2xs"></i></span></a>';
     }
+
+    $html .= '</span>';
 
     return $html;
 }

@@ -13,7 +13,7 @@ const buildComposeForm = (): void => {
           data-contact-url-base="/communication.php" data-venue-url-base="/venues.php"
           data-email-url-base="/communication.php" data-task-url-base="/team.php"
           data-conversation-url-base="/communication.php"></span>
-        <span data-email-conversation-pill></span>
+        <span data-email-conversation-pill><span class="detail-link-list"></span></span>
       </div>
       <div id="email-compose-link-collector" data-email-link-inputs data-link-editor-collector>
         <input type="hidden" name="link_items[]" value="contact:42" data-link-label="Jane">
@@ -22,26 +22,35 @@ const buildComposeForm = (): void => {
     </form>`;
 };
 
-const renderComposeForm = (): string => {
+const renderComposeForm = (fixture: {
+  callerConversationId?: number;
+  linkItems?: Array<{ type: string; id: number; label: string }>;
+} = {}): string => {
   const php = `
     define('BASE_PATH', '/booking');
     function renderCsrfField(): void { echo '<input type="hidden" name="csrf_token" value="token">'; }
     function getCsrfToken(): string { return 'token'; }
-    $composeConversationId = 9;
+    $fixture = json_decode(stream_get_contents(STDIN), true);
+    if (array_key_exists('callerConversationId', $fixture)) {
+      $composeConversationId = (int) $fixture['callerConversationId'];
+    }
     $teamMailboxes = [];
     $selectedMailbox = ['id' => 8, 'team_id' => 7];
     $folder = 'inbox'; $sortKey = 'date'; $filter = ''; $page = 1; $message = null;
     $composeValues = [
       'schedule_date' => '', 'schedule_time' => '', 'to_emails' => '', 'cc_emails' => '',
       'bcc_emails' => '', 'subject' => '', 'start_new_conversation' => false, 'body' => '',
-      'link_items' => [], 'conversation_id' => 9, 'conversation_label' => 'Existing conversation'
+      'link_items' => $fixture['linkItems'] ?? [], 'conversation_id' => 9, 'conversation_label' => 'Existing conversation'
     ];
     $baseEmailUrl = '/booking/app/controllers/communication/index.php';
     $baseQuery = ['tab' => 'email'];
     $composeCancelUrl = '/cancel';
     require 'app/views/communication/email_compose_form.php';
   `;
-  return execFileSync("php", ["-r", php], { encoding: "utf8" });
+  return execFileSync("php", ["-r", php], {
+    encoding: "utf8",
+    input: JSON.stringify(fixture),
+  });
 };
 
 const fireLocalSaved = (detail: Record<string, unknown>): void => {
@@ -69,6 +78,21 @@ test("email compose ignores another collector's local-saved event", async () => 
   expect(document.querySelector("[data-email-conversation-pill]")!.textContent).not.toContain("Other conversation");
 });
 
+test("email compose preserves the generic icon when a show link is refreshed", async () => {
+  buildComposeForm();
+  await import("../src/email.ts");
+  document.dispatchEvent(new Event("DOMContentLoaded"));
+
+  fireLocalSaved({
+    collectorSelector: "#email-compose-link-collector",
+    links: [{ type: "show", id: 21, label: "Show link" }],
+  });
+
+  expect(document.querySelector("[data-email-links-list] .detail-link-pill .fa-link")).not.toBeNull();
+  expect(document.querySelector("[data-email-links-list] .detail-link-pill .fa-music")).toBeNull();
+  document.body.innerHTML = "";
+});
+
 test("email compose PHP view keeps one URL-aware component list and a blank-safe conversation pill", () => {
   document.body.innerHTML = renderComposeForm();
   const list = document.querySelector<HTMLElement>("[data-email-links-list]")!;
@@ -83,7 +107,26 @@ test("email compose PHP view keeps one URL-aware component list and a blank-safe
   expect(document.querySelectorAll("[data-email-links-list]")).toHaveLength(1);
   expect(collector.dataset.linkEditorPillsSelector).toBeUndefined();
   expect(document.querySelector("[data-email-conversation-pill]")!.textContent).toContain("Existing conversation");
+  expect(document.querySelector("[data-email-conversation-pill] .detail-link-list")).not.toBeNull();
   expect(document.querySelector("[data-link-editor-modal-id='link-editor-email-0']")).not.toBeNull();
+});
+
+test("draft conversation renders a pill without populating the previously blank hidden field", () => {
+  document.body.innerHTML = renderComposeForm({
+    linkItems: [{ type: "show", id: 21, label: "Show link" }],
+  });
+
+  expect(document.querySelector<HTMLInputElement>("input[name='conversation_id']")!.value).toBe("");
+  expect(document.querySelector("[data-email-conversation-pill]")!.textContent).toContain("Existing conversation");
+  expect(document.querySelector("[data-email-links-list] .detail-link-pill .fa-link")).not.toBeNull();
+  expect(document.querySelector("[data-email-links-list] .detail-link-pill .fa-music")).toBeNull();
+});
+
+test("email compose preserves an explicitly supplied hidden conversation ID", () => {
+  document.body.innerHTML = renderComposeForm({ callerConversationId: 42 });
+
+  expect(document.querySelector<HTMLInputElement>("input[name='conversation_id']")!.value).toBe("42");
+  expect(document.querySelector("[data-email-conversation-pill]")!.textContent).toContain("Existing conversation");
 });
 
 test("recipient lookup keeps newly selected links when rendering empty and populated collectors", async () => {
@@ -187,6 +230,7 @@ test("email compose modal submits local links, attaches a conversation, reopens,
     expect((document.querySelector("[data-email-links-list] .detail-link-pill") as HTMLAnchorElement).getAttribute("href"))
       .toBe("/booking/app/controllers/venues/index.php?venue_id=55");
     expect(document.querySelector("[data-email-conversation-pill]")!.textContent).toContain("New conversation");
+    expect(document.querySelector("[data-email-conversation-pill] .detail-link-list")).not.toBeNull();
 
     trigger.click();
     expect(modal.querySelector("[data-link-editor-tags]")!.textContent).toContain("Hall & Garden");
@@ -240,6 +284,7 @@ test("email compose attaches and detaches a conversation and clears an empty lin
 
   expect(document.querySelector<HTMLInputElement>("[data-email-conversation-id]")!.value).toBe("");
   expect(document.querySelector("[data-email-conversation-pill]")!.textContent?.trim()).toBe("");
+  expect(document.querySelector("[data-email-conversation-pill] .detail-link-list")).not.toBeNull();
   expect(document.querySelector("[data-email-links-list]")!.textContent).toContain("No links yet");
   expect(collector.querySelectorAll('input[name="link_items[]"]')).toHaveLength(0);
 });

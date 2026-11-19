@@ -114,6 +114,31 @@ if (function_exists('renderLinkedObjects')) {
     $check(str_contains($escaped, 'A &lt;B&gt; &amp; &quot;C&quot;'), 'label HTML characters are escaped exactly once');
     $check(str_contains($escaped, 'href="/search.php?q=a&amp;other=b"'), 'URL query ampersand is escaped exactly once');
     $check(!str_contains($escaped, '&amp;lt;') && !str_contains($escaped, '&amp;amp;'), 'escaped label and URL are not double-escaped');
+
+    $manyPills = renderLinkedObjects([
+        'items' => array_map(
+            static fn(int $id): array => ['type' => 'contact', 'id' => $id, 'label' => 'Contact ' . $id],
+            range(1, 10)
+        ),
+        'modalId' => 'link-editor-email-0',
+        'listId' => 'email-link-pills',
+        'listAttributes' => [
+            'data-email-links-list' => '',
+            'data-link-editor-pills-selector' => '#email-link-pills',
+        ],
+    ]);
+    $check(substr_count($manyPills, 'class="detail-link-pill"') === 10, 'ten linked-object pills render in the list');
+    $check(
+        str_contains($manyPills, '<span class="detail-link-group"><span class="detail-link-list" id="email-link-pills" data-link-editor-pills-selector="#email-link-pills" data-email-links-list="">')
+            && str_contains($manyPills, '</span><a href="#" class="detail-link-edit"'),
+        'pills and pencil are siblings inside one wrapping group while selectors stay on the inner list'
+    );
+    $globalCss = file_get_contents(__DIR__ . '/../app/public/css/global.css');
+    $check(
+        $globalCss !== false
+            && preg_match('/\.detail-link-group\s*\{[^}]*display:\s*inline-flex;[^}]*flex-wrap:\s*wrap;[^}]*gap:\s*[^;]+;[^}]*max-width:\s*100%;[^}]*\}/s', $globalCss) === 1,
+        'shared group CSS wraps pills and pencil within the detail row width'
+    );
 }
 
 exit($failures === 0 ? 0 : 1);
