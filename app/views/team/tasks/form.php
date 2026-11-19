@@ -13,7 +13,6 @@ require_once __DIR__ . '/../../../partials/linked_objects.php';
 $cancelUrl = $cancelUrl ?? (BASE_PATH . '/app/controllers/team/index.php?tab=tasks');
 $searchQuery = $searchQuery ?? '';
 $taskLinks = $taskLinks ?? [];
-$linkIcons = getLinkIcons();
 $linkItems = [];
 foreach ($taskLinks as $link) {
     $linkUrl = '#';
@@ -30,7 +29,6 @@ foreach ($taskLinks as $link) {
         'type' => $link['type'],
         'label' => $link['label'],
         'url' => $linkUrl,
-        'icon' => $linkIcons[$link['type']] ?? 'fa-link',
     ];
 }
 ?>
@@ -55,7 +53,7 @@ foreach ($taskLinks as $link) {
         <div class="detail-meta-info">
           <div class="detail-meta-row">
             <span class="detail-meta-label">Links:</span>
-            <span class="detail-meta-value detail-link-list">
+            <span class="detail-meta-value">
               <?php echo renderLinkedObjects([
                   'items' => $linkItems,
                   'modalId' => 'link-editor-task-' . (int) ($editTask['id'] ?? 0),

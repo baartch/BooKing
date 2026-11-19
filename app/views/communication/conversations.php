@@ -7,7 +7,6 @@ require_once __DIR__ . '/../../models/communication/conversation_notes.php';
 require_once __DIR__ . '/../../models/communication/team_helpers.php';
 require_once __DIR__ . '/../../models/core/object_links.php';
 require_once __DIR__ . '/../../models/core/link_scope.php';
-require_once __DIR__ . '/../../models/core/link_helpers.php';
 
 $errors = [];
 $conversations = [];
@@ -335,17 +334,7 @@ $cooldownSeconds = 14 * 24 * 60 * 60;
                 <div class="content mt-2"><?php echo nl2br(htmlspecialchars((string) $noteItem['body'])); ?></div>
                 <?php if (!empty($noteItem['participants'])): ?><p class="is-size-7"><strong>Participants:</strong> <?php echo htmlspecialchars(implode(', ', array_map(static fn($person) => trim($person['firstname'] . ' ' . $person['surname']), $noteItem['participants']))); ?></p><?php endif; ?>
                 <?php if (!empty($noteItem['links'])): ?>
-                  <?php
-                    $noteLinkItems = [];
-                    foreach ($noteItem['links'] as $link) {
-                        $noteLinkItems[] = [
-                            'type' => $link['type'],
-                            'label' => $link['label'],
-                            'url' => buildLinkUrl($link),
-                        ];
-                    }
-                  ?>
-                  <div class="detail-meta-row"><span class="detail-meta-label">Links:</span><span class="detail-meta-value detail-link-list"><?php echo renderLinkedObjects(['items' => $noteLinkItems]); ?></span></div>
+                  <?php require __DIR__ . '/../../partials/conversation_note_links.php'; ?>
                 <?php endif; ?>
                 <details><summary class="is-size-7">Edit note</summary>
                   <?php

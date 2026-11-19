@@ -104,7 +104,7 @@ if ($activeContact) {
       <div class="detail-meta-info">
         <div class="detail-meta-row">
           <span class="detail-meta-label">Links:</span>
-          <span class="detail-meta-value detail-link-list">
+          <span class="detail-meta-value">
             <?php echo renderLinkedObjects([
                 'items' => $linkItems,
                 'modalId' => 'link-editor-contact-' . (int) $activeContact['id'],

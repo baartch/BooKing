@@ -194,7 +194,7 @@ if ($activeVenue) {
 
     $linksRow = '<div class="detail-meta-row">'
         . '<span class="detail-meta-label">Links:</span>'
-        . '<span class="detail-meta-value detail-link-list">'
+        . '<span class="detail-meta-value">'
         . renderLinkedObjects([
             'items' => $linkItems,
             'modalId' => 'link-editor-venue-' . (int) $activeVenue['id'],
