@@ -18,7 +18,16 @@ function renderLinkedObjects(array $options): string
         $html .= ' id="' . $escape($listId) . '"';
     }
 
-    $allowedListAttributes = ['data-link-editor-pills-selector'];
+    $allowedListAttributes = [
+        'data-link-editor-pills-selector',
+        'data-email-links-list',
+        'data-team-id',
+        'data-contact-url-base',
+        'data-venue-url-base',
+        'data-email-url-base',
+        'data-task-url-base',
+        'data-conversation-url-base',
+    ];
     foreach ($allowedListAttributes as $attribute) {
         if (array_key_exists($attribute, $listAttributes)) {
             $html .= ' ' . $attribute . '="' . $escape((string) $listAttributes[$attribute]) . '"';

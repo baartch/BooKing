@@ -3,6 +3,7 @@ import {
   initHugerte,
   initHugertePlainPaste,
 } from "./hugerte-editor.js";
+import { renderLinkedObjectPills } from "./linked-objects.js";
 
 type TemplateData = {
   name: string;
@@ -133,12 +134,10 @@ type LocalLinkEditorSavedEvent = CustomEvent<{
 }>;
 
 const renderLinkItems = (): void => {
-  const container = document.querySelector<HTMLElement>("[data-email-links]");
-  const list = document.querySelector<HTMLElement>("[data-email-links-list]");
-  const inputs = document.querySelector<HTMLElement>(
-    "[data-email-link-inputs]",
-  );
-  if (!container || !list || !inputs) {
+  const form = document.querySelector<HTMLFormElement>("[data-email-compose-form]");
+  const list = form?.querySelector<HTMLElement>("[data-email-links-list]");
+  const inputs = form?.querySelector<HTMLElement>("[data-email-link-inputs]");
+  if (!form || !list || !inputs) {
     return;
   }
 
@@ -163,37 +162,27 @@ const renderLinkItems = (): void => {
         item !== null,
     );
 
-  if (existing.length > 0) {
-    selectedLinkItems = existing
-      .filter(
-        (item, index, array) =>
-          array.findIndex(
-            (other) => other.type === item.type && other.id === item.id,
-          ) === index,
-      )
-      .map((item) => {
-        const match = selectedLinkItems.find(
-          (existingItem) =>
-            existingItem.type === item.type && existingItem.id === item.id,
-        );
-        return {
-          id: item.id,
-          type: item.type,
-          name: item.label || match?.name || `${item.type} #${item.id}`,
-        };
-      });
-  }
+  const previousSelection = selectedLinkItems;
+  selectedLinkItems = existing
+    .filter(
+      (item, index, array) =>
+        array.findIndex(
+          (other) => other.type === item.type && other.id === item.id,
+        ) === index,
+    )
+    .map((item) => {
+      const match = previousSelection.find(
+        (existingItem) =>
+          existingItem.type === item.type && existingItem.id === item.id,
+      );
+      return {
+        id: item.id,
+        type: item.type,
+        name: item.label || match?.name || `${item.type} #${item.id}`,
+      };
+    });
 
-  list.innerHTML = "";
   inputs.innerHTML = "";
-
-  if (selectedLinkItems.length === 0) {
-    const empty = document.createElement("span");
-    empty.className = "has-text-grey is-size-7";
-    empty.textContent = "No links yet";
-    list.appendChild(empty);
-    return;
-  }
 
   const teamId = Number(list.dataset.teamId ?? 0);
   const contactUrlBase = list.dataset.contactUrlBase ?? "";
@@ -240,41 +229,18 @@ const renderLinkItems = (): void => {
     return "";
   };
 
-  selectedLinkItems.forEach((item) => {
-    const chip = document.createElement("a");
-    chip.className = "detail-link-pill";
-
+  const pillItems = selectedLinkItems.map((item) => {
     const href = resolveLinkUrl(item.type, item.id);
-    if (href !== "") {
-      chip.href = href;
-    } else {
-      chip.href = "#";
-      chip.addEventListener("click", (event) => {
-        event.preventDefault();
-      });
-    }
+    return {
+      type: item.type,
+      id: item.id,
+      label: item.name,
+      ...(href !== "" ? { url: href } : {}),
+    };
+  });
+  renderLinkedObjectPills(list, pillItems);
 
-    const icon = document.createElement("span");
-    icon.className = "icon is-small";
-    icon.innerHTML = `<i class="fa-solid ${
-      item.type === "contact"
-        ? "fa-user"
-        : item.type === "venue"
-          ? "fa-location-dot"
-          : item.type === "email"
-            ? "fa-envelope"
-            : item.type === "task"
-              ? "fa-list-check"
-              : "fa-link"
-    }"></i>`;
-
-    const text = document.createElement("span");
-    text.textContent = item.name;
-
-    chip.appendChild(icon);
-    chip.appendChild(text);
-    list.appendChild(chip);
-
+  selectedLinkItems.forEach((item) => {
     const hidden = document.createElement("input");
     hidden.type = "hidden";
     hidden.name = "link_items[]";
@@ -1201,9 +1167,21 @@ const initComposeLinkRefresh = (): void => {
 
   document.addEventListener("link-editor:local-saved", (event) => {
     const detail = (event as LocalLinkEditorSavedEvent).detail;
-    const links = detail?.links ?? [];
+    if (detail?.collectorSelector !== "#email-compose-link-collector") {
+      return;
+    }
 
-    if (links.length > 0) {
+    const links = detail?.links ?? [];
+    const composeForm = document.querySelector<HTMLFormElement>("[data-email-compose-form]");
+    const composeCollector = composeForm?.querySelector<HTMLElement>("#email-compose-link-collector");
+    const composeConversationInput = composeForm?.querySelector<HTMLInputElement>(
+      "[data-email-conversation-id]",
+    );
+    const composeConversationPill = composeForm?.querySelector<HTMLElement>(
+      "[data-email-conversation-pill]",
+    );
+
+    if (Array.isArray(detail?.links)) {
       selectedLinkItems = links
         .filter((link) => link.type && Number(link.id) > 0)
         .map((link) => ({
@@ -1212,13 +1190,9 @@ const initComposeLinkRefresh = (): void => {
           name: link.label || `${link.type} #${link.id}`,
         }));
     }
-
-    const composeConversationInput = document.querySelector<HTMLInputElement>(
-      "[data-email-conversation-id]",
-    );
-    const composeConversationPill = document.querySelector<HTMLElement>(
-      "[data-email-conversation-pill]",
-    );
+    if (composeCollector && !composeCollector.querySelector('input[name="link_items[]"]')) {
+      selectedLinkItems = [];
+    }
 
     if (composeConversationInput) {
       const shouldDetach = Boolean(detail?.detachConversation);
@@ -1232,21 +1206,24 @@ const initComposeLinkRefresh = (): void => {
       }
     }
 
-    if (composeConversationPill) {
-      const shouldDetach = Boolean(detail?.detachConversation);
-      if (shouldDetach) {
-        composeConversationPill.innerHTML = "";
-      } else if (
-        typeof detail?.conversationId === "number" &&
-        detail.conversationId > 0
-      ) {
-        const label =
-          detail?.conversationLabel?.trim() ||
-          `Conversation #${detail.conversationId}`;
-        const safe = document.createElement("span");
-        safe.textContent = label;
-        composeConversationPill.innerHTML = `<span class="detail-link-pill"><span class="icon is-small"><i class="fa-solid fa-comments"></i></span><span>${safe.innerHTML}</span></span>`;
-      }
+    if (
+      composeConversationPill &&
+      (Boolean(detail?.detachConversation) ||
+        (typeof detail?.conversationId === "number" && detail.conversationId > 0))
+    ) {
+      const conversationItems =
+        !detail?.detachConversation && typeof detail?.conversationId === "number" && detail.conversationId > 0
+          ? [{
+              type: "conversation",
+              id: detail.conversationId,
+              label:
+                detail.conversationLabel?.trim() ||
+                `Conversation #${detail.conversationId}`,
+            }]
+          : [];
+      renderLinkedObjectPills(composeConversationPill, conversationItems, {
+        emptyText: "",
+      });
     }
 
     renderLinkItems();

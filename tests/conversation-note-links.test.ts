@@ -60,6 +60,31 @@ test("note link pills and dialog retain unsaved selections across reopening", as
   document.body.innerHTML = "";
 });
 
+test("new and edited note forms submit their own selected type:id links", () => {
+  document.body.innerHTML = renderNoteForms([
+    {
+      formId: "note-new-submit",
+      noteEdit: { id: 0, links: [{ type: "contact", id: 42, label: "Jane" }] },
+    },
+    {
+      formId: "note-edit-submit",
+      noteEdit: { id: 17, links: [{ type: "venue", id: 5, label: "Hall" }] },
+    },
+  ]);
+
+  for (const [formId, expected] of [
+    ["note-new-submit", "contact:42"],
+    ["note-edit-submit", "venue:5"],
+  ]) {
+    const collector = document.querySelector<HTMLElement>(`#${formId}-links`)!;
+    expect(collector.dataset.linkEditorPillsSelector).toBe(`#${formId}-link-pills`);
+    expect(
+      Array.from(collector.querySelectorAll<HTMLInputElement>('input[name="link_items[]"]')).map((input) => input.value),
+    ).toEqual([expected]);
+  }
+  document.body.innerHTML = "";
+});
+
 test("searching and selecting a show adds its pill and keeps it in the dialog", async () => {
   const php = `
     define('BASE_PATH', '');

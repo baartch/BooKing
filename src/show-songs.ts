@@ -18,6 +18,46 @@ const editorSelector = "[data-show-songs-editor]";
 const rowSelector = "[data-show-song-row]";
 const selectSelector = "select.show-song-select";
 const removeSelector = ".show-song-remove";
+const showCollectorSelector = "#show-link-collector";
+
+type ShowLinkSavedEvent = CustomEvent<{
+  collectorSelector?: string;
+  links?: Array<{ type: string; id: number; label: string }>;
+}>;
+
+const initShowLinkRefresh = (): void => {
+  if (document.body.dataset.showLinkRefreshBound === "true") {
+    return;
+  }
+  document.body.dataset.showLinkRefreshBound = "true";
+
+  document.addEventListener("link-editor:local-saved", (event) => {
+    const detail = (event as ShowLinkSavedEvent).detail;
+    if (detail?.collectorSelector !== showCollectorSelector) {
+      return;
+    }
+
+    const collector = document.querySelector<HTMLElement>(showCollectorSelector);
+    const form = collector?.closest<HTMLFormElement>("form");
+    if (!form) {
+      return;
+    }
+
+    const links = Array.isArray(detail.links) ? detail.links : [];
+    const venueLink = links.find((link) => link?.type === "venue" && Number(link.id) > 0);
+    const typeInput = form.querySelector<HTMLInputElement>("#show_fallback_link_type");
+    const idInput = form.querySelector<HTMLInputElement>("#show_fallback_link_id");
+    if (typeInput && idInput) {
+      typeInput.value = venueLink ? "venue" : "";
+      idInput.value = venueLink ? String(venueLink.id) : "";
+    }
+
+    const venueInput = form.querySelector<HTMLInputElement>("#show_venue_text");
+    if (venueInput && venueInput.value.trim() === "" && venueLink?.label.trim()) {
+      venueInput.value = venueLink.label;
+    }
+  });
+};
 
 export const initShowSongsEditor = (scope: ParentNode = document): void => {
   scope.querySelectorAll<HTMLElement>(editorSelector).forEach((editor) => {
@@ -208,10 +248,12 @@ const bindEditor = (editor: HTMLElement): void => {
 
 document.addEventListener("DOMContentLoaded", () => {
   initShowSongsEditor();
+  initShowLinkRefresh();
 });
 
 document.addEventListener("tab:activated", () => {
   initShowSongsEditor();
+  initShowLinkRefresh();
 });
 
 document.addEventListener("htmx:afterSwap", (event) => {
@@ -222,5 +264,6 @@ document.addEventListener("htmx:afterSwap", (event) => {
     ((event.target as HTMLElement | null) ?? null);
   if (target) {
     initShowSongsEditor(target);
+    initShowLinkRefresh();
   }
 });

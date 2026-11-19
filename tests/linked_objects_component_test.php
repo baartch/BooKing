@@ -83,6 +83,29 @@ if (function_exists('renderLinkedObjects')) {
     $check(str_contains($editable, 'data-link-editor-trigger') && str_contains($editable, 'data-link-editor-modal-id="link-editor-contact-12"'), 'pencil targets the configured modal');
     $check(str_contains($editable, 'title="Edit links"') && str_contains($editable, 'aria-label="Edit links"'), 'pencil has accessible title and name');
 
+    $emailList = renderLinkedObjects([
+        'listAttributes' => [
+            'data-team-id' => '7',
+            'data-contact-url-base' => '/communication.php?x=1&y=2',
+            'data-venue-url-base' => '/venues.php',
+            'data-email-url-base' => '/email.php',
+            'data-task-url-base' => '/team.php',
+            'data-conversation-url-base' => '/conversations.php',
+            'data-untrusted-url' => 'javascript:alert(1)',
+        ],
+    ]);
+    $check(
+        str_contains($emailList, 'data-team-id="7"')
+            && str_contains($emailList, 'data-contact-url-base="/communication.php?x=1&amp;y=2"')
+            && str_contains($emailList, 'data-venue-url-base="/venues.php"')
+            && str_contains($emailList, 'data-email-url-base="/email.php"')
+            && str_contains($emailList, 'data-task-url-base="/team.php"')
+            && str_contains($emailList, 'data-conversation-url-base="/conversations.php"'),
+        'email list preserves the fixed URL and team data attributes with escaping'
+    );
+    $check(!str_contains($emailList, 'data-untrusted-url'), 'unapproved URL data attributes are omitted');
+    $check(!str_contains($emailList, '&amp;amp;'), 'email list attributes are not double-escaped');
+
     $escaped = renderLinkedObjects([
         'items' => [
             ['type' => 'contact', 'id' => 13, 'label' => 'A <B> & "C"', 'url' => '/search.php?q=a&other=b']

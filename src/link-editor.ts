@@ -319,6 +319,10 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
     if (localOnly) {
       updateCollector();
       editor.dataset.links = JSON.stringify(state.links);
+      editor.dataset.conversationId = state.conversationId !== null
+        ? String(state.conversationId)
+        : "";
+      editor.dataset.conversationLabel = state.conversationLabel;
 
       const collectorTarget = collectorSelector
         ? document.querySelector<HTMLElement>(collectorSelector)
@@ -326,19 +330,9 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
       const pillsSelector = collectorTarget?.dataset.linkEditorPillsSelector;
       const pills = pillsSelector ? document.querySelector<HTMLElement>(pillsSelector) : null;
       if (pills) {
-        renderLinkedObjectPills(pills, state.links);
-      }
-
-      // Show form convenience: if venue text is empty and a venue link exists,
-      // prefill venue text with the linked venue label.
-      if (collectorSelector === "#show-link-collector") {
-        const venueInput = document.querySelector<HTMLInputElement>("#show_venue_text");
-        if (venueInput && venueInput.value.trim() === "") {
-          const venueLink = state.links.find((link) => link.type === "venue" && link.label.trim() !== "");
-          if (venueLink) {
-            venueInput.value = venueLink.label;
-          }
-        }
+        renderLinkedObjectPills(pills, state.links, {
+          showIcons: collectorTarget?.dataset.linkEditorPillsShowIcons !== "0",
+        });
       }
 
       document.dispatchEvent(
