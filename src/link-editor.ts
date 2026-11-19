@@ -1,3 +1,5 @@
+import { renderLinkedObjectPills } from "./linked-objects.js";
+
 type LinkEditorItem = {
   type: string;
   id: number;
@@ -324,17 +326,7 @@ const initLinkEditorModal = (modal: HTMLElement): void => {
       const pillsSelector = collectorTarget?.dataset.linkEditorPillsSelector;
       const pills = pillsSelector ? document.querySelector<HTMLElement>(pillsSelector) : null;
       if (pills) {
-        pills.innerHTML = "";
-        if (state.links.length === 0) {
-          pills.innerHTML = '<span class="has-text-grey is-size-7">No links yet</span>';
-        } else {
-          state.links.forEach((link) => {
-            const pill = document.createElement("span");
-            pill.className = "detail-link-pill";
-            pill.innerHTML = `<span class="icon is-small"><i class="${typeIcon(link.type)}"></i></span><span>${escapeHtml(link.label)}</span>`;
-            pills.appendChild(pill);
-          });
-        }
+        renderLinkedObjectPills(pills, state.links);
       }
 
       // Show form convenience: if venue text is empty and a venue link exists,
