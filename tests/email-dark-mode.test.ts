@@ -8,7 +8,7 @@ const renderEmail = () => {
     function getLinkIcons(): array { return []; }
     function formatPlainEmailBodyWithQuotes(string $body): string { return htmlspecialchars($body); }
     $selectedMailbox = ['id' => 1];
-    $message = ['id' => 1, 'body_html' => '<div style="background: white; color: black"><p style="color: #111">Hello</p><a href="#">Link</a></div>'];
+    $message = ['id' => 1, 'body_html' => '<p>Unstyled</p><div style="background: white; color: black"><p style="color: #111">Hello</p><a href="#" style="color: #123456">Link</a></div>'];
     $emailDetailShowActions = $emailDetailShowLinks = $emailDetailShowAttachments = $emailDetailIncludeLinkEditor = false;
     require 'app/views/communication/email_detail.php';`;
   const result = Bun.spawnSync(["php", "-r", php]);
@@ -22,7 +22,11 @@ const renderEmail = () => {
 const checkThemes = (systemDark: boolean) => {
   const frame = renderEmail();
   const css = readFileSync("app/public/css/communication.css", "utf8");
-  const html = `<!doctype html><html><head><style>${css}</style></head><body>
+  const html = `<!doctype html><html><head><style>${css}
+    section, article { color: hsl(221, 14%, 29%); background: hsl(221, 14%, 100%); }
+    html[data-theme="dark"] section, html[data-theme="dark"] article { color: hsl(221, 14%, 71%); background: hsl(221, 14%, 9%); }
+    @media (prefers-color-scheme: dark) { html:not([data-theme]) section, html:not([data-theme]) article { color: hsl(221, 14%, 71%); background: hsl(221, 14%, 9%); } }
+    </style></head><body>
     <section class="email-detail-column">${frame}</section><article>${frame}</article>
     <script>
       const frames = [...document.querySelectorAll('iframe')];
@@ -33,9 +37,11 @@ const checkThemes = (systemDark: boolean) => {
           const doc = frame.contentDocument;
           return {
             frame: getComputedStyle(frame).backgroundColor,
+            surroundingText: getComputedStyle(frame.parentElement).color,
             body: getComputedStyle(doc.body).backgroundColor,
             block: getComputedStyle(doc.querySelector('div')).backgroundColor,
-            text: getComputedStyle(doc.querySelector('p')).color,
+            defaultText: getComputedStyle(doc.querySelector('body > p')).color,
+            text: getComputedStyle(doc.querySelector('div p')).color,
             link: getComputedStyle(doc.querySelector('a')).color
           };
         });
@@ -56,21 +62,18 @@ const checkThemes = (systemDark: boolean) => {
   return JSON.parse(encoded!.replaceAll("&quot;", '"'));
 };
 
-(chrome ? test : test.skip)("email bodies follow explicit and system themes in both views", () => {
+(chrome ? test : test.skip)("unstyled email backgrounds are transparent and explicit styles are preserved in both themes", () => {
   for (const systemDark of [false, true]) {
     const { dark, light, system } = checkThemes(systemDark);
-    for (const view of dark) {
-      expect(view.frame).toBe("rgb(27, 27, 27)");
-      expect(view.body).toBe("rgb(27, 27, 27)");
-      expect(view.block).toBe("rgba(0, 0, 0, 0)");
-      expect(view.text).toBe("rgb(245, 245, 245)");
-      expect(view.link).not.toBe(view.text);
-    }
-    for (const view of light) {
-      expect(view.frame).toBe("rgb(255, 255, 255)");
+    for (const view of [...dark, ...light]) {
+      expect(view.frame).toBe("rgba(0, 0, 0, 0)");
+      expect(view.body).toBe("rgba(0, 0, 0, 0)");
       expect(view.block).toBe("rgb(255, 255, 255)");
       expect(view.text).toBe("rgb(17, 17, 17)");
+      expect(view.link).toBe("rgb(18, 52, 86)");
+      expect(view.defaultText).toBe(view.surroundingText);
     }
+    expect(dark[0].defaultText).not.toBe(light[0].defaultText);
     expect(system).toEqual(systemDark ? dark : light);
   }
 });
