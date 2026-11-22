@@ -2,10 +2,11 @@
 ?>
 <aside class="column is-3 email-column">
   <h3 class="title is-6">Mailbox</h3>
-  <?php if (!$teamMailboxes): ?>
-    <p>No mailboxes assigned.</p>
-  <?php else: ?>
-    <div class="email-mailbox-avatar-list">
+  <div class="email-mailbox-row">
+    <?php if (!$teamMailboxes): ?>
+      <p>No mailboxes assigned.</p>
+    <?php else: ?>
+      <div class="email-mailbox-avatar-list">
       <?php foreach ($teamMailboxes as $mailbox): ?>
         <?php
           $mailboxId = (int) ($mailbox['id'] ?? 0);
@@ -49,11 +50,11 @@
           <?php endif; ?>
         </a>
       <?php endforeach; ?>
-    </div>
-  <?php endif; ?>
-
-  <div class="block">
-    <a href="<?php echo htmlspecialchars($baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, ['compose' => 1]))); ?>" class="button is-primary is-fullwidth">New eMail</a>
+      </div>
+    <?php endif; ?>
+    <a href="<?php echo htmlspecialchars($baseEmailUrl . '?' . http_build_query(array_merge($baseQuery, ['compose' => 1]))); ?>" class="button is-primary email-compose-button" title="New eMail" aria-label="New eMail">
+      <span class="icon"><i class="fa-solid fa-pen" aria-hidden="true"></i></span>
+    </a>
   </div>
 
   <?php if ($notice): ?>
