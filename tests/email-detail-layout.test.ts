@@ -38,9 +38,9 @@ const readLayout = () => {
   return JSON.parse(encoded!.replaceAll("&quot;", '"'));
 };
 
-(chrome ? test : test.skip)("HTML email has a readable default background", () => {
+(chrome ? test : test.skip)("HTML email uses the surrounding background", () => {
   const layout = readLayout();
-  expect(layout.background).toBe("rgb(255, 255, 255)");
+  expect(layout.background).toBe("rgba(0, 0, 0, 0)");
 });
 
 (chrome ? test : test.skip)("HTML email fills available detail space with a conversation fallback", () => {
