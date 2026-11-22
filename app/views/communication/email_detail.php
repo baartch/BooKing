@@ -232,6 +232,7 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
         if ($messageBody !== '' && $messageBody !== strip_tags($messageBody)) {
             $emailDocument = '<!doctype html><html><head>'
                 . '<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; form-action &#39;none&#39;; base-uri &#39;none&#39;">'
+                . '<style>' . file_get_contents(__DIR__ . '/../../public/css/email-content.css') . '</style>'
                 . '</head><body>' . $messageBody . '</body></html>';
             echo '<iframe class="email-detail-frame" title="Email content" sandbox="" srcdoc="'
                 . htmlspecialchars($emailDocument, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '"></iframe>';

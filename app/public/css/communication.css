@@ -265,6 +265,19 @@
   flex: 1 0 20rem;
   border: 0;
   background: #fff;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] .email-detail-frame {
+  background: #1b1b1b;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) .email-detail-frame {
+    background: #1b1b1b;
+    color-scheme: dark;
+  }
 }
 
 .email-detail-body.is-quotes-collapsed blockquote[type="cite"] {
