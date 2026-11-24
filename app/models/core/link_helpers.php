@@ -78,14 +78,19 @@ function buildLinkUrl(array $link, array $options = []): string
     return '#';
 }
 
-function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int $userId): array
+function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int $userId, array $additionalTeamIds = []): array
 {
     $type = trim($type);
     if ($type === '' || $id <= 0) {
         return [];
     }
 
-    if ($teamId === null && $userId === null) {
+    $teamIds = array_values(array_unique(array_filter(
+        array_map('intval', array_merge($teamId !== null ? [$teamId] : [], $additionalTeamIds)),
+        static fn(int $scopeTeamId): bool => $scopeTeamId > 0
+    )));
+
+    if (!$teamIds && $userId === null) {
         return [];
     }
 
@@ -103,17 +108,21 @@ function fetchLinkedObjects(PDO $pdo, string $type, int $id, ?int $teamId, ?int 
         ':right_id' => $id
     ];
 
-    if ($userId !== null && $teamId !== null) {
-        $sql .= '(user_id = :user_id OR (user_id IS NULL AND team_id = :team_id))';
+    $scopeConditions = [];
+    if ($userId !== null) {
+        $scopeConditions[] = 'user_id = :user_id';
         $params[':user_id'] = $userId;
-        $params[':team_id'] = $teamId;
-    } elseif ($userId !== null) {
-        $sql .= 'user_id = :user_id';
-        $params[':user_id'] = $userId;
-    } else {
-        $sql .= 'user_id IS NULL AND team_id = :team_id';
-        $params[':team_id'] = $teamId;
     }
+    if ($teamIds) {
+        $teamPlaceholders = [];
+        foreach ($teamIds as $index => $scopeTeamId) {
+            $placeholder = ':scope_team_' . $index;
+            $teamPlaceholders[] = $placeholder;
+            $params[$placeholder] = $scopeTeamId;
+        }
+        $scopeConditions[] = '(user_id IS NULL AND team_id IN (' . implode(', ', $teamPlaceholders) . '))';
+    }
+    $sql .= '(' . implode(' OR ', $scopeConditions) . ')';
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);

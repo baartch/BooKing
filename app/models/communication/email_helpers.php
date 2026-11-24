@@ -282,14 +282,14 @@ function fetchMailboxIdentityListForUser(int $userId): array
     return array_values(array_unique($mailboxIdentityList));
 }
 
-function fetchEmailMessageLinks(int $messageId, ?int $teamId, ?int $userId): array
+function fetchEmailMessageLinks(int $messageId, ?int $teamId, ?int $userId, array $additionalTeamIds = []): array
 {
     if ($messageId <= 0) {
         return [];
     }
 
     $pdo = getDatabaseConnection();
-    return fetchLinkedObjects($pdo, 'email', $messageId, $teamId, $userId);
+    return fetchLinkedObjects($pdo, 'email', $messageId, $teamId, $userId, $additionalTeamIds);
 }
 
 function fetchAttachmentForUser(int $attachmentId, int $userId): ?array
@@ -1000,4 +1000,3 @@ function getMailboxPrimaryEmail(array $mailbox): string
 
     return $email;
 }
-
