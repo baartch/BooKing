@@ -22,7 +22,15 @@ type HugeRteEditor = {
   save: () => void;
   getContent: () => string;
   setContent: (content: string) => void;
-  on: (event: string, callback: () => void) => void;
+  on: {
+    (event: "Submit", callback: (event: Event) => void): void;
+    (event: "GetContent", callback: (event: { source_view?: boolean; content: string }) => void): void;
+  };
+  editorUpload?: {
+    blobCache: {
+      getByUri: (uri: string) => { blob: () => Blob; base64: () => string } | undefined;
+    };
+  };
   container?: HTMLElement;
   ui?: { registry: HugeRteUiRegistry };
 };
@@ -149,7 +157,30 @@ const initHugerte = (options: InitHugerteOptions): void => {
     height: options.height ?? 360,
     setup: (editor: HugeRteEditor) => {
       // Sync editor content back to the textarea before form submit.
-      editor.on("Submit", () => editor.save());
+      editor.on("Submit", (event) => {
+        editor.save();
+        const content = document.createElement("template");
+        content.innerHTML = textarea.value;
+        const hasTemporaryImage = Array.from(content.content.querySelectorAll("img"))
+          .some((image) => image.getAttribute("src")?.trim().toLowerCase().startsWith("blob:"));
+        if (hasTemporaryImage) {
+          event.preventDefault();
+          window.alert("An image has a temporary URL and cannot be saved. Please replace it with the original image before saving.");
+        }
+      });
+
+      // HugeRTE normally exposes its temporary blob URLs in source-code view.
+      // Resolve cached images there too, so copied/edited source remains portable.
+      editor.on("GetContent", (event) => {
+        if (!event.source_view) return;
+        event.content = event.content.replace(
+          /(<img\b[^>]*?\ssrc=")(blob:[^"]+)(")/gi,
+          (match, prefix: string, uri: string, suffix: string) => {
+            const image = editor.editorUpload?.blobCache.getByUri(uri);
+            return image ? `${prefix}data:${image.blob().type};base64,${image.base64()}${suffix}` : match;
+          },
+        );
+      });
 
       // Register a "Template" dropdown in the toolbar when templates are provided.
       if (
