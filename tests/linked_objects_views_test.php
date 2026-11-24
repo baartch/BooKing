@@ -226,6 +226,11 @@ $check(
         && str_contains($conversationViewSource, "require __DIR__ . '/../../partials/conversation_note_links.php';"),
     'conversation timeline includes the rendered note-links partial'
 );
+$check(
+    $conversationViewSource !== false
+        && str_contains($conversationViewSource, '$emailDetailShowLinks = true;'),
+    'conversation email details display their linked objects'
+);
 $noteLinks = is_file($notePartialPath)
     ? $render($notePartialPath, ['noteItem' => ['links' => [$venueLink]]])
     : '';
