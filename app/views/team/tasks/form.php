@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../../partials/linked_objects.php';
 $cancelUrl = $cancelUrl ?? (BASE_PATH . '/app/controllers/team/index.php?tab=tasks');
 $searchQuery = $searchQuery ?? '';
 $taskLinks = $taskLinks ?? [];
+$localModalId = $isEdit && $editTask ? 'link-editor-task-' . (int) $editTask['id'] : 'link-editor-task-0';
 $linkItems = [];
 foreach ($taskLinks as $link) {
     $linkUrl = '#';
@@ -49,22 +50,21 @@ foreach ($taskLinks as $link) {
       <input type="hidden" name="task_id" value="<?php echo (int) $editTask['id']; ?>">
     <?php endif; ?>
 
-    <?php if ($isEdit && $editTask): ?>
-      <div class="detail-meta mb-4">
-        <div class="detail-meta-info">
-          <div class="detail-meta-row">
-            <span class="detail-meta-label">Links:</span>
-            <span class="detail-meta-value">
-              <?php echo renderLinkedObjects([
-                  'items' => $linkItems,
-                  'modalId' => 'link-editor-task-' . (int) ($editTask['id'] ?? 0),
-              ]); ?>
-            </span>
-          </div>
+    <div class="detail-meta mb-4">
+      <div class="detail-meta-info">
+        <div class="detail-meta-row">
+          <span class="detail-meta-label">Links:</span>
+          <span class="detail-meta-value">
+            <?php echo renderLinkedObjects([
+                'items' => $linkItems,
+                'modalId' => $localModalId,
+                'listId' => 'task-link-pills',
+            ]); ?>
+          </span>
         </div>
       </div>
-    <?php endif; ?>
-    <div data-link-editor-collector>
+    </div>
+    <div data-link-editor-collector id="task-link-collector" data-link-editor-pills-selector="#task-link-pills">
       <input type="hidden" name="link_items[]" value="">
       <?php foreach ($taskLinks as $link): ?>
         <input type="hidden" name="link_items[]" value="<?php echo htmlspecialchars($link['type'] . ':' . (int) $link['id']); ?>">
@@ -121,14 +121,14 @@ foreach ($taskLinks as $link) {
     </div>
   </form>
 
-  <?php if ($isEdit && $editTask): ?>
-    <?php
-      $linkEditorSourceType = 'task';
-      $linkEditorSourceId = (int) $editTask['id'];
-      $linkEditorMailboxId = 0;
-      $linkEditorSearchTypes = 'contact,venue,email,task';
-      $linkEditorLinks = $linkEditorLinks ?? [];
-      require __DIR__ . '/../../../partials/link_editor_modal.php';
-    ?>
-  <?php endif; ?>
+  <?php
+    $linkEditorSourceType = 'task';
+    $linkEditorSourceId = $isEdit && $editTask ? (int) $editTask['id'] : 0;
+    $linkEditorMailboxId = 0;
+    $linkEditorSearchTypes = 'contact,venue,email,task';
+    $linkEditorLinks = $linkEditorLinks ?? [];
+    $linkEditorLocalOnly = !($isEdit && $editTask);
+    $linkEditorCollectorSelector = $linkEditorLocalOnly ? '#task-link-collector' : '';
+    require __DIR__ . '/../../../partials/link_editor_modal.php';
+  ?>
 </div>
