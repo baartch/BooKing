@@ -190,6 +190,7 @@ if ($prefillTo !== '') {
 }
 
 $messageLinks = [];
+$emailDisplayLinks = [];
 
 $selectedMessageId = (int) ($_GET['message_id'] ?? 0);
 if ($selectedMailbox && $selectedMessageId > 0) {
@@ -252,6 +253,33 @@ if ($selectedMailbox && $selectedMessageId > 0) {
                     : null;
 
                 $messageLinks = fetchEmailMessageLinks((int) $message['id'], $linkTeamId, $linkUserId);
+                $emailDisplayLinks = $messageLinks;
+
+                try {
+                    $accessibleTeamIds = [];
+                    $teamStmt = $pdo->prepare('SELECT team_id FROM team_members WHERE user_id = :user_id');
+                    $teamStmt->execute([':user_id' => $userId]);
+                    foreach ($teamStmt->fetchAll() as $teamRow) {
+                        $accessibleTeamId = (int) ($teamRow['team_id'] ?? 0);
+                        if ($accessibleTeamId > 0) {
+                            $accessibleTeamIds[] = $accessibleTeamId;
+                        }
+                    }
+
+                    if ($accessibleTeamIds) {
+                        $emailDisplayLinks = fetchEmailMessageLinks(
+                            (int) $message['id'],
+                            $linkTeamId,
+                            $linkUserId,
+                            $accessibleTeamIds
+                        );
+                        if (count($emailDisplayLinks) > count($messageLinks)) {
+                            $emailDetailIncludeLinkEditor = false;
+                        }
+                    }
+                } catch (Throwable $error) {
+                    logAction($userId, 'email_team_links_load_error', $error->getMessage());
+                }
             } catch (Throwable $error) {
                 logAction($userId, 'email_links_load_error', $error->getMessage());
             }

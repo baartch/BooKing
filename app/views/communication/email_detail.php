@@ -13,6 +13,7 @@ $emailDetailShowLinks = $emailDetailShowLinks ?? true;
 $emailDetailShowAttachments = $emailDetailShowAttachments ?? true;
 $emailDetailSubjectUrl = $emailDetailSubjectUrl ?? null;
 $messageLinks = $messageLinks ?? [];
+$emailDisplayLinks = $emailDisplayLinks ?? $messageLinks;
 $attachments = $attachments ?? [];
 $composeMode = $composeMode ?? false;
 $templates = $templates ?? [];
@@ -72,13 +73,17 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
 
       $linkItems = [];
       $linkEditorLinks = [];
-      if (!empty($messageLinks)) {
-          foreach ($messageLinks as $link) {
+      if (!empty($emailDisplayLinks)) {
+          foreach ($emailDisplayLinks as $link) {
               $linkItems[] = [
                   'type' => $link['type'],
                   'label' => $link['label'],
                   'url' => buildLinkUrl($link)
               ];
+          }
+      }
+      if (!empty($messageLinks)) {
+          foreach ($messageLinks as $link) {
               $linkEditorLinks[] = [
                   'type' => $link['type'],
                   'id' => (int) $link['id'],
@@ -213,7 +218,7 @@ echo '<' . htmlspecialchars($emailDetailWrapperTag) . ' ' . $wrapperAttributes .
               <span class="detail-meta-value">
                 <?php echo renderLinkedObjects([
                     'items' => $linkItems,
-                    'modalId' => 'link-editor-email-' . (int) $message['id'],
+                    'modalId' => $emailDetailIncludeLinkEditor ? 'link-editor-email-' . (int) $message['id'] : '',
                 ]); ?>
               </span>
             </div>

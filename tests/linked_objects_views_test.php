@@ -203,6 +203,33 @@ $checkLink($emailDetail, '/booking/app/controllers/communication/index.php?tab=c
 $checkSingleList($emailDetail, 'email detail');
 $checkEditableModal($emailDetail, 'email', 42, 'contact,venue,email,task', 'email detail');
 $contains($emailDetail, 'data-mailbox-id="4"', 'email detail preserves its mailbox source ID');
+$emailDetailWithTeamTask = $render($emailDetailPath, [
+    'message' => $emailMessage,
+    'messageLinks' => [['type' => 'contact', 'id' => 9, 'label' => 'Grace']],
+    'emailDisplayLinks' => [
+        ['type' => 'contact', 'id' => 9, 'label' => 'Grace'],
+        ['type' => 'task', 'id' => 8, 'label' => 'Follow up'],
+    ],
+    'emailDetailIncludeLinkEditor' => false,
+    'selectedMailbox' => ['id' => 4],
+    'pdo' => $emailPdo,
+    'baseEmailUrl' => '/booking/app/controllers/communication/index.php',
+    'baseQuery' => [],
+    'folder' => 'inbox',
+    'sortKey' => 'received_desc',
+    'filter' => '',
+    'page' => 1,
+    'emailDetailShowActions' => false,
+    'emailDetailShowAttachments' => false,
+]);
+$checkLink(
+    $emailDetailWithTeamTask,
+    '/booking/app/controllers/team/index.php?tab=tasks&amp;task_id=8',
+    'Follow up',
+    'fa-list-check',
+    'email linked team task'
+);
+$notContains($emailDetailWithTeamTask, 'data-link-editor-trigger', 'email with cross-scope links does not expose a misleading editor');
 $emailDetailEmpty = $render($emailDetailPath, [
     'message' => array_merge($emailMessage, ['conversation_id' => null]),
     'messageLinks' => [],
